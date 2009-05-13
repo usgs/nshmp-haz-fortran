@@ -7,7 +7,6 @@
 #include "adhoc_check_error.h"
 
 
-/** These are temporary */
 OCIEnv    *adhoc_env_hp;
 OCIError  *adhoc_err_hp;
 OCISvcCtx *adhoc_svc_hp;
