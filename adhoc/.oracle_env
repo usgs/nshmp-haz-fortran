@@ -1,0 +1,7 @@
+ORACLE_HOME=/usr/local/oracle/product/11.1.0/db_1;
+#LD_LIBRARY_PATH=${ORACLE_HOME}/lib;
+#TNS_ADMIN=${ORACLE_HOME}/network/admin/tnsnames.ora;
+
+export ORACLE_HOME;
+#export LD_LIBRARY_PATH;
+#export TNS_ADMIN;
