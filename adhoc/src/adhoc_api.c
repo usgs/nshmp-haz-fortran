@@ -6,7 +6,6 @@
 #include "adhoc_api.h"
 #include "adhoc_check_error.h"
 
-
 OCIEnv    *adhoc_env_hp;
 OCIError  *adhoc_err_hp;
 OCISvcCtx *adhoc_svc_hp;
