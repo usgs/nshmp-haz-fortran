@@ -1,5 +1,6 @@
 c--- gethead: reads header of PSHA hazcurve file
 c-- to use: gethead.nga filename or names
+c -- dummy change
 c -- to compile: f95 gethead.nga.f -o gethead.nga iosubs.o -e
       type header 
         character*30 region,filin(5)
