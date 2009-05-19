@@ -30,7 +30,7 @@ test: all
 ftest: all
 	$(CC) $(CFLAGS) $(INCLUDE) $(LIBRARY) $(OCI_INCLUDE) \
 		-o build/test_agrid_fortran.o -c src/tests/test_agrid_fortran.c
-	$(F77) $(INCLUDE) $(LIBRARY) $(OCI_FLAGS) $(OBJECTS) \
+	$(F77) -g $(INCLUDE) $(LIBRARY) $(OCI_FLAGS) $(OBJECTS) \
 		build/test_agrid_fortran.o -o ftest src/tests/test_agrid.f -ladhoc
 
 nshm_api:

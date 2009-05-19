@@ -72,6 +72,8 @@ int nshm_get_agrid_meta(int _id, NSHM_Agrid * _agrid) {
 
 	/* Set the agrid meta data information */
 	info.id = _id;
+	info.description = calloc(strlen(name)+1, sizeof(*name));
+	//memset(info.description, 0, sizeof(info.description));
 	strncpy(info.description, name, strlen(name));
 	_agrid->metadata = &info;
 

@@ -25,7 +25,11 @@ void fetchagrid_(float * values[], NSHM_AgridMeta * meta, long int desc_len)
 
 	meta->id = agrid.metadata->id;
 	meta->num_rows = agrid.metadata->num_rows;
-	memset(meta->description, 0, sizeof(meta->description));
+	meta->desc_len = strlen(agrid.metadata->description);
+	meta->description = calloc(strlen(agrid.metadata->description),
+		sizeof(*agrid.metadata->description)
+	);
+	//memset(meta->description, 0, sizeof(meta->description));
 	strncpy(meta->description, agrid.metadata->description,
 		strlen(agrid.metadata->description)
 	);

@@ -8,7 +8,7 @@
 #include "nshm_agrid.h"
 
 
-void print_agrid(NSHM_Agrid agrid);
+void print_agrid(NSHM_Agrid _agrid);
 
 int main(int argc, char ** argv) {
 
@@ -46,9 +46,8 @@ void print_agrid(NSHM_Agrid _agrid) {
 
 
 
-	for (i = 0; i < _agrid.metadata->num_rows; ++i) {
+	for (i = 0; i < 10; ++i) {
 		printf("\t%3.1f  %4.1f  %6.5f\n",
 			_agrid.latitude[i], _agrid.longitude[i], _agrid.value[i]);
 	}
-
 }
