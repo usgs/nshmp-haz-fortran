@@ -51,7 +51,14 @@ int adhoc_init(AdHoc_AuthInfo _auth_info) {
 	return ADHOC_RETURN_SUCCESS;
 }
 
+int adhoc_statement_prepare(AdHoc_Statement * _stmt) {
+	int status = ADHOC_RETURN_SUCCESS;
+
+	return status;
+}
+
 int adhoc_query(AdHoc_Statement * _stmt) {
+	if ( !_stmt->initialized ) { adhoc_statement_prepare(_stmt); }
 	return ADHOC_RETURN_WARNING;
 }
 

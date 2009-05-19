@@ -76,11 +76,11 @@ typedef struct _AdHoc_DbField {
  * object. This statement can then be executed.
  */
 typedef struct _AdHoc_Statement {
-	AdHoc_Cursor  cursor;     /* The Cursor information (connection info) */
-	OCIStmt       *stmt;      /* The OCIStatement to execute */
-	char          *sql;       /* The SQL Query to send to the Database */
-	int           num_fields; /* The number of fields in this statement */
-	AdHoc_DbField fields;     /* Fields associated with this statement */
+	AdHoc_Cursor  cursor;      /* The Cursor information (connection info) */
+	char          *sql;        /* The SQL Query to send to the Database */
+	int           num_fields;  /* The number of fields in this statement */
+	AdHoc_DbField *fields;     /* Fields associated with this statement */
+	boolean       initialized; /* Indecates if the statement is ready */
 } AdHoc_Statement;
 
 
@@ -94,6 +94,19 @@ typedef struct _AdHoc_Statement {
  *
  */
 int adhoc_init(AdHoc_AuthInfo _auth_info);
+
+/**
+ * Prepares the statement to execute. The given _stmt structure should be
+ * partially initialized by the caller before calling this method. That is,
+ * before calling this method, the caller should define the SQL and FIELDS of
+ * the AdHoc_Statement. In this method call, the AdHoc_Cursor will be 
+ * initialized and each of the using the SQL attribute to create an OCIStmt and
+ * then binding/defining each of the AdHoc_DbField structures as appropriate.
+ *
+ * AdHoc_Statement _stmt (IN/OUT) -- The partially initialized AdHoc statement
+ *                                   structure.
+ */
+int adhoc_statement_prepare(AdHoc_Statement * _stmt);
 
 /**
  * Executes a statement agaist the database. Statements executed in this manner
