@@ -75,7 +75,7 @@ int nshm_get_agrid_meta(int _id, NSHM_Agrid * _agrid) {
 	info.description = calloc(strlen(name)+1, sizeof(*name));
 	//memset(info.description, 0, sizeof(info.description));
 	strncpy(info.description, name, strlen(name));
-	_agrid->metadata = &info;
+	memmove(_agrid->metadata, &info, sizeof(NSHM_AgridMeta));
 
     adhoc_check_error(adhoc_err_hp, OCIStmtRelease(
         stmt_hp, adhoc_err_hp, (OraText *) NULL, 0, OCI_DEFAULT)
