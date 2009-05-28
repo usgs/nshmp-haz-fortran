@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -g -Wall -O0 -fno-strict-aliasing
 
-F77 = /home/webm1/bin/irun/bin/gfortran
+F90 = /home/webm1/bin/irun/bin/gfortran -g
 
 OCI_INCLUDE = -I$(ORACLE_HOME)/rdbms/public
 OCI_LIBRARY = -L$(ORACLE_HOME)/lib
@@ -15,8 +15,9 @@ ADHOC_LIBRARY = -L$(ADHOC_HOME)/lib
 INCLUDE = -Iinclude $(ADHOC_INCLUDE)
 LIBRARY = -Llib $(ADHOC_LIBRARY)
 
-TARGETS = nshm_api nshm_agrid
+TARGETS = nshm_api nshm_agrid nshm_agrid_f
 OBJECTS = build/nshm_api.o build/nshm_agrid.o
+FOBJS   = build/nshm_agrid_f.o
 
 all: init $(TARGETS)
 
@@ -30,7 +31,7 @@ test: all
 ftest: all
 	$(CC) $(CFLAGS) $(INCLUDE) $(LIBRARY) $(OCI_INCLUDE) \
 		-o build/test_agrid_fortran.o -c src/tests/test_agrid_fortran.c
-	$(F77) -g $(INCLUDE) $(LIBRARY) $(OCI_FLAGS) $(OBJECTS) \
+	$(F90) $(INCLUDE) $(LIBRARY) $(OCI_FLAGS) $(OBJECTS) $(FOBJS) \
 		build/test_agrid_fortran.o -o ftest src/tests/test_agrid.f -ladhoc
 
 nshm_api:
@@ -39,6 +40,9 @@ nshm_api:
 nshm_agrid: 
 	$(CC) $(CFLAGS) $(INCLUDE) $(OCI_INCLUDE) -o build/$@.o -c src/$@.c
 
+nshm_agrid_f:
+	$(F90) -o build/nshm_agrid_f.o -c src/nshm_agrid.f
+
 init: clean
 	mkdir build
 
@@ -46,3 +50,4 @@ clean:
 	-rm -rf build
 	-rm -f test
 	-rm -f ftest
+	-rm -f agrid.mod
