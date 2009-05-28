@@ -38,6 +38,10 @@ void print_agrid(NSHM_Agrid * _agrid) {
 
 	printf("\tID:          %d\n", _agrid->metadata->id);
 	printf("\tNumRows:     %d\n", _agrid->metadata->num_rows);
+	printf("\tLatitude [min, max, inc] = [%4.2f, %4.2f, udef]\n",
+		_agrid->metadata->min_lat, _agrid->metadata->max_lat);
+	printf("\tLongitude [min, max, inc] = [%5.2f, %5.2f, udef]\n",
+		_agrid->metadata->min_lng, _agrid->metadata->max_lng);
 	printf("\tDescription: %s\n", _agrid->metadata->description);
 
 	printf("########################################");

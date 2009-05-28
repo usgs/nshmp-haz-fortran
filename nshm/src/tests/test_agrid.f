@@ -1,40 +1,41 @@
-      PROGRAM EXAMPLE
+      PROGRAM main
+      USE Agrid
+      IMPLICIT NONE
 C
 C
-      TYPE metainfo
-        integer id
-        real min_lat
-        real max_lat
-        real lat_inc
-        real min_lng
-        real max_lng
-        real lng_inc
-        integer num_rows
-        integer desc_len
-        character, pointer, dimension (:) :: description
-C        character*50 description ! Don't use or depend on this!!!
-      END TYPE metainfo
 C
-      REAL values(1048576)
-      INTEGER i
-      TYPE(metainfo) :: meta
+C --  Agrid meta parameter values
+C
+      CHARACTER(MAX_DESC_LEN) :: desc
+      REAL :: values(MAX_GRID_ROWS)
+      REAL :: min_lat, max_lat, inc_lat
+      REAL :: min_lon, max_lon, inc_lon
+      INTEGER :: num_rows
+C
+C --  This is just an iterator for a do-loop later
+C
+      INTEGER :: i
+c      TYPE(NSHM_AgridMeta) :: meta
 C
 C
-      allocate(meta%description(0))
-      CALL fetchagrid(values, meta)
+ 100  FORMAT('Name: ',A50,/,'Rows: ',I6,/,'Latitude [min, max]: [',
+     + F5.2,', ',F5.2,']',/,'Longitude [min, max]: [',F7.2,', ',F7.2,
+     + ']')
+ 101  FORMAT('     ',F7.5)
 C
-      write(*, 100, advance="no")meta%id
-      do i = 1, meta%desc_len
-         write(*,103,advance="no")meta%description(i)
-      end do
-      write(*,102)meta%num_rows
- 100  format('ID: ',I2,' Name: ')
- 101  format(F6.5)
- 102  format(' Rows: ',I6)
- 103  format(A1)
 C
-      do 20 i = 1, 10 !meta%num_rows
-          write(*, 101) values(i)
- 20   continue
+      CALL get_agrid( desc, values, min_lat, max_lat,
+     +      inc_lat, min_lon, max_lon, inc_lon, num_rows )
 C
-      END
+c      meta%description = ""
+c      CALL fetchagrid(values, meta)
+
+c      WRITE(*, 100) TRIM(meta%desc), meta%num_rows
+      WRITE(*, 100) desc, num_rows, min_lat, max_lat, min_lon, max_lon
+C
+      DO i = 1, 10 !num_rows
+          WRITE(*,101) values(i)
+      END DO
+C
+      STOP
+      END PROGRAM main
