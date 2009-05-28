@@ -39,5 +39,6 @@ void fetchagrid_(float ** values, NSHM_AgridMeta * meta)
 	);
 
 	memmove(values, agrid->value, agrid->metadata->num_rows * sizeof(float));
-
+	free(agrid->metadata);
+	free(agrid);
 }

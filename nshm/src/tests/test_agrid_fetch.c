@@ -24,6 +24,8 @@ int main(int argc, char ** argv) {
 	print_agrid(agrid);
 
 	adhoc_close();
+	free(agrid->metadata);
+	free(agrid);
 	return EXIT_SUCCESS;
 }
 
