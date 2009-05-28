@@ -18,9 +18,9 @@ C
 c      TYPE(NSHM_AgridMeta) :: meta
 C
 C
- 100  FORMAT('Name: ',A50,/,'Rows: ',I6,/,'Latitude [min, max]: [',
-     + F5.2,', ',F5.2,']',/,'Longitude [min, max]: [',F7.2,', ',F7.2,
-     + ']')
+ 100  FORMAT('Name: ',A50,/,'Rows: ',I6,/,'Latitude [min, max, inc]: [',
+     + F5.2,', ',F5.2,', ',F5.2,']',/,'Longitude [min, max, inc]: [',
+     + F7.2,', ',F7.2,', ',F5.2,']')
  101  FORMAT('     ',F7.5)
 C
 C
@@ -31,7 +31,8 @@ c      meta%description = ""
 c      CALL fetchagrid(values, meta)
 
 c      WRITE(*, 100) TRIM(meta%desc), meta%num_rows
-      WRITE(*, 100) desc, num_rows, min_lat, max_lat, min_lon, max_lon
+      WRITE(*, 100) desc, num_rows, min_lat, max_lat, inc_lat,
+     +  min_lon, max_lon, inc_lon
 C
       DO i = 1, 10 !num_rows
           WRITE(*,101) values(i)

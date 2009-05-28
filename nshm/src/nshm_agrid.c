@@ -40,19 +40,21 @@ int nshm_get_random_agrid(NSHM_Agrid * _agrid) {
 
 int nshm_get_agrid_meta(int _id, NSHM_Agrid * _agrid) {
     
-    char * query = "SELECT AGRID_NAME, MIN_LAT, MAX_LAT, MIN_LON, MAX_LON \
-    	FROM AGRID_META WHERE AGRID_ID = :id ";
+    char * query = "SELECT AGRID_NAME, MIN_LAT, MAX_LAT, INC_LAT, \
+		MIN_LON, MAX_LON, INC_LON FROM AGRID_META WHERE AGRID_ID = :id ";
 
     OCIBind   *bind_hp;
     OCIDefine *defn_hp;
     OCIDefine *defn_min_lat_hp;
     OCIDefine *defn_max_lat_hp;
+	OCIDefine *defn_inc_lat_hp;
     OCIDefine *defn_min_lng_hp;
     OCIDefine *defn_max_lng_hp;
+	OCIDefine *defn_inc_lng_hp;
     OCIStmt   *stmt_hp;
     char      name[50];
-    float     min_lat, max_lat;
-    float     min_lng, max_lng;
+    float     min_lat, max_lat, inc_lat;
+    float     min_lng, max_lng, inc_lng;
     ub4       num_rows = 1;
     NSHM_AgridMeta info;
 
@@ -84,16 +86,28 @@ int nshm_get_agrid_meta(int _id, NSHM_Agrid * _agrid) {
         (sb4) sizeof(max_lat), SQLT_FLT, (void *) NULL, (ub2 *) NULL,
         (ub2 *) NULL, OCI_DEFAULT)
     );
+
+    adhoc_check_error(adhoc_err_hp, OCIDefineByPos(
+        stmt_hp, &defn_inc_lat_hp, adhoc_err_hp, 4, (void *) &inc_lat,
+        (sb4) sizeof(inc_lat), SQLT_FLT, (void *) NULL, (ub2 *) NULL,
+        (ub2 *) NULL, OCI_DEFAULT)
+    );
     
     adhoc_check_error(adhoc_err_hp, OCIDefineByPos(
-        stmt_hp, &defn_min_lng_hp, adhoc_err_hp, 4, (void *) &min_lng,
+        stmt_hp, &defn_min_lng_hp, adhoc_err_hp, 5, (void *) &min_lng,
         (sb4) sizeof(min_lng), SQLT_FLT, (void *) NULL, (ub2 *) NULL,
         (ub2 *) NULL, OCI_DEFAULT)
     );
     
     adhoc_check_error(adhoc_err_hp, OCIDefineByPos(
-        stmt_hp, &defn_max_lng_hp, adhoc_err_hp, 5, (void *) &max_lng,
+        stmt_hp, &defn_max_lng_hp, adhoc_err_hp, 6, (void *) &max_lng,
         (sb4) sizeof(max_lng), SQLT_FLT, (void *) NULL, (ub2 *) NULL,
+        (ub2 *) NULL, OCI_DEFAULT)
+    );
+    
+    adhoc_check_error(adhoc_err_hp, OCIDefineByPos(
+        stmt_hp, &defn_inc_lng_hp, adhoc_err_hp, 7, (void *) &inc_lng,
+        (sb4) sizeof(inc_lng), SQLT_FLT, (void *) NULL, (ub2 *) NULL,
         (ub2 *) NULL, OCI_DEFAULT)
     );
     
@@ -106,12 +120,12 @@ int nshm_get_agrid_meta(int _id, NSHM_Agrid * _agrid) {
     info.id = _id;
     info.min_lat = min_lat;
     info.max_lat = max_lat;
+	info.inc_lat = inc_lat;
     info.min_lng = min_lng;
     info.max_lng = max_lng;
-	memset(info.description, 0, NSHM_AGRID_META_DESC_LEN);
+	info.inc_lng = inc_lng;
     strncpy(info.description, name, strlen(name));
 
-	_agrid->metadata = calloc(1, sizeof(NSHM_AgridMeta));
     memmove(_agrid->metadata, &info, sizeof(NSHM_AgridMeta));
 
     adhoc_check_error(adhoc_err_hp, OCIStmtRelease(
