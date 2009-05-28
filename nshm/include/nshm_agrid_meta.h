@@ -1,6 +1,8 @@
 #ifndef AGRID_META_H
 #define AGRID_META_H
 
+#define NSHM_AGRID_META_DESC_LEN 50
+
 typedef struct _NSHM_AgridMeta {
 	int    id;           /* Unique DB id for corresponding  agrid data */
 	float  min_lat;      /* Minimum latitude value for corresponding agrid */
@@ -10,8 +12,7 @@ typedef struct _NSHM_AgridMeta {
 	float  max_lng;      /* Maximum longitude value for corresponding agrid */
 	float  inc_lng;      /* Degree spacing between longitude values */
 	int    num_rows;     /* The number of rows fetched from the database */
-	int    desc_len;     /* The length of the value of description */
-	char   *description; /* Textual description for reference */
+	char   description[NSHM_AGRID_META_DESC_LEN]; /* Textual description */
 } NSHM_AgridMeta;
 
 #endif
