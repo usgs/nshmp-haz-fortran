@@ -10,7 +10,7 @@
 
 boolean initialized = FALSE;
 
-void fetchagrid_(float * values[], NSHM_AgridMeta * meta, long int desc_len)
+void fetchagrid_(float ** values, NSHM_AgridMeta * meta)
 {
     NSHM_Agrid agrid;
 
@@ -21,16 +21,18 @@ void fetchagrid_(float * values[], NSHM_AgridMeta * meta, long int desc_len)
 
 	nshm_get_random_agrid(&agrid);
 
-	memmove(values, agrid.value, agrid.metadata->num_rows * sizeof(float));
-
 	meta->id = agrid.metadata->id;
 	meta->num_rows = agrid.metadata->num_rows;
-	meta->desc_len = strlen(agrid.metadata->description);
-	meta->description = calloc(strlen(agrid.metadata->description),
-		sizeof(*agrid.metadata->description)
-	);
-	//memset(meta->description, 0, sizeof(meta->description));
+	meta->min_lat = agrid.metadata->min_lat;
+	meta->max_lat = agrid.metadata->max_lat;
+	meta->min_lng = agrid.metadata->min_lng;
+	meta->max_lng = agrid.metadata->max_lng;
+
+	memset(meta->description, 0, NSHM_AGRID_META_DESC_LEN);
 	strncpy(meta->description, agrid.metadata->description,
 		strlen(agrid.metadata->description)
 	);
+
+	memmove(values, agrid.value, agrid.metadata->num_rows * sizeof(float));
+
 }
