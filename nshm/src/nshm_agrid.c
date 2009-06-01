@@ -124,7 +124,7 @@ int nshm_get_agrid_meta(int _id, NSHM_Agrid * _agrid) {
     info.min_lng = min_lng;
     info.max_lng = max_lng;
 	info.inc_lng = inc_lng;
-    strncpy(info.description, name, strlen(name));
+    strncpy(info.description, name, strlen(name)+1);
 
     memmove(_agrid->metadata, &info, sizeof(NSHM_AgridMeta));
 
