@@ -1,7 +1,9 @@
 CC = gcc
 CFLAGS = -g -Wall -O0 -fno-strict-aliasing
 
-F90 = /home/webm1/bin/irun/bin/gfortran -g
+# Make sure this is the correct compiler
+F90 = gfortran -g
+# On gldplone this is /home/webm1/bin/irun/bin/gfortran
 
 OCI_INCLUDE = -I$(ORACLE_HOME)/rdbms/public
 OCI_LIBRARY = -L$(ORACLE_HOME)/lib
