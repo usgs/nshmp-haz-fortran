@@ -33,5 +33,4 @@ C --  This is just an iterator for a do-loop later
           WRITE(*,101) values(i)
       END DO
 
-      STOP
       END PROGRAM main
