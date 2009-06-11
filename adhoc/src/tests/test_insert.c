@@ -11,9 +11,16 @@ const char * QUERY = "INSERT INTO TEST_INSERT (TEST_VARCHAR, TEST_INT, \
 void do_single_insert();
 
 int main(int argc, char ** argv) {
+	
+	if (argc < 4) {
+		fprintf(stderr, "Usage: %s <username> <password> <tnsalias>\n",
+			argv[0]
+		);
+		return EXIT_FAILURE;
+	}
 
 	// Initialize the connection
-	AdHoc_AuthInfo  info = {"teamt", "haz_owner", "ham23*ret", "teamt"};
+	AdHoc_AuthInfo  info = {argv[3], argv[1], argv[2], argv[3]};
 	adhoc_init(info);
 
 	// Do a sample insert
