@@ -20,12 +20,12 @@ lib: all
 	ar rvs lib/libadhoc.a $(OBJECTS)
 
 test: lib
-	$(CC) $(CFLAGS) $(INCLUDE) $(LIBRARY) $(OCI_FLAGS) -o test_simple_db_conn \
-		src/tests/test_simple_db_conn.c -ladhoc
 	$(CC) $(CFLAGS) $(INCLUDE) $(LIBRARY) $(OCI_FLAGS) -o test_connect \
 		src/tests/test_connect.c -ladhoc
 	$(CC) $(CFLAGS) $(INCLUDE) $(LIBRARY) $(OCI_FLAGS) -o test_statement \
 		src/tests/test_statement.c -ladhoc
+	$(CC) $(CFLAGS) $(INCLUDE) $(LIBRARY) $(OCI_FLAGS) -o test_insert \
+		src/tests/test_insert.c -ladhoc
 	
 
 adhoc_utils: init
@@ -45,7 +45,7 @@ init: clean
 
 clean:
 	-rm -rf build
-	-rm -f test_simple_db_conn
 	-rm -f test_connect
 	-rm -f test_statement
+	-rm -f test_insert
 	-rm -f lib/libadhoc.a
