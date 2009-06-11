@@ -9,7 +9,7 @@ int main(int argc, char ** argv) {
 	AdHoc_Connection conn;
 
 	if (argc != 4) {
-		printf("Usage: %s <username> <password> <sid>\n", argv[0]);
+		printf("Usage: %s <username> <password> <tnsalias>\n", argv[0]);
 		return EXIT_FAILURE;
 	}
 

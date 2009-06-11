@@ -4,7 +4,7 @@
 
 #include "oci.h"
 #include "adhoc_api.h"
-#include "adhoc_check_error.h"
+#include "adhoc_utils.h"
 
 OCIEnv    *adhoc_env_hp;
 OCIError  *adhoc_err_hp;

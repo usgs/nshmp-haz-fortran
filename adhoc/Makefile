@@ -9,10 +9,10 @@ OCI_FLAGS   = $(OCI_INCLUDE) $(OCI_LIBRARY) $(OCI_LINKS)
 INCLUDE = -Iinclude
 LIBRARY = -Llib
 
-TARGETS = adhoc_utils adhoc_check_error adhoc_connection adhoc_api
+TARGETS = adhoc_utils adhoc_connection adhoc_stmt adhoc_api
 
-OBJECTS = build/adhoc_utils.o build/adhoc_check_error.o \
-          build/adhoc_connection.o build/adhoc_api.o
+OBJECTS = build/adhoc_utils.o build/adhoc_connection.o \
+          build/adhoc_stmt.o build/adhoc_api.o
 
 all: init $(TARGETS)
 
@@ -22,20 +22,23 @@ lib: all
 test: lib
 	$(CC) $(CFLAGS) $(INCLUDE) $(LIBRARY) $(OCI_FLAGS) -o test_simple_db_conn \
 		src/tests/test_simple_db_conn.c -ladhoc
-	$(CC) $(CFLAGS) $(INCLUDE) $(LIBRARY) $(OCI_FLAGS) -o test_simple_connect \
-		src/tests/test_simple_connect.c -ladhoc
-
-adhoc_api: adhoc_check_error adhoc_utils
-	$(CC) $(CFLAGS) $(INCLUDE) $(OCI_INCLUDE) -o build/$@.o -c src/$@.c
-
-adhoc_connection: init adhoc_check_error
-	$(CC) $(CFLAGS) $(INCLUDE) $(OCI_INCLUDE) -o build/$@.o -c src/$@.c
-
-adhoc_check_error: init adhoc_utils
-	$(CC) $(CFLAGS) $(INCLUDE) $(OCI_INCLUDE) -o build/$@.o -c src/$@.c
+	$(CC) $(CFLAGS) $(INCLUDE) $(LIBRARY) $(OCI_FLAGS) -o test_connect \
+		src/tests/test_connect.c -ladhoc
+	$(CC) $(CFLAGS) $(INCLUDE) $(LIBRARY) $(OCI_FLAGS) -o test_statement \
+		src/tests/test_statement.c -ladhoc
+	
 
 adhoc_utils: init
-	$(CC) $(CFLAGS) $(INCLUDE) -o build/$@.o -c src/$@.c
+	$(CC) $(CFLAGS) $(INCLUDE) $(OCI_INCLUDE) -o build/$@.o -c src/$@.c
+
+adhoc_api: adhoc_utils
+	$(CC) $(CFLAGS) $(INCLUDE) $(OCI_INCLUDE) -o build/$@.o -c src/$@.c
+
+adhoc_connection: adhoc_api
+	$(CC) $(CFLAGS) $(INCLUDE) $(OCI_INCLUDE) -o build/$@.o -c src/$@.c
+
+adhoc_stmt: init adhoc_connection 
+	$(CC) $(CFLAGS) $(INCLUDE) $(OCI_INCLUDE) -o build/$@.o -c src/$@.c
 
 init: clean
 	mkdir build
@@ -43,5 +46,6 @@ init: clean
 clean:
 	-rm -rf build
 	-rm -f test_simple_db_conn
-	-rm -f test_simple_connect
+	-rm -f test_connect
+	-rm -f test_statement
 	-rm -f lib/libadhoc.a

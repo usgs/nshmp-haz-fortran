@@ -20,4 +20,6 @@ int adhoc_connect(char * _username, char * _password, char * _tnsalias,
 		AdHoc_Connection * _connection);
 
 int adhoc_close_connection(AdHoc_Connection * _connection);
+
+boolean adhoc_is_connected(AdHoc_Connection _connection);
 #endif

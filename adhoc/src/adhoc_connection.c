@@ -4,7 +4,7 @@
 #include "oci.h"
 #include "adhoc_connection.h"
 #include "adhoc_api.h"
-#include "adhoc_check_error.h"
+#include "adhoc_utils.h"
 
 int adhoc_connect(char * _username, char * _password, char * _tnsalias,
 		AdHoc_Connection * _connection) {
@@ -58,6 +58,7 @@ int adhoc_connect(char * _username, char * _password, char * _tnsalias,
 
 int adhoc_close_connection(AdHoc_Connection * _connection) {
 	int status;
+
 	status = adhoc_check_error(_connection->errhp, OCILogoff(
 		_connection->svchp, _connection->errhp)
 	);
@@ -65,4 +66,8 @@ int adhoc_close_connection(AdHoc_Connection * _connection) {
 	_connection->connected = FALSE;
 
 	return status;
+}
+
+boolean adhoc_is_connected(AdHoc_Connection _connection) {
+	return _connection.connected;
 }
