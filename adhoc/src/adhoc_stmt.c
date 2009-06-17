@@ -10,7 +10,7 @@
 #include "adhoc_utils.h"
 
 //------------------------------------------------------------------------------
-// Private Method Prototypes (i.e. Published in the header file)
+// Private Method Prototypes
 //------------------------------------------------------------------------------
 
 int adhoc_associate_field(AdHoc_Stmt * _stmt, AdHoc_Field * _field);
@@ -20,68 +20,6 @@ ub2 adhoc_oci_type(int _type);
 //------------------------------------------------------------------------------
 // Public Methods Implementations (i.e. Published in the header file)
 //------------------------------------------------------------------------------
-
-/*
-AdHoc_Stmt adhoc_stmt_create(char * _sql, AdHoc_Field _fields[], int _num) {
-	AdHoc_Stmt stmt;
-
-	// Copy the SQL string into place
-	stmt.sql = calloc(1, strlen(_sql) + 1);
-	strncpy(stmt.sql, _sql, strlen(_sql));
-
-
-	if (_num > 0) {
-		// Set the current field list capacity values
-		if (_num > ADHOC_NUM_FIELDS_DEFAULT) {
-			stmt.fields = calloc(_num, sizeof(AdHoc_Field));
-			stmt.max_fields = _num;
-		} else {
-			stmt.fields = calloc(ADHOC_NUM_FIELDS_DEFAULT, sizeof(AdHoc_Field));
-			stmt.max_fields = ADHOC_NUM_FIELDS_DEFAULT;
-		}
-
-		// Set the current number of used fields
-		memmove(stmt.fields, _fields, sizeof(AdHoc_Field) * _num);
-		stmt.num_fields = _num;
-
-	} else {
-		// Create the default allocation
-		stmt.fields = calloc(ADHOC_NUM_FIELDS_DEFAULT, sizeof(AdHoc_Field));
-		stmt.max_fields = ADHOC_NUM_FIELDS_DEFAULT;
-
-		// Set the current number of fields
-		stmt.num_fields = 0; 
-	}
-
-	return stmt;
-}
-
-int adhoc_stmt_prepare(AdHoc_Stmt * _stmt, AdHoc_Connection * _conn) {
-	int i;
-	int status;
-
-	// Create the OCI Statement
-	status = adhoc_check_error(_conn->errhp, OCIStmtPrepare2(
-		_conn->svchp, &_stmt->stmthp, _conn->errhp,
-		(const OraText *) _stmt->sql, strlen((char *) _stmt->sql),
-		(OraText *) NULL, 0, OCI_NTV_SYNTAX, OCI_DEFAULT)
-	);
-
-	// Bind/Define input/output fields.
-	for (i = 0; i < _stmt->num_fields; ++i) {
-		if (atoi(_stmt->fields[i].name) != 0) {
-			// Numeric field name indicates an output field. Define by position.
-			status = adhoc_stmt_define(_stmt, &_stmt->fields[i], _conn);
-		} else {
-			// ASCII field name indicates an input field. Bind by name.
-			status = adhoc_stmt_bind(_stmt, &_stmt->fields[i], _conn);
-		}
-		if (status != ADHOC_RETURN_SUCCESS) { break; }
-	}
-
-	return status;
-}
-*/
 
 AdHoc_Stmt adhoc_stmt_create(char * _sql, AdHoc_Field _fields[], int _num,
 		AdHoc_Connection * _conn) {
@@ -121,9 +59,8 @@ AdHoc_Stmt adhoc_stmt_create(char * _sql, AdHoc_Field _fields[], int _num,
 
 	if (status != ADHOC_RETURN_SUCCESS) {
 		get_timestamp(&stamp);
-		fprintf(stderr, "Error: %s [%d] -- Statement creation failed.",
+		fprintf(stderr, "Error: %s [%d] -- Statement creation failed.\n",
 			stamp, status);
-		adhoc_stmt_free(&stmt, _conn);
 	}
 
 	return stmt;
@@ -138,7 +75,7 @@ int adhoc_stmt_bind(AdHoc_Stmt * _stmt, AdHoc_Field * _field,
 
 	status = adhoc_check_error(_conn->errhp, OCIBindByName(
 		_stmt->stmthp, (OCIBind **) &_stmt->fields[idx].handle, _conn->errhp,
-		(text *) _stmt->fields[idx].name, (sb4) _stmt->fields[idx].val_lens,
+		(text *) _stmt->fields[idx].name, -1,
 		(void *) &_stmt->fields[idx].value,
 		sizeof(_stmt->fields[idx].value), _stmt->fields[idx].type,
 		(void *) NULL, (ub2 *) NULL, (ub2 *) NULL, 0, (ub4 *) NULL, OCI_DEFAULT)
@@ -167,8 +104,13 @@ int adhoc_stmt_define(AdHoc_Stmt * _stmt, AdHoc_Field * _field,
 int adhoc_stmt_execute(AdHoc_Stmt * _stmt, AdHoc_Connection * _conn) {
 	int status;
 
+	int num_iters = 1; // Insert, update, delete.
+	if ( strncasecmp(_stmt->sql, "SELECT", 6) == 0 ) {
+		num_iters = 0; // SELECT statement
+	}
+
 	status = adhoc_check_error(_conn->errhp, OCIStmtExecute(
-		_conn->svchp, _stmt->stmthp, _conn->errhp, 0, 0,
+		_conn->svchp, _stmt->stmthp, _conn->errhp, num_iters, 0,
 		(OCISnapshot *) NULL, (OCISnapshot *) NULL, OCI_DEFAULT)
 	);
 

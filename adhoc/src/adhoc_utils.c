@@ -34,7 +34,7 @@ void get_timestamp(char ** stamp) {
 	);
 }
 
-int adhoc_oci_check(void *_handle_pointer, ub4 _handle_type, sword _status) {
+int adhoc_oci_check(void *_handle_pointer, int _handle_type, int _status) {
 	text errbuf[512];
 	int errcode = ADHOC_RETURN_SUCCESS;
 	char * stamp; get_timestamp(&stamp);

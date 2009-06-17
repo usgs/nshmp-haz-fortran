@@ -12,8 +12,6 @@
 #define ADHOC_TYPE_FLT 1
 #define ADHOC_TYPE_STR 2
 
-/* The maximum number of input/output fields one can bind to a statement */
-#define ADHOC_NUM_FIELDS_MAX 1024 
 /* The initial capacity of in/out fields to bind to a statement */
 #define ADHOC_NUM_FIELDS_DEFAULT 8
 /* The amount to increate the field array laength for a statement when the

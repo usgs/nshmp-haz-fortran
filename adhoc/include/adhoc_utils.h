@@ -23,7 +23,7 @@ void adhoc_get_timestamp(char ** stamp);
  *
  * sword _status (IN) -- The OCI return status from an OCI method call.
  */
-int adhoc_oci_check(void *_handle_pointer, ub4 _handle_type, sword _status);
+int adhoc_oci_check(void *_handle_pointer, int _handle_type, int _status);
 
 void resize_array(void * _array, int _old_num_element, int _new_num_element, 
 		int _size_element);
