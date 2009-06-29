@@ -1,0 +1,21 @@
+./run_liquefy portx 44. -123.5 260. 12345 ./
+
+runs a site liquefaction study for D soil site in Oregon. 12345 is the PID.
+Site's Vs30 has been specified as 260 m/s. Will get nonlinear pga response for most sources.
+Output is (M,f) distribution for 6 return periods ranging from 72 yrs to 4975 yrs.
+Needs further source code from Steve Kramer, U of Washington. Needs web interface
+from Eric Martinez.
+
+2 output files are generated as of  Nov 12: PID.pga and PID.pga.dat.
+The first is or should be input to Kramer code. The second is suitable for quick plots of
+the 6 M,f distributions. Steve Harmsen Nov 13, 2008.
+Other examples:
+
+/www/eqint.cr.tmp/eq-men/deaggint2008
+./run_liquefy MemphisBC 35.2 -89.9 760. 12345 ./
+does a BC pga analysis for a site in Memphis TN
+
+./run_liquefy SeattleD 47.65 -122.3 259. 12345 ./
+does a NEHRP D-Class pga for a site in Seattle
+The results are saved in this subdir: SeattleD.pga  SeattleD.pga.dat
+These are not the final, just my contribution. Kramer will operate on SeattleD.pga.

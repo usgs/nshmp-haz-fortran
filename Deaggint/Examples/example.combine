@@ -1,0 +1,7 @@
+	combining data files
+The file addhaz.345 is an example of the list of files and their corresponding weights that are used
+when combining data from various runs. There are several reasons for combining: (1) check if current
+model SA (PGA) is OK or needs updating (iterating), and (2), how to combine for final deagg report. These files
+go away automatically after their raison d'etre has ceased. 
+After the weight field is a source-info flag. This is used by the deagg to tie the file to a broad source
+category. See sum_haz.2008.f for the details.

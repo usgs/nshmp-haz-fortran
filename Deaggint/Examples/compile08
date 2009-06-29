@@ -1,0 +1,93 @@
+echo 'For web codes always compile with -static. No looking for libs'
+gfortran -static deaggSUBD.2008.f iosubs.o -ffpe-trap= -o deaggSUBD.2008 -ffixed-line-length-none -O
+gfortran -static deaggSUBD.2009.f iosubs.o -ffpe-trap= -o deaggSUBD.2009 -ffixed-line-length-none -O
+gfortran -static deaggSUBD.PGA08.f iosubs.o -ffpe-trap= -o deaggSUBD.PGA08 -ffixed-line-length-none -O
+gfortran vancouver.f -static -o vancouver -ffixed-line-length-none
+gfortran checksum6.f -static -o checksum6 -ffixed-line-length-none
+gfortran checksum.f -static -o checksum -ffixed-line-length-none
+gfortran checksum09.f -static -o checksum09 -ffixed-line-length-none
+gfortran get_Subdrate.f -static -o get_Subdrate -ffixed-line-length-none iosubs.o
+gfortran get_Subdprob.f -static -o get_Subdprob -ffixed-line-length-none iosubs.o
+gfortran get_Subd.prvi.f -static -o get_Subd.prvi -ffixed-line-length-none iosubs.o
+gfortran get_akprob.f -static -o get_akprob -ffixed-line-length-none iosubs.o
+gfortran get_akrate.f -static -o get_akrate -ffixed-line-length-none 
+gfortran get_Subdrecur.f -static -o get_Subdrecur -ffixed-line-length-none 
+gfortran get_rate.f -static -o get_rate -ffixed-line-length-none 
+gfortran hawaii.f -static -o hawaii -ffixed-line-length-none  -O iosubs.o
+gfortran hawaii.rate.f -static -o hawaii.rate -ffixed-line-length-none 
+gfortran hawaii.rate05.f -static -o hawaii.rate05 -ffixed-line-length-none 
+gfortran prvi.rate.f -static -o prvi.rate -ffixed-line-length-none  -O
+gfortran prvi.rate05.f -static -o prvi.rate05 -ffixed-line-length-none  -O
+gfortran alaska.rate.f -static -o alaska.rate -ffixed-line-length-none 
+gfortran alaska.rate05.f -static -o alaska.rate05 -ffixed-line-length-none 
+gfortran getloc.zc.f -static -o getloc.zc -ffixed-line-length-none 
+gfortran get_prob.f -static -o get_prob -ffixed-line-length-none iosubs.o
+gfortran get_prob75.f -static -o get_prob75 -ffixed-line-length-none iosubs.o
+gfortran get_cascprob.f -static -o get_cascprob -ffixed-line-length-none 
+gfortran get_cascrate.f -static -o get_cascrate -ffixed-line-length-none 
+gfortran get_cascrecur.f -static -o get_cascrecur -ffixed-line-length-none 
+gfortran get_akrecur.f -static -o get_akrecur -ffixed-line-length-none 
+gfortran get_recur.f -static -o get_recur -ffixed-line-length-none 
+gfortran rescale.f -static -o rescale -ffixed-line-length-none
+gfortran decides.f -static -o decides -ffixed-line-length-none
+gfortran decide6.f -static -o decide6 -ffixed-line-length-none
+gfortran -static deaggSUBv3.robin.f iosubs.o -ffpe-trap= -o deaggSUBv3.robin -ffixed-line-length-none
+gfortran -static deaggSUBv3ga.f iosubs.o -ffpe-trap= -o deaggSUBv3ga -ffixed-line-length-none
+gfortran -static deaggSUBv3g.f iosubs.o -ffpe-trap= -o deaggSUBv3g -ffixed-line-length-none
+gfortran -static deaggGRID.2008.f iosubs.o -ffpe-trap= -o deaggGRID.2008 -ffixed-line-length-none -O
+gfortran -static deaggGRID.2009.f iosubs.o -ffpe-trap= -o deaggGRID.2009 -ffixed-line-length-none -O
+gfortran -static deaggGRID.PGA08.f iosubs.o -ffpe-trap= -o deaggGRID.PGA08 -ffixed-line-length-none -O
+gfortran -static deaggXv3.jeff.f iosubs.o -ffpe-trap= -o deaggXv3.jeff -ffixed-line-length-none
+gfortran -static deaggFLTH.2008.f iosubs.o -ffpe-trap= -o deaggFLTH.2008 -ffixed-line-length-none
+gfortran -static deaggFLTH.2009.f iosubs.o -ffpe-trap= -o deaggFLTH.2009 -ffixed-line-length-none
+gfortran -static deaggFLTH.PGA08.f iosubs.o -ffpe-trap= -o deaggFLTH.PGA08 -ffixed-line-length-none
+gfortran -static deaggFXv61.band2.f iosubs.o -ffpe-trap= -o deaggFXv61.band2 -ffixed-line-length-none
+gfortran -static deaggXv3.band.f iosubs.o -ffpe-trap= -o deaggXv3.band -ffixed-line-length-none -O
+gfortran -static deaggXv3.band2.f iosubs.o -ffpe-trap= -o deaggXv3.band2 -ffixed-line-length-none -O
+gfortran -static deaggSUBv3.band2.f iosubs.o -ffpe-trap= -o deaggSUBv3.band2 -ffixed-line-length-none
+gfortran -static deaggXv3.robin.f iosubs.o -ffpe-trap= -o deaggXv3.robin -ffixed-line-length-none
+gfortran -static deaggXv31.robin.f iosubs.o -ffpe-trap= -o deaggXv31.robin -ffixed-line-length-none
+gfortran -static deaggXv31.soil.f iosubs.o -ffpe-trap= -o deaggXv31.soil -ffixed-line-length-none
+gfortran -static deaggXv3g.soil.f iosubs.o -ffpe-trap= -o deaggXv3g.soil -ffixed-line-length-none
+gfortran -static deaggXv31a.robin.f iosubs.o -ffpe-trap= -o deaggXv31a.robin -ffixed-line-length-none
+gfortran -static deaggXv3ga.f iosubs.o -ffpe-trap= -o deaggXv3ga -ffixed-line-length-none -O
+gfortran -static deaggXv3g.f iosubs.o -ffpe-trap= -o deaggXv3g -ffixed-line-length-none -O
+gfortran -static deaggXv3a.robin.f iosubs.o -ffpe-trap= -o deaggXv3a.robin -ffixed-line-length-none
+gfortran -static deaggFXv31ga.f iosubs.o -ffpe-trap= -o deaggFXv31ga -ffixed-line-length-none
+gfortran -static deaggFXv31g.f iosubs.o -ffpe-trap= -o deaggFXv31g -ffixed-line-length-none
+gfortran -static deaggFXv31g.soil.f iosubs.o -ffpe-trap= -o deaggFXv31g.soil -ffixed-line-length-none
+gfortran -static band.2005j.f iosubs.o -ffpe-trap= -o band.2005j -ffixed-line-length-none
+gfortran -static band.aid2.f -ffpe-trap= -o band.aid2 -ffixed-line-length-none
+gfortran -static band.2005ak.f iosubs.o -ffpe-trap= -o band.2005ak -ffixed-line-length-none
+gfortran -static band.2005pr.f iosubs.o -ffpe-trap= -o band.2005pr -ffixed-line-length-none
+gfortran -static bin2xyzX.v2.f -ffixed-line-length-none -o bin2xyzX.v2 iosubs.o -ffpe-trap=
+gfortran sum_rate.f -O -o sum_rate -static -ffixed-line-length-none
+gfortran geog_haz.2005.f -O -o geog_haz.2005 -static -ffixed-line-length-none
+gfortran geog_hazV3.4.f -O -o geog_haz -static -ffixed-line-length-none
+gfortran rateFXv31.jeff.f -O -o rateFXv31.jeff -static -ffixed-line-length-none
+gfortran rateSUBv6.jeff.f -O -o rateSUBv6.jeff -static -ffixed-line-length-none
+gfortran rateFXv3.jeff.f -O -o rateFXv3.jeff -static -ffixed-line-length-none
+gfortran rateFXv61.jeff.f -O -o rateFXv61.jeff -static -ffixed-line-length-none
+gfortran rateFXv6.jeff.f -O -o rateFXv6.jeff -static -ffixed-line-length-none
+gfortran rateXv6a.jeff.f -O -o rateXv6a.jeff -static -ffixed-line-length-none iosubs.o
+gfortran iosubs.o rateXv31.jeff.f -O -o rateXv31.jeff -static -ffixed-line-length-none
+gfortran iosubs.o rateXv3.jeff.f -O -o rateXv3.jeff -static -ffixed-line-length-none
+gfortran iosubs.o rateXv3a.jeff.f -O -o rateXv3a.jeff -static -ffixed-line-length-none
+gfortran iosubs.o rateXv61.jeff.f -O -o rateXv61.jeff -static -ffixed-line-length-none
+gfortran iosubs.o rateXv6.jeff.f -O -o rateXv6.jeff -static -ffixed-line-length-none
+gfortran iosubs.o combine.2005pr.f -O -o combine.2005pr -static -ffixed-line-length-none -fcray-pointer
+gfortran iosubs.o usa.sap.f -O -o usa.sap -static -ffixed-line-length-none -fcray-pointer
+gfortran iosubs.o combine.2008.f -O -o combine.2008 -static -ffixed-line-length-none 
+gfortran iosubs.o combine.2009.f -O -o combine.2009 -static -ffixed-line-length-none 
+gfortran iosubs.o combine.2008b.f -O -o combine.2008b -static -ffixed-line-length-none 
+gfortran -c datetime.f -o datetime.o -static
+gfortran -c recipes.f -o recipes.o -static
+gfortran -c rvtdsubs.f -o rvtdsubs.o -static
+gfortran -c smsim_tdww2.f -o smsim_tdww2.o -static
+gfortran ./sum_haz_2008.f -static -O datetime.o  iosubs.o  recipes.o rvtdsubs.o  smsim_tdww2.o -o sum_haz_2008 -ffixed-line-length-none 
+gfortran ./sum_haz_2009.f -static -O datetime.o  iosubs.o  recipes.o rvtdsubs.o  smsim_tdww2.o -o sum_haz_2009 -ffixed-line-length-none 
+gfortran ./sum_haz_2008b.f -static -O  -o sum_haz_2008b -ffixed-line-length-none 
+gfortran ./sum_rate05.f -static -o sum_rate05  -ffixed-line-length-none -O
+gfortran ./sum_haz_2005a.f -static -O datetime.o  iosubs.o  recipes.o rvtdsubs.o  smsim_tdww2.o -o sum_haz_2005a
+gfortran ./sum_haz_2005at.f -static -C datetime.o  iosubs.o  recipes.o rvtdsubs.o  smsim_tdww2.o -o sum_haz_2005a
+gfortran ./sum_haz_2005az.f -static -ffixed-line-length-none datetime.o  iosubs.o  recipes.o rvtdsubs.o  smsim_tdww2.o -o sum_haz_2005a

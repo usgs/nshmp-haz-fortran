@@ -1,0 +1,10 @@
+# GMT common arguments shelf
+-Bf05a10:Closest Distance, Rcd (km):/0.5:MAGNITUDE (Mw):/f1a2.0:% Contribution to Hazard:4
+-Jx1/1
+-Jz0.400
+-R0/11/0/8.5
+-x2.80
+EOF
+.40/8.20/0/.10000E+02
+-x-1.6
+EOF

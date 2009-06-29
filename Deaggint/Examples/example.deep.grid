@@ -1,0 +1,5 @@
+deep seismicity long  period (5sc)
+PacNW:
+bin/deaggGRID.2008 DE/pacnwdeep.LP             CXpnd 48.00000 -123.20000 5.00  .06 760. ./ ./
+CAlifornia
+bin/deaggGRID.2008 DE/CAdeep.LP CXdp 41.1 -123.8 5. .03 760. ./ ./
