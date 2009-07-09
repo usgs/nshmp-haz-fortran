@@ -20,6 +20,9 @@ FOBJS   = build/nshm_grid_f.o
 
 all: init $(TARGETS)
 
+lib: all
+	ar rvs lib/libnshm.a $(OBJECTS) $(FOBJS)
+
 test: all
 	$(CC) $(CFLAGS) $(INCLUDE) $(LIBRARY) $(OCI_FLAGS) $(OBJECTS) \
 		-o test_api src/tests/test_api.c 
@@ -47,3 +50,4 @@ clean:
 	-rm -f test_grid
 	-rm -f include/grid.mod
 	-rm -f test_grid_f
+	-rm -f lib/libnshm.a
