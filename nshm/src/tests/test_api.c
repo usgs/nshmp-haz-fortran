@@ -26,10 +26,11 @@ int main(int argc, char ** argv) {
 	nshm_log_error(LOG_ERR_MSG);
 
 	printf("Generating an error for the error handler callback.\n");
-	printf("\n\n==============================================\n\n");
+	printf("\n==============================================\n\n");
 	nshm_initialize("foo", "bar", "baz");
-	printf("\n\n==============================================\n\n");
+	printf("\n==============================================\n\n");
 
 	free(stamp);
+	printf("Normal exit.\n");
 	return EXIT_SUCCESS;
 }
