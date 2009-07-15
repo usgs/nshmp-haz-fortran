@@ -19,10 +19,10 @@ void nshm_error_handler(OCI_Error *_error);
 // FORTRAN API Function Prototypes
 //------------------------------------------------------------------------------
 
-int nshm_initialize_(char *_user, char *_pass, char *_tns, int ulen, int plen,
+void nshm_initialize_(char *_user, char *_pass, char *_tns, int ulen, int plen,
 		int tlen);
 
-int nshm_cleanup_();
+void nshm_cleanup_();
 
 //------------------------------------------------------------------------------
 // Public API Function Implementations
@@ -103,7 +103,7 @@ void nshm_log_error(char *_message) {
 // FORTRAN API Function Implementations
 //------------------------------------------------------------------------------
 
-int nshm_initialize_(char *_user, char *_pass, char *_tns, int ulen, int plen,
+void nshm_initialize_(char *_user, char *_pass, char *_tns, int ulen, int plen,
 		int tlen) {
 	// FORTRAN does not use null-terminated strings. Copy the FORTRAN strings
 	// using their indicator variables into proper null-terminated C-strings.
@@ -116,10 +116,10 @@ int nshm_initialize_(char *_user, char *_pass, char *_tns, int ulen, int plen,
 	strncpy(tns, _tns, tlen);
 	
 	// Now we can call our C routine
-    return nshm_initialize(user, pass, tns);
+    nshm_initialize(user, pass, tns);
 }
 
-int nshm_cleanup_() { return nshm_cleanup(); }
+void nshm_cleanup_() { nshm_cleanup(); }
 
 //------------------------------------------------------------------------------
 // Private Function Implementations
