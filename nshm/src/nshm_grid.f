@@ -24,8 +24,8 @@ C --- value as well.
          REAL*8 :: lng_min
          REAL*8 :: lng_max
          REAL*8 :: lng_inc
-         REAL*8 :: grid_values(MAX_GRID_ROWS)
-         CHARACTER(LEN=MAX_GRID_NAME_LEN) :: grid_name
+         REAL*8, POINTER :: grid_values
+         CHARACTER, POINTER :: grid_name
          INTEGER :: grid_id
       END TYPE NSHM_Grid
 

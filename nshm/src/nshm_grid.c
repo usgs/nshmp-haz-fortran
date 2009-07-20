@@ -17,6 +17,8 @@
 
 int nshm_get_grid_meta(NSHM_Grid *_grid, char *_stub, int _id);
 int nshm_get_grid_data(NSHM_Grid *_grid, char *_stub, int _id);
+int nshm_put_grid_meta(NSHM_Grid *_grid, char *_stub, char *_seq);
+int nshm_put_grid_data(NSHM_Grid *_grid, char *_stub, char *_seq);
 
 //------------------------------------------------------------------------------
 // FORTRAN API Function Prototypes
@@ -26,9 +28,14 @@ void nshm_get_agrid_(NSHM_Grid *_grid);
 void nshm_get_bgrid_(NSHM_Grid *_grid);
 void nshm_get_mmax_(NSHM_Grid *_grid);
 
+void nshm_put_agrid_(NSHM_Grid *_grid, int nlen);
+void nshm_put_bgrid_(NSHM_Grid *_grid, int nlen);
+void nshm_put_mmax_(NSHM_Grid *_grid, int nlen);
+
 void nshm_print_grid_(NSHM_Grid *_grid);
 void nshm_num_rows_(NSHM_Grid *_grid, int *_num_rows);
 void nshm_free_grid_(NSHM_Grid *_grid);
+
 
 //------------------------------------------------------------------------------
 // Public API Function Implementations
@@ -99,8 +106,68 @@ int nshm_get_mmax(NSHM_Grid *_grid) {
 	return NSHM_RETURN_SUCCESS;
 }
 
+int nshm_put_agrid(NSHM_Grid *_grid) {
+	int status;
+
+	// Put the meta information in the database and fetch the generated id
+	status = nshm_put_grid_meta(_grid, DML_AGRID_META, AGRID_SEQ);
+	if ( status >= NSHM_RETURN_WARNING ) {
+		nshm_log_error("Failed to insert agrid metadata.");
+		return status;
+	}
+
+	// Put the data into the agrid table in the database
+	status = nshm_put_grid_data(_grid, DML_AGRID_DATA, AGRID_OR_SEQ);
+	if ( status >= NSHM_RETURN_WARNING ) {
+		nshm_log_error("Failed to insert agrid data.");
+		return status;
+	}
+
+	return NSHM_RETURN_SUCCESS;
+}
+
+int nshm_put_bgrid(NSHM_Grid *_grid) {
+	int status;
+
+	// Put the meta information in the database and fetch the generated id
+	status = nshm_put_grid_meta(_grid, DML_BGRID_META, BGRID_SEQ);
+	if ( status >= NSHM_RETURN_WARNING ) {
+		nshm_log_error("Failed to insert bgrid metadata.");
+		return status;
+	}
+
+	// Put the data into the bgrid table in the database
+	status = nshm_put_grid_data(_grid, DML_BGRID_DATA, BGRID_OR_SEQ);
+	if ( status >= NSHM_RETURN_WARNING ) {
+		nshm_log_error("Failed to insert bgrid data.");
+		return status;
+	}
+
+	return NSHM_RETURN_SUCCESS;
+}
+
+int nshm_put_mmax(NSHM_Grid *_grid) {
+	int status;
+
+	// Put the meta information in the database and fetch the generated id
+	status = nshm_put_grid_meta(_grid, DML_MMAX_META, MMAX_SEQ);
+	if ( status >= NSHM_RETURN_WARNING ) {
+		nshm_log_error("Failed to insert mmax metadata.");
+		return status;
+	}
+
+	// Put the data into the mmax table in the database
+	status = nshm_put_grid_data(_grid, DML_MMAX_DATA, MMAX_OR_SEQ);
+	if ( status >= NSHM_RETURN_WARNING ) {
+		nshm_log_error("Failed to insert mmax data.");
+		return status;
+	}
+
+	return NSHM_RETURN_SUCCESS;
+}
+
 void nshm_print_grid(NSHM_Grid *_grid) {
-	int i;
+	int i = 0;
 	int num_rows = nshm_num_rows(_grid);
 	double lat; double lng;
 
@@ -116,30 +183,30 @@ void nshm_print_grid(NSHM_Grid *_grid) {
 	lat = _grid->lat_max; lng = _grid->lng_min;
 
 	printf("Data:\n  Latitude   Longitude    Value\n");
-	if (num_rows > 10) {
+
+	if ( num_rows > 10 ) {
 		// Just print a snippet of data
-		for (i = 0; i < 5; i++) {
-			printf("   %4.2f      %5.2f    %7.5f\n", lat, lng,
-				_grid->grid_values[i]);
-			lng += _grid->lng_inc;
-			if ( lng > _grid->lng_max ) {
-				lng = _grid->lng_max;
-				lat -= _grid->lat_inc;
+		i = 0; // Counter of how many iterations we've printed
+		for (lat=_grid->lat_max; lat>=_grid->lat_min; lat-=_grid->lat_inc) {
+			for (lng=_grid->lng_min; lng<=_grid->lng_max; lng+=_grid->lng_inc) {
+				printf("   %4.2f      %5.2f    %7.5f\n", lat, lng,
+					_grid->grid_values[i++]);
+					if ( i > 4 ) { break; } // Print only 5 rows
 			}
+			if ( i > 4 ) { break; } // Print only 5 rows
 		}
+
 		printf("     .            .       .\n");
 		printf("     .            .       .\n");
 		printf("     .            .       .\n");
 		printf("  %d more rows of data.\n", num_rows - 5);
 		
 	} else {
-		// Just print all of the data
-		for (i = 0; i < num_rows; i++) {
-			printf("   %4.2f   %5.2f   %7.5f\n",lat,lng,_grid->grid_values[i]);
-			lng += _grid->lng_inc;
-			if ( lng > _grid->lng_max ) {
-				lng = _grid->lng_max;
-				lat -= _grid->lat_inc;
+		// Just print all of the data. There isn't that much of it.
+		for (lat=_grid->lat_max; lat>=_grid->lat_min; lat-=_grid->lat_inc) {
+			for (lng=_grid->lng_min; lng<=_grid->lng_max; lng+=_grid->lng_inc) {
+				printf("   %4.2f      %5.2f    %7.5f\n", lat, lng,
+					_grid->grid_values[i++]);
 			}
 		}
 	}
@@ -176,6 +243,54 @@ void nshm_get_bgrid_(NSHM_Grid *_grid) { nshm_get_bgrid(_grid); }
 
 void nshm_get_mmax_(NSHM_Grid *_grid) { nshm_get_mmax(_grid); }
 
+void nshm_put_agrid_(NSHM_Grid *_grid, int nlen) {
+	// Copy the name to a null-terminated string
+	char *name = calloc(nlen+1, sizeof(char));
+	strncpy(name, _grid->grid_name, nlen);
+
+	// Free the original name
+	free(_grid->grid_name);
+
+	// Copy the null-terminated name back to the grid_name
+	_grid->grid_name = calloc(nlen+1, sizeof(char));
+	strncpy(_grid->grid_name, name, nlen);
+
+	// Call the C-method to actually put the grid in the db
+	nshm_put_agrid(_grid);
+}
+
+void nshm_put_bgrid_(NSHM_Grid *_grid, int nlen) {
+	// Copy the name to a null-terminated string
+	char *name = calloc(nlen+1, sizeof(char));
+	strncpy(name, _grid->grid_name, nlen);
+
+	// Free the original name
+	free(_grid->grid_name);
+
+	// Copy the null-terminated name back to the grid_name
+	_grid->grid_name = calloc(nlen+1, sizeof(char));
+	strncpy(_grid->grid_name, name, nlen);
+
+	// Call the C-method to actually put the grid in the db
+	nshm_put_bgrid(_grid);
+}
+
+void nshm_put_mmax_(NSHM_Grid *_grid, int nlen) {
+	// Copy the name to a null-terminated string
+	char *name = calloc(nlen+1, sizeof(char));
+	strncpy(name, _grid->grid_name, nlen);
+
+	// Free the original name
+	free(_grid->grid_name);
+
+	// Copy the null-terminated name back to the grid_name
+	_grid->grid_name = calloc(nlen+1, sizeof(char));
+	strncpy(_grid->grid_name, name, nlen);
+
+	// Call the C-method to actually put the grid in the db
+	nshm_put_mmax(_grid);
+}
+
 void nshm_print_grid_(NSHM_Grid *_grid) { nshm_print_grid(_grid); }
 
 void nshm_num_rows_(NSHM_Grid *_grid, int *_num_rows) {
@@ -191,8 +306,12 @@ void nshm_free_grid_(NSHM_Grid *_grid) { nshm_free_grid(_grid); }
 int nshm_get_grid_meta(NSHM_Grid *_grid, char *_stub, int _id) {
 	char *query;
 	int name_len;
+	double precision;
 	OCI_Resultset *rs;
 	OCI_Statement *st = OCI_StatementCreate(CONNECTION);
+
+	// How many decimal places of precision to save.
+	precision = pow(10, NSHM_GRID_PRECISION);
 
 	// Build the query string
 	asprintf(&query, _stub, _id);
@@ -207,7 +326,7 @@ int nshm_get_grid_meta(NSHM_Grid *_grid, char *_stub, int _id) {
 	// Assign the grid information from our resultset
 	_grid->grid_id = OCI_GetInt(rs, GRID_ID_IDX);
 	name_len = strlen(OCI_GetString(rs, GRID_NAME_IDX));
-	_grid->grid_name = calloc(1, (sizeof(char) * name_len) + 1);
+	_grid->grid_name = calloc(name_len+1, sizeof(char));
 	strncpy(_grid->grid_name, OCI_GetString(rs, GRID_NAME_IDX), name_len);
 
 	_grid->lat_min = OCI_GetDouble(rs, GRID_MIN_LAT_IDX);
@@ -217,7 +336,7 @@ int nshm_get_grid_meta(NSHM_Grid *_grid, char *_stub, int _id) {
 	_grid->lng_min = OCI_GetDouble(rs, GRID_MIN_LNG_IDX);
 	_grid->lng_max = OCI_GetDouble(rs, GRID_MAX_LNG_IDX);
 	_grid->lng_inc = OCI_GetDouble(rs, GRID_INC_LNG_IDX);
-	
+
 	free(query);
 	OCI_StatementFree(st);
 	return NSHM_RETURN_SUCCESS;
@@ -246,5 +365,123 @@ int nshm_get_grid_data(NSHM_Grid *_grid, char *_stub, int _id) {
 
 	free(query);
 	OCI_StatementFree(st);
+	return NSHM_RETURN_SUCCESS;
+}
+
+int nshm_put_grid_meta(NSHM_Grid *_grid, char *_stub, char *_seq) {
+	char *query;
+	OCI_Resultset *rs;
+	OCI_Statement *st = OCI_StatementCreate(CONNECTION);
+
+	// Prepare the statement and insert the row into the meta table.
+	asprintf(&query, _stub, _seq);
+	OCI_Prepare(st, query);
+	OCI_BindString(st, ":name", _grid->grid_name, strlen(_grid->grid_name)+1);
+	OCI_BindDouble(st, ":lat_min", &_grid->lat_min);
+	OCI_BindDouble(st, ":lat_max", &_grid->lat_max);
+	OCI_BindDouble(st, ":lat_inc", &_grid->lat_inc);
+	OCI_BindDouble(st, ":lng_min", &_grid->lng_min);
+	OCI_BindDouble(st, ":lng_max", &_grid->lng_max);
+	OCI_BindDouble(st, ":lng_inc", &_grid->lng_inc);
+	OCI_Execute(st);
+	OCI_StatementFree(st);
+	free(query);
+
+	// Now check the sequence number to fetch the curr val to link the meta and
+	// data rows together.
+	st = OCI_StatementCreate(CONNECTION);
+	asprintf(&query, "SELECT %s.currval FROM DUAL", _seq);
+	OCI_ExecuteStmt(st, query);
+	rs = OCI_GetResultset(st);
+	free(query);
+
+	// Fetch the value
+	if ( OCI_FetchNext(rs) ) {
+		// The grid->grid_id is now set to the inserted row id
+		_grid->grid_id = OCI_GetInt(rs, 1);
+	} else {
+		nshm_log_error("Failed to fetch sequence iterator.");
+
+		OCI_StatementFree(st);
+		return NSHM_RETURN_ERROR;
+	}
+
+	OCI_Commit(CONNECTION); // Commit changes.
+	OCI_StatementFree(st);  // Frees the statement and result set at once.
+
+	return NSHM_RETURN_SUCCESS;
+}
+
+int nshm_put_grid_data(NSHM_Grid *_grid, char *_stub, char *_seq) {
+	int idx = 0;
+	int num_rows = nshm_num_rows(_grid);
+	int i, j, latmin, latmax, latinc, lngmin, lngmax, lnginc; // Iterators
+	double *latvals, *lngvals;
+	double precision;
+	char *error, *query;
+
+	OCI_Statement *st;
+
+	precision = pow(10.0, NSHM_GRID_PRECISION);
+
+	// 07/16/09 -- EMM: Using ints for loop iteration  increments and bounds are
+	// faster than doubles and also do not have the precision errors.
+	latmin = (int) rint(precision * _grid->lat_min);
+	latmax = (int) rint(precision * _grid->lat_max);
+	latinc = (int) rint(precision * _grid->lat_inc);
+	lngmin = (int) rint(precision * _grid->lng_min);
+	lngmax = (int) rint(precision * _grid->lng_max);
+	lnginc = (int) rint(precision * _grid->lng_inc);
+
+	latvals = calloc(num_rows, sizeof(double));
+	lngvals = calloc(num_rows, sizeof(double));
+
+	// Build an array of latitude and longitude values
+	for ( i = latmax; i >= latmin; i -= latinc ) {
+		for ( j = lngmin; j <= lngmax; j += lnginc ) {
+			latvals[idx] = ((double) i) / ((double) precision);
+			lngvals[idx] = ((double) j) / ((double) precision);
+			idx++;
+		}
+	}
+
+	if ( idx != num_rows ) {
+		asprintf(
+			&error,
+			"idx and num_rows differed!\n\tidx: %d\n\tnum_rows: %d\n\n",
+			idx, num_rows
+		);
+		nshm_log_error(error);
+		free(error); free(latvals); free(lngvals);
+		return NSHM_RETURN_ERROR;
+	}
+
+	// Prepare the statement and bind our arrays
+	asprintf(&query, _stub, _grid->grid_id, _seq);
+	st = OCI_StatementCreate(CONNECTION);
+	OCI_Prepare(st, query);
+	OCI_BindArraySetSize(st, num_rows);
+	OCI_BindArrayOfDoubles(st, ":lats", latvals, num_rows);
+	OCI_BindArrayOfDoubles(st, ":lngs", lngvals, num_rows);
+	OCI_BindArrayOfDoubles(st, ":vals", _grid->grid_values, num_rows);
+
+	// Execute the statement and check if any errors occurred.
+	if ( !OCI_Execute(st) ) {
+		asprintf(
+			&error,
+			"There were %d errors executing query.\n",
+			OCI_GetBatchErrorCount(st)
+		);
+		nshm_log_error(error);
+		free(error); free(query); free(latvals); free(lngvals);
+		return NSHM_RETURN_ERROR;
+	}
+
+	OCI_Commit(CONNECTION);
+
+	// Clean up our memory and stuff.
+	free(query); free(latvals); free(lngvals);
+	OCI_StatementFree(st);
+
 	return NSHM_RETURN_SUCCESS;
 }

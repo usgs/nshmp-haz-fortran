@@ -5,7 +5,7 @@ CFLAGS = -g -Wall -O0 -fno-strict-aliasing
 F90 = gfortran -g
 # On gldplone this is /home/webm1/bin/irun/bin/gfortran
 
-OCILIB_HOME = "../OCILIB"
+OCILIB_HOME = "../ocilib"
 OCI_INCLUDE = -I$(OCILIB_HOME)/include
 OCI_LIBRARY = -L$(OCILIB_HOME)/lib
 OCI_LINKS   = -locilib

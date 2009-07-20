@@ -95,7 +95,9 @@ char * nshm_timestamp() {
 }
 
 void nshm_log_error(char *_message) {
-	fprintf(stderr, _message);
+	// Maybe we could switch to an actual logger at some point. For development
+	// purposes I think stderr will do just fine.
+	fprintf(stderr, "%s\n", _message);
 }
 
 
