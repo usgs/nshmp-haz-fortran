@@ -15,6 +15,7 @@
 // Private Function Prototypes
 //------------------------------------------------------------------------------
 
+int nshm_get_grid_id(char *_stub, char *_name, int *_id);
 int nshm_get_grid_meta(NSHM_Grid *_grid, char *_stub, int _id);
 int nshm_get_grid_data(NSHM_Grid *_grid, char *_stub, int _id);
 int nshm_put_grid_meta(NSHM_Grid *_grid, char *_stub, char *_seq);
@@ -24,26 +25,36 @@ int nshm_put_grid_data(NSHM_Grid *_grid, char *_stub, char *_seq);
 // FORTRAN API Function Prototypes
 //------------------------------------------------------------------------------
 
-void nshm_get_agrid_(NSHM_Grid *_grid);
-void nshm_get_bgrid_(NSHM_Grid *_grid);
-void nshm_get_mmax_(NSHM_Grid *_grid);
+/* Meta getter functions */
+void nshm_get_agrid_meta_(NSHM_Grid *_grid, char * _name, int _nlen);
+void nshm_get_bgrid_meta_(NSHM_Grid *_grid, char * _name, int _nlen);
+void nshm_get_mmax_meta_(NSHM_Grid *_grid, char * _name, int _nlen);
 
+/* Data getter functions */
+void nshm_get_agrid_data_(NSHM_Grid *_grid, char * _name, int _nlen);
+void nshm_get_bgrid_data_(NSHM_Grid *_grid, char * _name, int _nlen);
+void nshm_get_mmax_data_(NSHM_Grid *_grid, char * _name, int _nlen);
+
+/* Meta and Data setter functions */
 void nshm_put_agrid_(NSHM_Grid *_grid, int nlen);
 void nshm_put_bgrid_(NSHM_Grid *_grid, int nlen);
 void nshm_put_mmax_(NSHM_Grid *_grid, int nlen);
 
+/* Utility functions */
 void nshm_print_grid_(NSHM_Grid *_grid);
 void nshm_num_rows_(NSHM_Grid *_grid, int *_num_rows);
 void nshm_free_grid_(NSHM_Grid *_grid);
 
-
 //------------------------------------------------------------------------------
 // Public API Function Implementations
 //------------------------------------------------------------------------------
-int nshm_get_agrid(NSHM_Grid *_grid) {
+int nshm_get_agrid(NSHM_Grid *_grid, char *_name) {
 	
 	int status;
-	int id = 1; // Randomize this at some point
+	int id;
+
+	// Fetch the grid id
+	nshm_get_grid_id(QUERY_AGRID_ID, _name, &id);
 
 	// Fetch the metadata for this agrid
 	status = nshm_get_grid_meta(_grid, QUERY_AGRID_META, id);
@@ -51,6 +62,9 @@ int nshm_get_agrid(NSHM_Grid *_grid) {
 		nshm_log_error("Failed to get Agrid metadata.");
 		return status;
 	}
+
+	// Allocate space for the grid values
+	_grid->grid_values = calloc(nshm_num_rows(_grid), sizeof(double));
 
 	// Fetch the data for this agrid
 	status = nshm_get_grid_data(_grid, QUERY_AGRID_DATA, id);
@@ -62,10 +76,13 @@ int nshm_get_agrid(NSHM_Grid *_grid) {
 	return NSHM_RETURN_SUCCESS;
 }
 
-int nshm_get_bgrid(NSHM_Grid *_grid) {
+int nshm_get_bgrid(NSHM_Grid *_grid, char *_name) {
 	
 	int status;
-	int id = 1; // There is only 1 bgrid. We always use this one.
+	int id;
+
+	// Fetch the grid id
+	nshm_get_grid_id(QUERY_BGRID_ID, _name, &id);
 
 	// Fetch the metadata for this agrid
 	status = nshm_get_grid_meta(_grid, QUERY_BGRID_META, id);
@@ -73,6 +90,9 @@ int nshm_get_bgrid(NSHM_Grid *_grid) {
 		nshm_log_error("Failed to get Bgrid metadata.");
 		return status;
 	}
+
+	// Allocate space for the grid values
+	_grid->grid_values = calloc(nshm_num_rows(_grid), sizeof(double));
 
 	// Fetch the data for this agrid
 	status = nshm_get_grid_data(_grid, QUERY_BGRID_DATA, id);
@@ -84,10 +104,13 @@ int nshm_get_bgrid(NSHM_Grid *_grid) {
 	return NSHM_RETURN_SUCCESS;
 }
 
-int nshm_get_mmax(NSHM_Grid *_grid) {
+int nshm_get_mmax(NSHM_Grid *_grid, char *_name) {
 	
 	int status;
-	int id = 1; // Randomize this at some point
+	int id;
+
+	// Fetch the grid id
+	nshm_get_grid_id(QUERY_MMAX_ID, _name, &id);
 
 	// Fetch the metadata for this agrid
 	status = nshm_get_grid_meta(_grid, QUERY_MMAX_META, id);
@@ -95,6 +118,9 @@ int nshm_get_mmax(NSHM_Grid *_grid) {
 		nshm_log_error("Failed to get Mmax metadata.");
 		return status;
 	}
+
+	// Allocate space for the grid values
+	_grid->grid_values = calloc(nshm_num_rows(_grid), sizeof(double));
 
 	// Fetch the data for this agrid
 	status = nshm_get_grid_data(_grid, QUERY_MMAX_DATA, id);
@@ -237,11 +263,55 @@ void nshm_free_grid(NSHM_Grid *_grid) {
 // FORTRAN API Function Implementations
 //------------------------------------------------------------------------------
 
-void nshm_get_agrid_(NSHM_Grid *_grid) { nshm_get_agrid(_grid); }
+void nshm_get_agrid_meta_(NSHM_Grid *_grid, char * _name, int _nlen) {
+	int id;
+	char *name = calloc(_nlen+1, sizeof(char));
+	strncpy(name, _name, _nlen);
+	nshm_get_grid_id(QUERY_AGRID_ID, name, &id);
+	nshm_get_grid_meta(_grid, QUERY_AGRID_META, id);
+}   
+    
+void nshm_get_bgrid_meta_(NSHM_Grid *_grid, char * _name, int _nlen) {
+	int id;
+	char *name = calloc(_nlen+1, sizeof(char));
+	strncpy(name, _name, _nlen);
+	nshm_get_grid_id(QUERY_BGRID_ID, name, &id);
+	nshm_get_grid_meta(_grid, QUERY_BGRID_META, id);
+}   
+    
+void nshm_get_mmax_meta_(NSHM_Grid *_grid, char * _name, int _nlen) {
+	int id;
+	char *name = calloc(_nlen+1, sizeof(char));
+	strncpy(name, _name, _nlen);
+	nshm_get_grid_id(QUERY_MMAX_ID, name, &id);
+	nshm_get_grid_meta(_grid, QUERY_MMAX_META, id);
+}   
+    
 
-void nshm_get_bgrid_(NSHM_Grid *_grid) { nshm_get_bgrid(_grid); }
+void nshm_get_agrid_data_(NSHM_Grid *_grid, char * _name, int _nlen) {
+	int id;
+	char *name = calloc(_nlen+1, sizeof(char));
+	strncpy(name, _name, _nlen);
+	nshm_get_grid_id(QUERY_AGRID_ID, name, &id);
+	nshm_get_grid_data(_grid, QUERY_AGRID_DATA, id);
+}   
 
-void nshm_get_mmax_(NSHM_Grid *_grid) { nshm_get_mmax(_grid); }
+void nshm_get_bgrid_data_(NSHM_Grid *_grid, char * _name, int _nlen) {
+	int id;
+	char *name = calloc(_nlen+1, sizeof(char));
+	strncpy(name, _name, _nlen);
+	nshm_get_grid_id(QUERY_BGRID_ID, name, &id);
+	nshm_get_grid_data(_grid, QUERY_BGRID_DATA, id);
+}   
+
+void nshm_get_mmax_data_(NSHM_Grid *_grid, char *_name, int _nlen) {
+	int id;
+	char *name = calloc(_nlen+1, sizeof(char));
+	strncpy(name, _name, _nlen);
+	nshm_get_grid_id(QUERY_MMAX_ID, name, &id);
+	nshm_get_grid_data(_grid, QUERY_MMAX_DATA, id);
+}   
+
 
 void nshm_put_agrid_(NSHM_Grid *_grid, int nlen) {
 	// Copy the name to a null-terminated string
@@ -303,6 +373,28 @@ void nshm_free_grid_(NSHM_Grid *_grid) { nshm_free_grid(_grid); }
 // Private Function Implementations
 //------------------------------------------------------------------------------
 
+int nshm_get_grid_id(char *_stub, char *_name, int *_id) {
+	char *query;
+	OCI_Resultset *rs;
+	OCI_Statement *st = OCI_StatementCreate(CONNECTION);
+
+	// Build the query
+	asprintf(&query, _stub, _name);
+
+	// Execute the query
+	OCI_ExecuteStmt(st, query);
+	rs = OCI_GetResultset(st);
+
+	// Fetch the results
+	if (!OCI_FetchNext(rs)) { return NSHM_RETURN_ERROR; }
+	*_id = OCI_GetInt(rs, GRID_ID_IDX);
+
+	// Clean up our resources and return
+	free(query);
+	OCI_StatementFree(st);
+	return NSHM_RETURN_SUCCESS;
+}
+
 int nshm_get_grid_meta(NSHM_Grid *_grid, char *_stub, int _id) {
 	char *query;
 	int name_len;
@@ -349,7 +441,9 @@ int nshm_get_grid_data(NSHM_Grid *_grid, char *_stub, int _id) {
 	OCI_Statement *st = OCI_StatementCreate(CONNECTION);
 
 	// Computed the expected number of rows based on the metadata
-	_grid->grid_values = calloc(num_rows, sizeof(double));
+	// 08/25/09 -- EMM: Do not do this anymore. Memory is allocated in Fortran
+	//                  or as part of the public C-interface specification.
+	//_grid->grid_values = calloc(num_rows, sizeof(double));
 
 	// Finish out the query with the give _id
 	asprintf(&query, _stub, _id);

@@ -24,9 +24,9 @@ C --- value as well.
          REAL*8 :: lng_min
          REAL*8 :: lng_max
          REAL*8 :: lng_inc
-         REAL*8, POINTER :: grid_values
-         CHARACTER, POINTER :: grid_name
          INTEGER :: grid_id
+         CHARACTER, POINTER :: grid_name
+         REAL*8, POINTER, DIMENSION(:) :: grid_values
       END TYPE NSHM_Grid
 
       CONTAINS
@@ -34,5 +34,45 @@ C --- value as well.
 C ---------------------------------------------------------------------
 C --- FORTRAN subroutines go here.
 C ---------------------------------------------------------------------
+
+      SUBROUTINE nshm_get_agrid(grid, gname)
+         TYPE(NSHM_Grid), INTENT(INOUT) :: grid
+         CHARACTER(LEN=*), INTENT(IN) :: gname
+
+         INTEGER*4 :: num_points
+
+         CALL nshm_get_agrid_meta(grid, gname)
+         CALL nshm_num_rows(grid, num_points)
+         ALLOCATE(grid%grid_values(num_points))
+         CALL nshm_get_agrid_data(grid, gname)
+
+      END SUBROUTINE nshm_get_agrid
+
+      SUBROUTINE nshm_get_bgrid(grid, gname)
+         TYPE(NSHM_Grid), INTENT(INOUT) :: grid
+         CHARACTER*50, INTENT(IN) :: gname
+
+         INTEGER*4 :: num_points
+
+         CALL nshm_get_bgrid_meta(grid, gname)
+         CALL nshm_num_rows(grid, num_points)
+         ALLOCATE(grid%grid_values(num_points))
+         CALL nshm_get_bgrid_data(grid, gname)
+
+      END SUBROUTINE nshm_get_bgrid
+
+
+      SUBROUTINE nshm_get_mmax(grid, gname)
+         TYPE(NSHM_Grid), INTENT(INOUT) :: grid
+         CHARACTER*50, INTENT(IN) :: gname
+
+         INTEGER*4 :: num_points
+
+         CALL nshm_get_mmax_meta(grid, gname)
+         CALL nshm_num_rows(grid, num_points)
+         ALLOCATE(grid%grid_values(num_points))
+         CALL nshm_get_mmax_data(grid, gname)
+
+      END SUBROUTINE nshm_get_mmax
 
       END MODULE GRID

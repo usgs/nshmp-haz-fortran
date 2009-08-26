@@ -24,21 +24,21 @@ int main(int argc, char ** argv) {
 	printf("#############################################################\n");
 	printf("## Fetching an Agrid                                       ##\n");
 	printf("#############################################################\n");
-	status = nshm_get_agrid(&grid);
+	status = nshm_get_agrid(&grid, "adapt_cy");
 	nshm_print_grid(&grid);
 	nshm_free_grid(&grid);
 
 	printf("#############################################################\n");
 	printf("## Fetching a Bgrid                                        ##\n");
 	printf("#############################################################\n");
-	status = nshm_get_bgrid(&grid);
+	status = nshm_get_bgrid(&grid, "BVAL_.1");
 	nshm_print_grid(&grid);
 	nshm_free_grid(&grid);
 
 	printf("#############################################################\n");
 	printf("## Fetching a Mmax                                         ##\n");
 	printf("#############################################################\n");
-	status = nshm_get_mmax(&grid);
+	status = nshm_get_mmax(&grid, "gm_j_6p6_7p1");
 	nshm_print_grid(&grid);
 	nshm_free_grid(&grid);
 

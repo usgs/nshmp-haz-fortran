@@ -15,6 +15,10 @@
 #define GRID_INC_LNG_IDX 8
 #define GRID_VAL_IDX 1
 
+// Query to select the Agrid ID based on a given grid name
+#define QUERY_AGRID_ID "SELECT AGRID_ID FROM AGRID_META WHERE AGRID_NAME = \
+	TRIM('%s')"
+
 // Query to select Agrid Metadata for a single agrid with known AGRID_ID value
 #define QUERY_AGRID_META "SELECT AGRID_ID, AGRID_NAME, MIN_LAT, MAX_LAT, \
 	INC_LAT, MIN_LON, MAX_LON, INC_LON FROM AGRID_META WHERE AGRID_ID = %d"
@@ -23,6 +27,10 @@
 #define QUERY_AGRID_DATA "SELECT AGRID_VAL FROM AGRID WHERE AGRID_ID = %d \
 	ORDER BY LAT DESC, LON ASC"
 
+// Query to select the Bgrid ID based on a given grid name
+#define QUERY_BGRID_ID "SELECT BVAL_ID FROM BVALUE_META WHERE BVAL_NAME = \
+	TRIM('%s')"
+
 // Query to select Bgrid Metadata for a single agrid with known BVAL_ID value
 #define QUERY_BGRID_META "SELECT BVAL_ID, BVAL_NAME, MIN_LAT, MAX_LAT, \
 	INC_LAT, MIN_LON, MAX_LON, INC_LON FROM BVALUE_META WHERE BVAL_ID = %d"
@@ -30,6 +38,10 @@
 // Query to select Bgrid Data for a single agrid with known BGRID_ID value
 #define QUERY_BGRID_DATA "SELECT B_VAL FROM BVALUE WHERE BVAL_ID = %d \
 	ORDER BY LAT DESC, LON ASC"
+
+// Query to select the MMax ID based on a given grid name
+#define QUERY_MMAX_ID "SELECT MMAX_ID FROM MMAX_META WHERE MMAX_NAME = \
+	TRIM('%s')"
 
 // Query to select MMax Metadata for a single agrid with known MMAX_ID value
 #define QUERY_MMAX_META "SELECT MMAX_ID, MMAX_NAME, MIN_LAT, MAX_LAT, \
@@ -85,14 +97,14 @@ typedef struct _NSHM_Grid {
 	double lng_min;
 	double lng_max;
 	double lng_inc;
-	double *grid_values;
-	char   *grid_name;
 	int    grid_id;
+	char   *grid_name;
+	double *grid_values;
 } NSHM_Grid;
 
-int nshm_get_agrid(NSHM_Grid *_grid);
-int nshm_get_bgrid(NSHM_Grid *_grid);
-int nshm_get_mmax(NSHM_Grid *_grid);
+int nshm_get_agrid(NSHM_Grid *_grid, char *_name);
+int nshm_get_bgrid(NSHM_Grid *_grid, char *_name);
+int nshm_get_mmax(NSHM_Grid *_grid, char *_name);
 
 int nshm_put_agrid(NSHM_Grid *_grid);
 int nshm_put_bgrid(NSHM_Grid *_grid);
