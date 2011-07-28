@@ -1,6 +1,7 @@
 CC=gcc -Wall -O3 -static
 FF=gfortran -Wall -O3 -static -ffixed-line-length-none
 
+
 EXECUTABLES=\
 	bin2xyzX.v2 \
 	checksum09 \
