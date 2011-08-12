@@ -1,8 +1,0 @@
-./run_2009 123 ./ test2 38. -91. 2 50 3 760. 1 0
-computes the diff GMPE contributions for a test site in Missouri
-
-./run_2009 12345 ./ test 36.1 -115.5 50 50 6 760. 1 0
-computes the diff GMPE contributions for a test site in southern Nevada
-
-The first of these has fairly voluminous output (123.txt) because 8 GMPEs
-plus the mean deag are output into this file.
