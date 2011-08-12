@@ -1,0 +1,63 @@
+1
+29
+../out/NMSZuncl.500yr.5branch.5hz
+0.45		weight =.45 for 500yr and .05 for 1000 yr
+../out/NMSZuncl.1000yr.5branch.5hz
+0.05
+../out/newmad-500-clu.5hz.g1
+0.01125          ! .5 .05 .9 .5
+../out/newmad-500-clu.5hz.g2
+0.0225
+../out/newmad-500-clu.5hz.g3
+0.1575
+../out/newmad-500-clu.5hz.g4
+0.0225
+../out/newmad-500-clu.5hz.g5
+0.01125
+../out/newmad-750-clu.5hz.g1
+0.01125         ! .5 .05 .9 .5
+../out/newmad-750-clu.5hz.g2
+0.0225
+../out/newmad-750-clu.5hz.g3
+0.1575
+../out/newmad-750-clu.5hz.g4
+0.0225
+../out/newmad-750-clu.5hz.g5
+0.01125
+../out/newmad-1000-clu.5hz.g1
+0.0025          !.5 .1 .05
+../out/newmad-1000-clu.5hz.g2
+0.005
+../out/newmad-1000-clu.5hz.g3
+0.035		!.5 .1 .7
+../out/newmad-1000-clu.5hz.g4
+0.005
+../out/newmad-1000-clu.5hz.g5
+0.0025
+../out/newmad-1500-clu.5hz.g1
+0.01125 		!1500 year on central &south arms, adds to 750yr ...
+../out/newmad-1500-clu.5hz.g2
+0.0225
+../out/newmad-1500-clu.5hz.g3
+0.1575
+../out/newmad-1500-clu.5hz.g4
+0.0225
+../out/newmad-1500-clu.5hz.g5
+0.01125 
+../out/CEUScm.5hz
+1
+../out/CEUSABall8.bcrock.5hz
+.5
+../out/CEUSJall8.bcrock.5hz
+.5
+../out/CEUSchar.73.5hz
+.45
+../out/CEUSchar.71.5hz
+.2
+../out/CEUSchar.75.5hz
+.15
+../out/CEUSchar.68.5hz
+.2
+1
+../out/combine/tmp.ceus.5hz
+0
