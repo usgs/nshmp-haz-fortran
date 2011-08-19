@@ -1,5 +1,5 @@
 ===============================================
-Ground motion levels for hazard calculations 
+Ground motion levels for hazard calculations
 #Spectral frequency (Hz) period (s)
 #No. ground motion levels
 #Ground motion levels
