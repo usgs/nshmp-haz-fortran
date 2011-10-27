@@ -4,7 +4,7 @@ Ground motion levels for hazard calculations
 #No. ground motion levels
 #Ground motion levels
 ===============================================
-
+ 
 PGA		0.0sec
 19
 .005 .007 .0098 .0137 .0192 .0269 .0376 .0527 .0738 .103 .145 .203 .284 .397 .556 .778 1.09 1.52 2.13
