@@ -1,0 +1,61 @@
+#!/bin/csh
+# script info
+# 
+ 
+# GET PLOTTING PARAMETERS
+if ($#argv != 1) then
+  echo "USAGE: $0 [input map file]"
+  echo "Input map files of type like us_hazard.pga.2pc50"
+  exit
+endif
+set mapf_in=$1
+
+# remove header information from map file
+awk 'NR>2{print $0}' $mapf_in > map.tmp
+# set ps file name
+set per_haz=`basename $mapf_in | cut -d. -f2`
+set prob_haz=`basename $mapf_in | cut -d. -f3`
+set psfile=pl_us_hazard_${per_haz}_${prob_haz}.ps
+
+# set color palette
+if ( "$per_haz" == "pga" ) then
+  cp mfiles/sa1.cpt pl.cpt
+else if ( "$per_haz" == "1hz" ) then
+  cp mfiles/sa1.cpt pl.cpt
+else if ( "$per_haz" == "5hz" ) then
+  cp mfiles/sa5.cpt pl.cpt
+else
+  echo "No plotting option for $per_haz"
+  exit
+endif
+set cptfile=pl.cpt
+
+# plotting variables
+set SCA = -JM15
+set REG = -R-125/-65/24.6/50
+set BORD = -Ba5f1/a5f1WeSn:."":
+echo $SCA $REG $BORD
+gmtset BASEMAP_TYPE plain
+gmtset OUTPUT_DEGREE_FORMAT D
+gmtset PLOT_DEGREE_FORMAT D
+gmtset ANNOT_FONT_SIZE 12
+gmtset LABEL_FONT_SIZE 12
+
+# PLOTTING
+set inc_in=0.05
+set coast_opt="-A1/1/2 -N1/2/0/0/0 -N2/2/0/0/0"
+
+xyz2grd map.tmp -Gmap.grd -I${inc_in} $REG -V
+grdimage map.grd $SCA $REG $BORD -C$cptfile -X1.5i -Y8 -P  -V -K >! $psfile
+
+pscoast $SCA $REG -W0.5p/0/0/0 $coast_opt -Di -O -K -V >> $psfile
+
+psscale -C$cptfile -D1.0/-6.5/14.5/0.5h -B:"":/:: -X2.25i -Y2.0i -O -K -L >> $psfile
+
+pstext -R0/10/0/10 -JX20 -V -O -N -G0 -X0.5 -Y2.0 << END >>  $psfile
+0.0 1.75 16 0.0 7 CB $per_haz - 2% in 50 years
+END
+ 
+ 
+# remove temporary files
+rm map.tmp map.grd pl.cpt 

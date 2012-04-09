@@ -25,7 +25,7 @@ if [ $CA_A_FAULTS == 1 ]; then
 #	$FAULT "$D_CA_F/aFault_unseg_HB.in"			> $LOG/aF5.log 
 	$FAULT "$D_CA_F/aFault_unseg.in"			> $LOG/aF2.log 
 	$FAULT "$D_CA_F/aFault_MoBal.in"			> $LOG/aF3.log 
-	$FAULT "$D_CA_F/creepflt.in"				> $LOG/creepflt.log 
+#	$FAULT "$D_CA_F/creepflt.in"				> $LOG/creepflt.log 
 fi
 
 
