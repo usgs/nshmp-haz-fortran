@@ -39,7 +39,9 @@ all:
 	$(FORTRAN_COMPILER) $(FFLAGS) -o $(OUT)/hazSUBXnga $(SRC)/hazSUBXnga.f $(SRC)/iosubs.o
 	$(FORTRAN_COMPILER) $(FFLAGS) -o $(OUT)/hazSUBXngatest $(SRC)/hazSUBXngaTest.f $(SRC)/iosubs.o
 	$(FORTRAN_COMPILER) $(FFLAGS) -o $(OUT)/hazallXLv2 $(SRC)/hazallXLv2.f $(SRC)/iosubs.o
+	$(FORTRAN_COMPILER) $(FFLAGS) -o $(OUT)/hazpoint $(SRC)/hazpoint.f $(SRC)/iosubs.o
 	$(FORTRAN_COMPILER) $(FFLAGS) -o $(OUT)/gethead.nga $(SRC)/gethead.nga.f $(SRC)/iosubs.o
+	$(FORTRAN_COMPILER) $(FFLAGS) -o $(OUT)/agridtest2A $(SRC)/agridtest2A.f 
 	$(FORTRAN_COMPILER) $(FFLAGS) -fcray-pointer -o $(OUT)/hazinterpnga $(SRC)/hazinterpnga.f $(SRC)/iosubs.o
 	$(FORTRAN_COMPILER) $(FFLAGS) -o $(OUT)/getmeanrjf $(SRC)/getmeanrjf.f $(SRC)/iosubs.o
 
