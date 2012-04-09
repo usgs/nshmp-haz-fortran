@@ -1,5 +1,5 @@
 1
-22
+19
 ../out/brange.3dip.ch.5hz.m
 0.6666
 ../out/brange.3dip.gr.5hz.m
@@ -38,8 +38,6 @@
 0.0500
 ../out/aFault_MoBal.5hz.m
 0.2250
-../out/creepflt.5hz.m
-1.0000
 1
 ../out/combine/tmp.wus.f.5hz.m
 0

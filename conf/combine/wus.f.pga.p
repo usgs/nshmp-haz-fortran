@@ -1,5 +1,5 @@
 1
-22
+19
 ../out/brange.3dip.ch.pga.p
 0.6666
 ../out/brange.3dip.gr.pga.p
@@ -38,8 +38,6 @@
 0.0500
 ../out/aFault_MoBal.pga.p
 0.2250
-../out/creepflt.pga.p
-1.0000
 1
 ../out/combine/tmp.wus.f.pga.p
 0
