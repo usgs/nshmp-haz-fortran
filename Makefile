@@ -16,6 +16,7 @@ CFLAGS = -O -arch i386
 
 OUT = bin
 SRC = src
+UTIL = $(SRC)/util
 
 #
 #all: src/NSHMP08.f90
