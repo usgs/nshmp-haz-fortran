@@ -5915,8 +5915,9 @@ c delta = dip =50 d
         sinDELTA=sin(dip0*d2r)
 c	Loop thru M from low to high limit
 5	format(a,$)
-
-	do k=1,15
+c      P. Powers bug fix 6/20/2012 below was do k=1,15 for R3 code, probably
+c      was fixed in harmsens code during CA evaluations
+	do k=1,nmag
 c base area on w&c formula for all sources. 
         area =  10**((M-4.07)/0.98)
 	amag=M
