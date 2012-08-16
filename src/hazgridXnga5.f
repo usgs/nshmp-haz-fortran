@@ -134,7 +134,7 @@ c Try this on sun  using Solaris 10 fortran 2006:
 c f95 hazgridXnga5.f -o hazgridXnga5 -fast iosubs.o -e -ftrap=%none
 c
 c Try this on PCs with gfortran:
-c	gfortran hazgridXnga5.f iosubs.o -ffixed-line-length-none -static -o hazgridXnga5.exe -finit-local-zerro -ffpe-trap=
+c	gfortran hazgridXnga5.f iosubs.o -ffixed-line-length-none -static -o hazgridXnga5.exe -finit-local-zero -ffpe-trap=
 c
 c the flag -finit-local-zerro initializes uninitialized variables (arrays) to 0 and 
 c logicals to .false.  This flag was brought in to veersions of gfortran after 2007, and is not a standard.
@@ -3224,7 +3224,7 @@ c add c7 may 13 2009. C7 corresponds to E soil.
       c1= (/ -0.25,0.40,-0.98,0.160,0.195,-0.172,-0.67648,-2.250,-3.64/)
       c1w=(/-0.04713,0.51589,-1.02133,0.43928,0.26067,-0.16568,-0.69924,-2.39234,
      + -3.70012/)	! global c1 coeffs.
-      c2= (/0.6909,0.69186,0.8789,0.66675,0.73228,0.7904,-.84559,0.99640,1.1169/)
+      c2= (/0.6909,0.69186,0.8789,0.66675,0.73228,0.7904,0.84559,0.99640,1.1169/)
        c3= (/0.01130,0.00572,0.00130,0.0108,0.00372,0.00166,0.0014349,0.00364,.00615/)
        c4= (/-0.00202,-0.00192,-0.00173,-0.00219,-0.00185,-0.00177,-.0017457,-0.00118,
      + -0.00045/)
