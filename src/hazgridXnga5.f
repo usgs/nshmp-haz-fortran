@@ -3452,7 +3452,8 @@ c
       c13= (/0.414,.478,.543,0.460,0.482,0.49511834,
      + 0.508,0.551,.414,0.43,.443/)  !paper's c13
 c clamp for 2s set to 0 as per Ken Campbell's email of Aug 18 2008.
-	clamp= (/3.0,6.0,0.,6.,6.,6.,3.0,0.,6.,6.,6./)
+c clamp for 2hz set to 0 as well. Peter Powers noticed sept 14 2011.
+	clamp= (/3.0,6.0,0.,6.,6.,6.,0.0,0.,6.,6.,6./)
 	period = perx(iq)
        cmagsig= 7.16
 c set up erf matrix p as ftn of dist,mag,period,level,depth to seismicity,/
