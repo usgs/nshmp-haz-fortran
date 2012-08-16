@@ -1595,7 +1595,6 @@ c store other run-specific info. extra(9) and (10)
       do ifn=1,nfi(ip)
       headr%name(5)=pithy(ifn)
       call puthead(ifp(ip,1,ifn),headr,ndata,readn)
-c      print *, "PP: puthead 2 ",ifp(ip,1,ifn)
       enddo
       endif      !if gridded output
  201  continue
@@ -1755,7 +1754,7 @@ c-- move rupture zones by dlen horizontally along fault
       do imag=1,nmagf(ift)
       ntmp=max(ntmp,nmag0(ift,imag))
       enddo
-        do 222 m=1,ntmp      !+2 no need for overkill.
+        do 222 m=1,ntmp+2   !possibility of epistemic uncert on mag (bugfix)
         xmag= magmin(ift,1)+(m-1)*dmag(ift,1)      
 c magmin: can change slightly with imag. Using first branch value here
 c------find rupture length from Wells Coppersmith relation 
