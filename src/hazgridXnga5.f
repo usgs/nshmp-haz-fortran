@@ -3276,7 +3276,7 @@ c set up erf matrix p as ftn of dist,mag,period,level,flt type,atten type
       	amp_nl = 0.0	!nonlinear siteamp addition AF
 c      if(ip.eq.1)open(15,file='ab.tmp',status='unknown')
 c       write(6,*)'Ab data going to log file nmag, ntor=',nmag,ntor
-	if(ir.lt.6.and.slab)then
+	if(ir.lt.5.and.slab)then	!ir.lt.5 corrected July 9 2012 from P Powers
 	gnd0=c1(iq)
 	r1=c1(1)
 	c02=c2(iq)
