@@ -345,7 +345,7 @@ c current mb --> Mw in input
       integer readn,iq_ka,iq_as,jabs
       logical finite,grid,isok	! grid=.true. if stations form a regular grid
       logical wus/.false./,ceus/.false./,slab/.false./
-      logical byeca,byesoc,byeext,byepug,v30a,override_vs,l_mmax
+      logical byeca,byesoc,byeext,byepug,v30a/.false./,override_vs/.false./,l_mmax
 c override_vs becomes true if for deaggregation work user inputs a vs30 on command line.
       logical deagg,ss,rev,normal,obl,okabs,okgeo,okzhao,oktogo,e_wind(8)
 c craton and margin determine whether a source is in craton, margin, or neither
