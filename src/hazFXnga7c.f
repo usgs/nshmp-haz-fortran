@@ -592,7 +592,7 @@ c Below bypasses are based on file name. Bypass wont work if file names change
       byenv = index(name,'nv.').gt.0
 c Calif fault file names 6/2007: aFault bFault
       byeca=index(name,'aFault').gt.0.or.index(name,'bFault').gt.0
-      byeoreg=index(name,'orwa')
+      byeoreg=index(name,'orwa').gt.0
       cal_fl=index(name,'aFault_unseg').gt.0
       bfault=index(name,'bFault').gt.0
 c above name is used to determine if CAL floater: need a better way.
