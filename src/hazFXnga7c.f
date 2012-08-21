@@ -591,14 +591,10 @@ c Below bypasses are based on file name. Bypass wont work if file names change
       byeext=index(name,'brange').gt.0
       byenv = index(name,'nv.').gt.0
 c Calif fault file names 6/2007: aFault bFault
-      byeca=index(name,'ca-a').gt.0.or.index(name,'aFault_').gt.0
-     1  .or.index(name,'ca-wg').gt.0.or.index(name,'bFault_').gt.0
-      byeoreg=index(name,'orwa_').gt.0.or.index(name,'orwa.').gt.0
-      cal_fl = index(name,'unsegA').gt.0 .or. index(name,'aFault_unseg').gt.0
-     + .or. index(name,'creepflt').gt.0
-     + .or. (index(name,'aF01').gt.0..and.index(name,'_unseg').gt.0)
-      bfault = index(name,'bFault_').gt.0
-     + .or.index(name,'bF01').gt.0
+      byeca=index(name,'aFault').gt.0.or.index(name,'bFault').gt.0
+      byeoreg=index(name,'orwa')
+      cal_fl=index(name,'aFault_unseg').gt.0
+      bfault=index(name,'bFault').gt.0
 c above name is used to determine if CAL floater: need a better way.
 c creeping section is also host to california floaters. Parkfield did not rupture to
 c surface. After short discussion with Wesson, I did not include creeping sec
