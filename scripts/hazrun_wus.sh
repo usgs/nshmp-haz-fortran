@@ -43,26 +43,26 @@ if (( $WUS_FAULTS == 1 )); then
 	
 	# Basin and Range
 	$FAULT "$D_WUS_F/brange.3dip.ch.in"		> $LOG/brangech.log 
-	$FAULT "$D_WUS_F/brange.3dip.gr.in" 	> $LOG/brangegr.log 
+	$FAULT "$D_WUS_F/brange.3dip.gr.in" 	> $LOG/brangegr.log
 	$FAULT "$D_WUS_F/brange.3dip.65.in" 	> $LOG/brange65.log 
 
 	# PNW: Oregon and Washington
 	$FAULT "$D_WUS_F/orwa_c.in" 			> $LOG/orwac.log 
 	$FAULT "$D_WUS_F/orwa_n.3dip.ch.in" 	> $LOG/orwanch.log 
-	$FAULT "$D_WUS_F/orwa_n.3dip.gr.in" 	> $LOG/orwangr.log 
+	$FAULT "$D_WUS_F/orwa_n.3dip.gr.in" 	> $LOG/orwangr.log
 
 	# Nevada
 	$FAULT "$D_WUS_F/nv.3dip.ch.in" 		> $LOG/nvch.log 
-	$FAULT "$D_WUS_F/nv.3dip.gr.in" 		> $LOG/nvgr.log 
+	$FAULT "$D_WUS_F/nv.3dip.gr.in" 		> $LOG/nvgr.log
 	$FAULT "$D_WUS_F/nvut.3dip.65.in" 		> $LOG/nvut65.log 
 
 	# Utah except Wasatch
 	$FAULT "$D_WUS_F/ut.3dip.ch.in" 		> $LOG/utch.log 
-	$FAULT "$D_WUS_F/ut.3dip.gr.in" 		> $LOG/utgr.log 
+	$FAULT "$D_WUS_F/ut.3dip.gr.in" 		> $LOG/utgr.log
 
 	# Wasatch
 	$FAULT "$D_WUS_F/wasatch.3dip.ch.in" 	> $LOG/wasatchch.log 
-	$FAULT "$D_WUS_F/wasatch.3dip.gr.in" 	> $LOG/wasatchgr.log 
+	$FAULT "$D_WUS_F/wasatch.3dip.gr.in" 	> $LOG/wasatchgr.log
 	$FAULT "$D_WUS_F/wasatch.3dip.74.in"	> $LOG/wasatch74.log 
 
 fi
