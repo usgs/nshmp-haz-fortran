@@ -442,7 +442,7 @@ c perx = a default set of spectral periods used in 2002 PSHA maps. PGV=-1 was no
 c available then and should not be tried for those models
        perx = (/0.,0.2,1.0,0.1,0.3,0.5,2.0,-1./)
        gmwt = (/0.63, 0.185, 0.185/)	!weights for gm uncert branches
-       clamp = (/3.,6.,3.,6.,6.,6.,3.,300./)
+       clamp = (/3.,6.,0.,6.,6.,6.,3.,300./)
        aperiod = (/ 0.0,0.01,0.02,0.03,0.04,0.05,0.075,0.1,0.15,
      1  0.2,0.25,0.3,0.4,0.5,0.75,1.,1.5,2.,3.,4.,5.,-1.0/)
 c camper=Campbell-Bozorgnia NGA spectral period set, from 11-06 final(?) report. 
