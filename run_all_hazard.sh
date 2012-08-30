@@ -47,8 +47,8 @@ cd $scripts_path
 #check that meanrjb.bin file exists in the bin directory
 # option 1 is for WC SRL - used for all gridded seismicity in 2008 maps
 cd ../bin
-if [ ! -f rbjmean.bin ]; then
-getmeanrjf << END
+if [ ! -f meanrjb.bin ]; then
+./getmeanrjf << END
 1
 END
   mv rjbmean.bin.srl meanrjb.bin
