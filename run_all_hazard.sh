@@ -59,14 +59,14 @@ fi
 cd $scripts_path
 
 # run hazard calculation scripts
-hazrun_wus.sh >& ../logs/log_hazrun_wus.txt
-hazrun_ca.sh >& ../logs/log_hazrun_ca.txt
-hazrun_casc.sh >& ../logs/log_hazrun_casc.txt
-hazrun_ceus.sh >& ../logs/log_hazrun_ceus.txt
+./hazrun_wus.sh >& ../logs/log_hazrun_wus.txt
+./hazrun_ca.sh >& ../logs/log_hazrun_ca.txt
+./hazrun_casc.sh >& ../logs/log_hazrun_casc.txt
+./hazrun_ceus.sh >& ../logs/log_hazrun_ceus.txt
 
 # combine the WUS output files, CEUS output files, merge WUS-CEUS
-combine_wus.sh >& ../logs/log_combine_wus.txt
-combine_ceus_wus.sh >& ../logs/log_combine_ceus_wus.txt
+./combine_wus.sh >& ../logs/log_combine_wus.txt
+./combine_ceus_wus.sh >& ../logs/log_combine_ceus_wus.txt
 
 # plot 2% in 50 yrs results for and convert to pdf
 plot_haz_maps_2pc50.gmt ../out/combine/us_hazard.pga.2pc50
