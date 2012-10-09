@@ -1,3 +1,13 @@
+TODO for release:
+	Update ReadMe
+	Add sicalaimer
+	What is recommended for windows users
+			- gfortran via Cygwin?
+	Update hazrun script to spawn thread for long running calcs (WUS gr)
+	How long does single processor run take
+	Migrate code to USGS GitHub?			
+
+
 ===============================================
 Ground motion levels for hazard calculations
 #Spectral frequency (Hz) period (s)
