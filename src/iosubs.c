@@ -159,3 +159,36 @@ long int *bufsiz,*readn;
 {
       *readn= fread(headr,*bufsiz,1,fp[0]);
 }
+
+void getbufx_(fpx,buf2,bufsiz,readn)
+unsigned int *bufsiz,*readn;
+float *buf2;
+int *fpx;
+{
+       *readn= read(*fpx,buf2,*bufsiz*4);
+}
+void getheadx_(fpx,headr,bufsiz,readn)
+struct header *headr;
+long int *bufsiz,*readn;
+int *fpx;
+{
+      *readn= read(*fpx,headr,*bufsiz);
+}
+void openrx_(fpx,name,len)
+/* open file descriptor for readonly (enables several open files for reading) */
+char name[];
+int len;
+int *fpx;
+{
+       int i;
+       char st[80];
+       for(i=0; i<80; i++) st[i]= '\0';
+       for(i=0; i<80 && name[i] != ' ' && name[i] != '\n' ; i++)
+          st[i]=name[i];
+       if((*fpx=open(st,O_RDONLY)) < 0) {
+          fprintf(stderr,"cant open %s\n",st);
+       exit(1);
+       }
+       fprintf(stderr,"fpx %d\n",*fpx);
+}
+

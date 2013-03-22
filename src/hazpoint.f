@@ -154,6 +154,7 @@ cccc
       pgv=.false.
       elseif(head%period.eq.0.)then
       write(6,*) 'header period indicates PGA'
+      pgv=.false.
       else
       write(6,*)' Peak ground velocity cm/s'
       pgv=.true.

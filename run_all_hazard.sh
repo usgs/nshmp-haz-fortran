@@ -47,8 +47,9 @@ cd $scripts_path
 #check that meanrjb.bin file exists in the bin directory
 # option 1 is for WC SRL - used for all gridded seismicity in 2008 maps
 cd ../bin
+#./getmeanrjf << END
 if [ ! -f meanrjb.bin ]; then
-./getmeanrjf << END
+./getmeanrjf.v2 << END
 1
 END
   mv rjbmean.bin.srl meanrjb.bin
@@ -59,10 +60,15 @@ fi
 cd $scripts_path
 
 # run hazard calculation scripts
+time1a=`date`
 ./hazrun_wus.sh >& ../logs/log_hazrun_wus.txt
+time2a=`date`
 ./hazrun_ca.sh >& ../logs/log_hazrun_ca.txt
+time3a=`date`
 ./hazrun_casc.sh >& ../logs/log_hazrun_casc.txt
+time4a=`date`
 ./hazrun_ceus.sh >& ../logs/log_hazrun_ceus.txt
+time5a=`date`
 
 # combine the WUS output files, CEUS output files, merge WUS-CEUS
 ./combine_wus.sh >& ../logs/log_combine_wus.txt
@@ -90,7 +96,14 @@ $0 script completed
 Start time: $time1
 End time: $time2
 
-All hazard calculations written to the HERE
+Started WUS: $time1a
+Finished WUS/Started CA: $time2a
+Finished CA/Started Casc: $time3a
+Finished Casc/Started CEUS: $time4a
+Finished CEUS: $time5a
+
+
+All hazard calculations written to file
 
 ENDMAIL
 

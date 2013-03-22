@@ -8,12 +8,15 @@
 
 .PHONY: all clean
 
+#m_bit=-m32
+m_bit=-m32
+
 F_COMPILER = gfortran
-FFLAGS1 = -O2 -Warray-bounds -ffixed-line-length-none -ffpe-trap=
-FFLAGS2 = $(FFLAGS1) -fcray-pointer
+FFLAGS1 = -O2 -Warray-bounds -ffixed-line-length-none -ffpe-trap= $(m_bit)
+FFLAGS2 = $(FFLAGS1) -fcray-pointer $(m_bit)
 
 C_COMPILER = gcc
-CFLAGS = -O -arch i386 
+CFLAGS = -O $(m_bit)
 
 OUT = bin
 SRC = src
@@ -25,11 +28,18 @@ all:
 
 #	dependencies
 	$(C_COMPILER)  $(CFLAGS) -c -o $(SRC)/iosubs.o $(SRC)/iosubs.c
+	$(C_COMPILER)  $(CFLAGS) -c -o $(SRC)/iosubs_128.o $(SRC)/iosubs_128.c
 
 #	hazard curve generation
 	$(F_COMPILER) $(FFLAGS2) -o $(OUT)/hazallXL.v4 $(SRC)/hazallXL.v4.f $(SRC)/iosubs.o 
+	$(F_COMPILER) $(FFLAGS2) -o $(OUT)/hazallXL.v5 $(SRC)/hazallXL.v5.f $(SRC)/iosubs_128.o 
+
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazFXnga7c $(SRC)/hazFXnga7c.f $(SRC)/iosubs.o
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazFXnga13l $(SRC)/hazFXnga13l.f $(SRC)/iosubs.o
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazFXnga7.temp $(SRC)/hazFXnga7.temp.f $(SRC)/iosubs.o
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazFXnga12 $(SRC)/hazFXnga12.f $(SRC)/iosubs.o
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga5 $(SRC)/hazgridXnga5.f $(SRC)/iosubs.o
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga13l $(SRC)/hazgridXnga13l.f $(SRC)/iosubs.o
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazSUBXnga $(SRC)/hazSUBXnga.f $(SRC)/iosubs.o
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazSUBXngatest $(SRC)/hazSUBXngaTest.f $(SRC)/iosubs.o
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazallXLv2 $(SRC)/hazallXLv2.f $(SRC)/iosubs.o
@@ -43,6 +53,7 @@ all:
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/get_avalue $(UTIL)/get_avalue.f $(SRC)/iosubs.o
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/gethead.nga $(UTIL)/gethead.nga.f $(SRC)/iosubs.o
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/getmeanrjf $(UTIL)/getmeanrjf.f $(SRC)/iosubs.o
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/getmeanrjf.v2 $(UTIL)/getmeanrjf.v2.f $(SRC)/iosubs.o
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/gutenberg $(UTIL)/gutenberg.f $(SRC)/iosubs.o
 
 #	other

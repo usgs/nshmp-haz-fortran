@@ -90,6 +90,7 @@ c get information from header if at all possible.
 c make a  robust calculation of nx and ny using "nint" function. SH.
         nx= nint((xmax-xmin)/dx) +1
         ny= nint((ymax-ymin)/dy) +1
+        write(6,*) 'nx/ny: ',nx,ny
         if(nx.gt.nin.or.ny.gt.nin)then
         print *,'coarsemesh grid > nin. Increase mmat dims please'
         stop'hazinterp.nga.f could not continue'
