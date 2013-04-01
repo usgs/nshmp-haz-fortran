@@ -4,7 +4,7 @@
 #include <fcntl.h>
 #define MAXCHAR 128
 
-FILE *fporg,*fp[48];
+FILE *fporg,*fp[48],*fp1;
 int FILE_POINTER = 1;
 
 //long int index;
@@ -17,6 +17,16 @@ struct header
    float extra[10];
 };
 struct header *headr;
+struct sheader
+{
+   char name[MAXCHAR][6];
+   long int period;
+   long int nlev;
+   float xlev[20];
+   float extra[10];
+};
+struct sheader *sheadr;
+
 
 // This needs be done before anything that uses iosubs
 void initialize_() {
@@ -35,6 +45,21 @@ int len;
        for(i=0; i<MAXCHAR && name[i] != ' ' && name[i] != '\n' ; i++)
           st[i]=name[i];
        if((fp[0]=fopen(st,"rb"))==NULL) {
+          fprintf(stderr,"cant open %s\n",st);
+       exit(1);
+       }
+}
+
+void openr1_(name,len)
+char name[];
+int len;
+{
+       int i;
+       char st[MAXCHAR];
+       for(i=0; i<MAXCHAR; i++) st[i]= '\0';
+       for(i=0; i<MAXCHAR && name[i] != ' ' && name[i] != '\n' ; i++)
+          st[i]=name[i];
+       if((fp1=fopen(st,"rb"))==NULL) {
           fprintf(stderr,"cant open %s\n",st);
        exit(1);
        }
@@ -153,11 +178,27 @@ int *fpx;
        *readn= fwrite(headr,*bufsiz,1,fp[*fpx]);
 }
 
+void putshead_(fpx,sheadr,bufsiz,readn)
+struct sheader *sheadr;
+unsigned int *bufsiz,*readn;
+int *fpx;
+{
+       *readn= write(*fpx,sheadr,*bufsiz);
+}
+
+
 void gethead_(headr,bufsiz,readn)
 struct header *headr;
 long int *bufsiz,*readn;
 {
       *readn= fread(headr,*bufsiz,1,fp[0]);
+}
+
+void getshead_(sheadr,bufsiz,readn)
+struct sheader *sheadr;
+long int *bufsiz,*readn;
+{
+      *readn= fread(sheadr,*bufsiz,1,fp1);
 }
 
 void getbufx_(fpx,buf2,bufsiz,readn)

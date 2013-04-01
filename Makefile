@@ -8,8 +8,8 @@
 
 .PHONY: all clean
 
-#m_bit=-m32
-m_bit=-m32
+#m_bit=-m32 # flag does not work on Linux cluster
+m_bit=-m32 # flag does not work on Linux cluster
 
 F_COMPILER = gfortran
 FFLAGS1 = -O2 -Warray-bounds -ffixed-line-length-none -ffpe-trap= $(m_bit)
@@ -23,37 +23,68 @@ SRC = src
 UTIL = $(SRC)/util
 
 
-all:
+#all: CreateBinDir hazallXL.v2 hazallXL.v4 hazFXnga7c hazFXnga13l hazgridXnga5 hazgridXnga13l hazSUBXnga hazSUBXngatest hazpoint hazinterpnga avg_dist fltrate.v2 get_avalue gethead.nga getmeanrjf getmeanrjf.v2 gutenberg
+all: CreateBinDir hazallXL.v2 hazallXL.v4 hazallXL.v5 hazFXnga13l hazgridXnga13l hazSUBXnga hazSUBXngatest hazpoint hazinterpnga avg_dist fltrate.v2 get_avalue gethead.nga getmeanrjf getmeanrjf.v2 gutenberg
+
+CreateBinDir:
 	mkdir -p $(OUT)
 
 #	dependencies
+iosubs:
 	$(C_COMPILER)  $(CFLAGS) -c -o $(SRC)/iosubs.o $(SRC)/iosubs.c
+iosubs128:
 	$(C_COMPILER)  $(CFLAGS) -c -o $(SRC)/iosubs_128.o $(SRC)/iosubs_128.c
 
 #	hazard curve generation
+hazallXL.v2: iosubs
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazallXL.v2 $(SRC)/hazallXL.v2.f $(SRC)/iosubs.o
+hazallXL.v4: iosubs
 	$(F_COMPILER) $(FFLAGS2) -o $(OUT)/hazallXL.v4 $(SRC)/hazallXL.v4.f $(SRC)/iosubs.o 
-	$(F_COMPILER) $(FFLAGS2) -o $(OUT)/hazallXL.v5 $(SRC)/hazallXL.v5.f $(SRC)/iosubs_128.o 
+hazallXL.v5: iosubs
+	$(F_COMPILER) $(FFLAGS2) -o $(OUT)/hazallXL.v5 $(SRC)/hazallXL.v5.f $(SRC)/iosubs.o 
+#hazallXL.v5: iosubs128
+#	$(F_COMPILER) $(FFLAGS2) -o $(OUT)/hazallXL.v5 $(SRC)/hazallXL.v5.f $(SRC)/iosubs_128.o 
 
+hazFXnga7c: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazFXnga7c $(SRC)/hazFXnga7c.f $(SRC)/iosubs.o
+hazFXnga13l: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazFXnga13l $(SRC)/hazFXnga13l.f $(SRC)/iosubs.o
+hazFXnga7.temp: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazFXnga7.temp $(SRC)/hazFXnga7.temp.f $(SRC)/iosubs.o
+hazFXnga12: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazFXnga12 $(SRC)/hazFXnga12.f $(SRC)/iosubs.o
+
+hazgridXnga5: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga5 $(SRC)/hazgridXnga5.f $(SRC)/iosubs.o
+hazgridXnga13l: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga13l $(SRC)/hazgridXnga13l.f $(SRC)/iosubs.o
+
+hazSUBXnga: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazSUBXnga $(SRC)/hazSUBXnga.f $(SRC)/iosubs.o
-	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazSUBXngatest $(SRC)/hazSUBXngaTest.f $(SRC)/iosubs.o
-	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazallXLv2 $(SRC)/hazallXLv2.f $(SRC)/iosubs.o
+hazSUBXngatest: iosubs
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazSUBXngatest $(SRC)/hazSUBXngatest.f $(SRC)/iosubs.o
+
+hazpoint: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazpoint $(SRC)/hazpoint.f $(SRC)/iosubs.o
+hazinterpnga: iosubs
 	$(F_COMPILER) $(FFLAGS2) -o $(OUT)/hazinterpnga $(SRC)/hazinterpnga.f $(SRC)/iosubs.o
 
 #	utility
+avg_dist: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/avg_dist $(UTIL)/avg_dist.f $(SRC)/iosubs.o
+fltrate.v2: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/fltrate.v2 $(UTIL)/fltrate.v2.f $(SRC)/iosubs.o
-#	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/get_akprob $(UTIL)/get_akprob.f $(SRC)/iosubs.o
+get_akprob: iosubs
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/get_akprob $(UTIL)/get_akprob.f $(SRC)/iosubs.o
+get_avalue: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/get_avalue $(UTIL)/get_avalue.f $(SRC)/iosubs.o
+gethead.nga: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/gethead.nga $(UTIL)/gethead.nga.f $(SRC)/iosubs.o
+getmeanrjf: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/getmeanrjf $(UTIL)/getmeanrjf.f $(SRC)/iosubs.o
+getmeanrjf.v2: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/getmeanrjf.v2 $(UTIL)/getmeanrjf.v2.f $(SRC)/iosubs.o
+gutenberg: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/gutenberg $(UTIL)/gutenberg.f $(SRC)/iosubs.o
 
 #	other
