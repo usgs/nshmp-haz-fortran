@@ -1,11 +1,12 @@
-c--- program  hazFXnga13l.f; 03/20/2013; Use  with NGA relations, or others.
+c--- program  hazFXnga13l.f; 03/29/2013; Use  with NGA relations, or others.
+c 3/29/2013: include GK13 model which replaces GK12. Index 38.
 c 3/19/2013 : increase nfltmx to 1000.
 c 3/13/2013: revise AS13 to v10. The subroutine with v10 is according to Norm closer to AS08 than the v5 version.
 c 3/14/2013: revise AS08 to use our Rx. 3/15:Use vs30_class=1 (measured). Index 16
-C 3/04/2013: working on BSSA13. Mar 11. Running. Simplified the coding some. Perhaps more needed (SH).
+C 3/11/2013: working on BSSA13. Mar 11. Running. Simplified the coding some. Perhaps more needed (SH).
 c 3/06/2013: working on CY2013. Dirctivity, cDPP, is turned off for initial exercise.
 c       A long document discusses some suggested ways to implement...
-c 3/01/2013: update A&S GMPE. 3/04/2013: The A&S subr. is expecting z1 to come in with units km/s not m/s.
+c 3/01/2013: update A&S GMPE. 3/29/2013: The A&S subr. is expecting z1 to come in with units km/s not m/s.
 c
 c 2/25/2013: Update CB-NGA2 GMPE Index is 34
 c 2/19/2013: Add option to output inelastic spectral displacement, SD_i. 
@@ -411,6 +412,7 @@ c
       real z1,z1km	!depth to sustained 1 km/s Vs . Z1 is defaulted to a CY2013 function of Vs30.
       real v30(100000)      !possible array of site-specific vs30 new mar 2006.
       real dbasin,vs30,pr,rx,ry,dy_sdi
+	real Q,Q_CA, Q_BR	!some Q estimates for the Graizer&Kalkan model
       real, dimension (5) :: prdsom
       integer nmag,readn,ix,ix0,ix1,iy,iy0,jsegmin/10/,jsegmax/0/
       character nameout*78,name*60,adum*80,date*8,time*10,zone*5
@@ -583,7 +585,7 @@ c prd is the C&Y period set, 106 of 'em, jan 2009. Same, Oct 2007. PGA=0.0s in o
      3 'AB08p Prelim','AB06p Prelim','Pez11 Prelim','Silva M-depS',
      3 'Space Unoccu','Space Unoccu','Space Unoccu',
      3 'Space Unoccu','BSSA 03/2013','C&B02/13 NGA',
-     3 'ChiouY 03/13','Ab-Silva2013','Idriss 2012a','GraizKalkn12',
+     3 'ChiouY 03/13','Ab-Silva2013','Idriss 2012a','GraizKalkn13',
      4 'GrazKalkan09'/)
        gname=(/'.g1','.g2','.g3','.g4','.g5'/)
       do ia=1,8
@@ -719,7 +721,7 @@ c adum could be sa(g) or pgv (cm/s). need flexible format
             endif
       endif
       write (6,61)date,time,name
-61      format('# *** hazFXnga13l 03/04/2013 log file. Pgm run on ',a,' at ',a,/,
+61      format('# *** hazFXnga13l 03/29/2013 log file. Pgm run on ',a,' at ',a,/,
      +'# *** Input control file: ',a)
       if(poly)write(6,*)'hazFXnga13l: Polygon file &npts: ',polygon,npmax
 c Below bypasses are based on file name. Bypass wont work if file names change
@@ -809,7 +811,6 @@ c replace whatever was in the file with the command line location
 c **** Enter soil Vs30 condition  ******NEW*******
 c      write(6,*)"For sites, enter Vs30(m/s) and basin depth(km)"
       read(1,*)vs30,dbasin
-      dgkbasin=max(1.0,dbasin*0.5)      !Vladimir says his basin is 1.5 km/s isosurface. Campbell is
 c       				2.5 km/s isosurface.
       if(override_vs)vs30=vs30d
 c the below Z1 is defined so we do not need to rewrite input files with a Z1 value.
@@ -819,6 +820,7 @@ c     Norm Abrahamson's CA z1 reference (eq 18)
        z1_ref = exp ( -7.67/4. * alog( (Vs30**4 + 610.**4)/(1360.**4+610.**4) ) ) / 1000.
       z1=z1cal	!CY2013 function used until we know better for wus...
       z1km=Z1*0.001	!for AS need units km
+      dgkbasin=0.75 * z1km + 0.25*dbasin      !Vladimir says his basin is 1.5 km/s isosurface. Campbell is
 c this Z1 is  the recommended value of CY. May need to be changed (40 m for 760 m/s vs30)
       write(6,*)' Vs30 (m/s), Z1 (m) and depth of basin (km): ',vs30,Z1,dbasin
       if(vs30.lt.90..and.vs30.gt.0.)then
@@ -1397,10 +1399,12 @@ c      print *,nper_gmpe,' number of periods having coeffs BSSA'
       write(6,*)'Calling Grazier Kalkan09 model. 0 for basin. Pd index ',k
       else
       if(per.le.0.01)ipgk(ip)=1	!use the sa1 for new graizer model
-      write(6,*)'Calling Grazier Kalkan12 model.  Pd index ',ipgk(ip)
-      write(6,*)'Graizer12 basin depth (km) set to ',dgkbasin
-      Q_CA=435
-      write(6,*)'Graizer12 Quality factor = ',Q_CA
+      write(6,*)'Calling Grazier Kalkan13 model.  Pd index ',ipgk(ip)
+      write(6,*)'Graizer13 basin depth (km) set to ',dgkbasin
+      Q_CA=157.	!New Q for California from Vladimir Graizer. His Q was 435
+      Q_BR = 435.     ! might be a reasonable average value for basin and range Q.
+      write(6,*)'Graizer13 Quality factor for California= ',Q_CA
+      write(6,*)'For WUS sites with longitude>-120E, use this Q ',Q_BR
       endif
         elseif(ipia.eq.18)then
       ka=0
@@ -2386,9 +2390,16 @@ c skip the 2nd period for now assume the period of interest was tabulated.
       elseif(ipia.eq.37)then
       call  getIdriss2012(idriss(ip),ip,xmag,rrup,vs30,gnd,sigmaf)
       elseif(ipia.eq.38)then
-      call gksa12(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q_CA)
+      if(rx.lt.-120..and.ry.gt.39.)then
+      Q=Q_CA
+      elseif(ry.le.39.-0.8*(rx+120.))then
+      Q=Q_CA      
+      else
+      Q=Q_BR
+      endif
+      call gksa13(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q)
       elseif(ipia.eq.39)then
-      ib=0	!basin term Graizer & kalkan model
+      ib=0	!basin term Graizer & kalkan model of 2011? Out of date.
       call  gksa(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),IB)
       elseif(ipia.eq.35)then
 c from BChiou email use fmeasured=1. dtor1 is top of floating rupture may be downdip
@@ -2749,7 +2760,14 @@ c skip the 2nd period for now assume the period of interest was tabulated.
       elseif(ipia.eq.37)then
       call  getIdriss2012(idriss(ip),ip,xmag2,rrup,vs30,gnd,sigmaf)
       elseif(ipia.eq.38)then
-      call gksa12(ipgk(ip),ip,xmag2,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q_CA)
+      if(rx.lt.-120..and.ry.gt.39.)then
+      Q=Q_CA
+      elseif(ry.le.39.0- 0.8*(rx+120.))then
+      Q=Q_CA      
+      else
+      Q=Q_BR
+      endif
+      call gksa13(ipgk(ip),ip,xmag2,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q)
       elseif(ipia.eq.39)then
       ib=0	!basin term Graizer & kalkan model
       call  gksa(ipgk(ip),ip,xmag2,rrup,gnd,sigmaf,vs30,iftype(ift),IB)
@@ -3112,7 +3130,14 @@ c skip the 2nd period for now assume the period of interest was tabulated.
       elseif(ipia.eq.37)then
       call  getIdriss2012(idriss(ip),ip,xmag,rrup,vs30,gnd,sigmaf)
       elseif(ipia.eq.38)then
-      call gksa12(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q_CA)
+      if(rx.lt.-120..and.ry.gt.39.)then
+      Q=Q_CA
+      elseif(ry.le.39.0- 0.8*(rx+120.))then
+      Q=Q_CA      
+      else
+      Q=Q_BR
+      endif
+      call gksa13(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q)
       elseif(ipia.eq.39)then
       ib=0	!basin term Graizer & kalkan model
       call  gksa(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),IB)
@@ -3481,7 +3506,14 @@ c      endif
       elseif(ipia.eq.37)then
       call  getIdriss2012(idriss(ip),ip,xmag2,rrup,vs30,gnd,sigmaf)
       elseif(ipia.eq.38)then
-      call gksa12(ipgk(ip),ip,xmag2,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q_CA)
+      if(rx.lt.-120..and.ry.gt.39.)then
+      Q=Q_CA
+      elseif(ry.le.39.0- 0.8*(rx+120.))then
+      Q=Q_CA      
+      else
+      Q=Q_BR
+      endif
+      call gksa13(ipgk(ip),ip,xmag2,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q)
 c      print *,xmag2,rrup,gnd(1),sigmaf
       elseif(ipia.eq.39)then
       ib=0	!basin term Graizer & kalkan model
@@ -3865,7 +3897,14 @@ c skip the 2nd period for now assume the period of interest was tabulated.
       elseif(ipia.eq.37)then
       call  getIdriss2012(idriss(ip),ip,xmag,rrup,vs30,gnd,sigmaf)
       elseif(ipia.eq.38)then
-      call gksa12(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q_CA)
+      if(rx.lt.-120..and.ry.gt.39.)then
+      Q=Q_CA
+      elseif(ry.le.39.0- 0.8*(rx+120.))then
+      Q=Q_CA      
+      else
+      Q=Q_BR
+      endif
+      call gksa13(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q)
 c      print *,xmag,rrup,gnd(1),sigmaf
       elseif(ipia.eq.39)then
       ib=0	!basin term Graizer & kalkan model
@@ -8271,7 +8310,8 @@ c            print *,gndout(1),total_app
         return
         end subroutine CY2012_NGA
 
-      subroutine gksa12(L,ip,Mw,x,gndout,sigmaf,Vs,mec,Bdepth,Q)
+      subroutine gksa13(L,ip,Mw,x,gndout,sigmaf,Vs,mec,Bdepth,Q)
+c from GKSA13fl.f sent Mar 22 2013. 
 c Revised Graizer and Kalkan model with continuous response variation with 
 c      basin depth. Also PGA has been identified with 0.01s SA due to basin
 c      effect. 
@@ -8279,7 +8319,7 @@ c Input: L = period index in below per array.
 c      x = Rcd (km).
 c      Mw = moment magnitude.
 c Bdepth = basin depth (km). new parm. 2012. Geotech: depth to Vs=1.5 km/s
-c       Q quality factor 435 for California according to GK
+c       Q quality factor 137  for California in revision; was 435 according to GK
 c mec is sense-of-slip:
 ccccc      Mec = 1 for strike slip    Normal Faults (3) are treated like strike slip
 ccccc      Mec = 2 for thrust faults
@@ -8332,7 +8372,7 @@ C*********Coefficients file, dec 2012 ***************
          sigmaf=1./sigpga/sqrt2
 
 
-c********* Distance Dependance ********************
+c********* Distance Dependence ********************
 
 c********* Amplification Factor depending upon style of faulting **********
 ccccc      Mec = 1 for strike slip    Normal Faults are treated as strike
@@ -8389,30 +8429,33 @@ c-------- Core Filter and Anelastic ----------------
 ccccccc End non-basin PGA Calculation cccccccccccccccccccccccc
 
 
-c------SA calculations ---------------------------------------
-c Treat PGA as 0.01 SA because of the basin effect below... SH. Dec 4 2012.
+c------SA calculations ----------mod coeffs mar 29 2013 SH-----
           e1=-0.0012
-          e2=-0.4085
+          e2=-0.40854
           e3= 0.0006
           e4= 3.63
           a1= 0.01686
           a2= 1.2695
           a3= 0.0001
           Dsp=0.75
-          t1= 0.0022
-          t2= 0.63
+c          t1= 0.0022
+          t1= 0.001
+c          t2= 0.63
+          t2= 0.60
           t3=-0.0005
           t4=-2.1
-          s1=0.001
+c          s1=0.001
+          s1=0.00
           s2=0.077
           s3=0.3251
-          Mu = e1*x+e2*Mw+e3*Vs+e4
+
+           Mu = e1*x+e2*Mw+e3*Vs+e4
 
           Amp = (a1*Mw+a2)*exp(a3*x)
 
           Si = s1*x-(s2*Mw+s3)
 
-          Tspo = t1*x+t2*Mw+t3*Vs+t4
+          Tspo = MAX(0.3,ABS(t1*x+t2*Mw+t3*Vs+t4))	!changed 3/29/2013
           Pern = (per(L)/Tspo)**Slope
 
           temp1 = (alog(per(L))+Mu)/Si
@@ -8436,7 +8479,7 @@ c Treat PGA as 0.01 SA because of the basin effect below... SH. Dec 4 2012.
            sigmaf=1./sigma(L)/sqrt2
            endif
            return
-        END subroutine gksa12
+        END subroutine gksa13
 
       subroutine gksa(ipgk,ip,xmag,rcd,gndout,sigmaf,Vs,islip,IB)
 c***  Graizer & Kalkan July 2007, Attenuation **************

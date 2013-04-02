@@ -1,4 +1,5 @@
-c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  03.20. 2013. Long header version.
+c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  04.01. 2013. Long header version.
+c 4/01/2013: Add GK13. Calif Q is 156.6 here (new). Same index as GK12.
 c 3/20/2013: clean up declarations. dont use dimension without specifying type. This
 c step is a disambiguation where subroutines specify "implicit none". Some array items
 c were replaced with scalar items in calls to some subroutines. Work with Morgan 3/20
@@ -652,7 +653,7 @@ c adum could be sa(g) or pgv (cm/s). need flexi format
       endif
       call date_and_time(date,time,zone,ival)
       write (6,61)date,time,zone,namein
-61      format('hazgridXnga13l (2/25/2013) log file. Pgm run on ',a,' at ',a,1x,a,/,
+61      format('hazgridXnga13l (4/01/2013) log file. Pgm run on ',a,' at ',a,1x,a,/,
      + '# Control file:',a)
         call getarg(0,progname)
         ind=index(progname,' ')
@@ -1741,7 +1742,8 @@ c Determine index of period in the campbell set, camper.
         call getCampNGA1107 
      + (ip,icb,ia,ndist,di,nmag,magmin,dmag,sigmanf,distnf)
 c below added mar 6 2008 from email comment by Ken Campbell
-       if(vs30.gt.1500.)stop 'Vs30 >1500 m/s and CB NGA relation does not permit this.'   
+       if(vs30.gt.1500.)stop 'Vs30 >1500 m/s and CB NGA relation does 
+     *not permit this.'   
          elseif(ipia.eq.32) then
          if(icode(ip,ia).lt.0)then
          icode(ip,ia)=-icode(ip,ia)
@@ -1798,15 +1800,15 @@ c CY2013 index is 33.
          DIP=dipbck(icode(ip,ia))
       deltaZ1=0.0	!dont know use 0. from guidance in CY doc.
       if(per.eq.-1.)then
-       iper=1
+       iper(ip)=1
        k=1
       write(6,*)'Calling CY2013 NGA-W with period index 1: PGV'
       elseif(per.eq.-2.)then
-       iper=2
+       iper(ip)=2
        k=2
       write(6,*)'Calling CY2013 NGA-W with period index 2: PGD'
       elseif (per.ge.0..and. per.le.0.01)then
-      iper=3	!PGA index is 3 in Mar 2013 update
+      iper(ip)=3	!PGA index is 3 in Mar 2013 update
       k=3	!PGA index is 3 in Mar 2013 update
       write(6,*)'Calling CY2013 NGA-W with period index 3: PGA'
       else
@@ -1814,14 +1816,15 @@ c CY2013 index is 33.
       dowhile(percy13(k).ne.per.and.k.lt.24)
       k=k+1
       enddo
-      if(abs(percy13(k)-per).gt.0.002)stop'period not available for CY2013 GMPE'
+      if(abs(percy13(k)-per).gt.0.002)stop'period not available for 
+     *CY2013 GMPE'
       write(6,*)'Calling CY2013 NGA-W revision with deltaz1=',deltaz1
       write(6,*)'Calling CY2013 NGA-W with period index ',k
       iper(ip) = k
 c CHECK HERE
       endif	!pga or other?
       write(6,*)'Calling CY2013 model for period ',period(ip),' icode ',icode(ip,ia)
-c        call CY2013_NGA(ip,iper,ia,ndist,di,nmag,magmin,dmag,DIP,deltaz1,vs30,rxfac )
+c        call CY2013_NGA(ip,iper(ip),ia,ndist,di,nmag,magmin,dmag,DIP,deltaz1,vs30,rxfac )
         call CY2013_NGA(ip,k,ia,ndist,di,nmag,magmin,dmag,DIP,deltaz1,vs30,rxfac )
       elseif(ipia.eq.39)then
       if (period(ip).lt.0.01)then
@@ -1835,10 +1838,16 @@ c        call CY2013_NGA(ip,iper,ia,ndist,di,nmag,magmin,dmag,DIP,deltaz1,vs30,r
       endif	!periods for gk
       ipgk=k
       wus=.true.
-      Q=435.	!region independent Q. Could vary Q geographically if a model is available.
-      Bdepth=0.5*dbasin	!use 1km according to GK for testing, assuming Campbell basin=2 km.
-      print *,'Calling gksa12 with basin depth ',Bdepth,' Q ',Q
-      call gksa12(ip,ipgk,ia,ndist,di,nmag,magmin,dmag,vs30,Bdepth,Q)	
+      if(rx.lt.-120. .and. ry.gt.39.)then
+      Q=156.6	!california Q
+      elseif(ry.le.39.0 - 0.8*(rx+120.))then
+      Q=156.6 	!more      california Q
+       else
+      Q=435.	!GK 13 update for basin and range outside CA
+      endif
+      Bdepth=0.25*dbasin+0.75*z1km	!use 1km according to GK for testing, assuming Campbell basin=2 km.
+      print *,'Calling gksa13 with basin depth ',Bdepth,' Q ',Q
+      call gksa13(ip,ipgk,ia,ndist,di,nmag,magmin,dmag,vs30,Bdepth,Q)	
       elseif(ipia.eq.34)then
          if(icode(ip,ia).lt.0)then
          icode(ip,ia)=-icode(ip,ia)
@@ -1852,7 +1861,7 @@ c        call CY2013_NGA(ip,iper,ia,ndist,di,nmag,magmin,dmag,DIP,deltaz1,vs30,r
         useRy0=.false.
         hardrock=.true.
         if(period(ip).le.0.01)then
-        iper=1
+        iper(ip)=1
         k=1
         else
         k=2
@@ -1860,7 +1869,7 @@ c        call CY2013_NGA(ip,iper,ia,ndist,di,nmag,magmin,dmag,DIP,deltaz1,vs30,r
         k=k+1
         if(k.gt.22)stop'period not found in AS2013'
         enddo
-      iper=k
+      iper(ip)=k
       endif
       wus=.true.
       write(6,*)'Calling AS2013 model for period ',period(ip),' dip ',DIP,' rxfac ',rxfac
@@ -1873,7 +1882,7 @@ c      call AS2013_v10_model (ip,iper,ia,ndist,di,nmag,magmin,dmag,DIP,z1,useRy0
       call AS2013_v10_model (ip,k,ia,ndist,di,nmag,magmin,dmag,DIP,z1,useRy0,vs30,hardrock,rxfac)
       elseif(ipia.eq.38)then
         if(period(ip).le.0.01)then
-        iper=1
+        iper(ip)=1
         k=1
         else
         k=2
@@ -1882,7 +1891,7 @@ c      call AS2013_v10_model (ip,iper,ia,ndist,di,nmag,magmin,dmag,DIP,z1,useRy0
         if(k.gt.22)stop'period not found in Idr2012'
         enddo
         print *,'Calling Idriss-2012 GMPE for period ',period(ip)
-      iper=k
+      iper(ip)=k
       endif
       wus=.true.
 c      call Idriss2012(iper,ip,ia,ndist,di,nmag,magmin,dmag,vs30)	
@@ -4206,6 +4215,7 @@ c
      9              1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.2, 2.4, 2.5, 2.6, 2.8, 
      1              3.0, 3.2, 3.4, 3.5, 3.6, 3.8, 4.0, 4.2, 4.4, 4.6, 4.8, 
      1              5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0 /
+       rxfac=(/0.,0.5,1.,2.,3.,4.,4.5,5.,5.5,6./)
 
 c     VS30 class is to distinguish between the sigma if the VS30 is measured
 c     vs the VS30 being estimated from surface geology.
@@ -9066,10 +9076,11 @@ c        if(ii.eq.1)print *,M,psa,sigmaf,iprd
 
         end subroutine CY2012_NGA
      
-      subroutine gksa12(ip,L,ia,ndist,di,nmag,magmin,dmag,vs,Bdepth,Q)
+      subroutine gksa13(ip,L,ia,ndist,di,nmag,magmin,dmag,vs,Bdepth,Q)
 c Revised Graizer and Kalkan model with continuous response variation with 
 c      basin depth. Also PGA has been identified with 0.01s SA due to basin
 c      effect. 
+c Revised to March 2013 version. Apr 1 2013. SHarmsen.
 c Input: L = period index in below per array.
 c Bdepth = basin depth (km). new parm. 2012. Geotech: depth to Vs=1.5 km/s
 c       Q quality factor 435 for California according to GK
@@ -9138,22 +9149,26 @@ C*********Coefficients file, dec 2012 ***************
          D1 = 0.65
          sigpga = 0.550
          sigmaf=1./sigpga/sqrt2
-c Treat PGA as 0.01 SA because of the basin effect below... SH. Dec 4 2012.
+c------SA calculations ----------mod coeffs mar 29 2013 SH-----
           e1=-0.0012
-          e2=-0.4085
+          e2=-0.40854
           e3= 0.0006
           e4= 3.63
           a1= 0.01686
           a2= 1.2695
           a3= 0.0001
           Dsp=0.75
-          t1= 0.0022
-          t2= 0.63
+c          t1= 0.0022
+          t1= 0.001
+c          t2= 0.63
+          t2= 0.60
           t3=-0.0005
           t4=-2.1
-          s1=0.001
+c          s1=0.001
+          s1=0.00
           s2=0.077
           s3=0.3251
+
 c********* Basin Effect *******************************
 
 c-------  Depth dependance ----------------------------
@@ -9246,8 +9261,8 @@ c------SA calculations ---------------------------------------
           Amp = (a1*Mw+a2)*exp(a3*x)
 
           Si = s1*x-(s2*Mw+s3)
-
-          Tspo = t1*x+t2*Mw+t3*Vs+t4
+          Tspo = MAX(0.3,ABS(t1*x+t2*Mw+t3*Vs+t4))	!changed 3/29/2013
+c          Tspo = t1*x+t2*Mw+t3*Vs+t4
           Pern = (per(L)/Tspo)**Slope
 
           temp1 = (alog(per(L))+Mu)/Si
@@ -9291,7 +9306,7 @@ c         if (ii.eq.1.or.ii.eq.2)print *,x,SA1,Mw,sigma(L)
            enddo	!jj mag loop
            enddo	!kk source-depth loop
            return
-        END subroutine gksa12
+        END subroutine gksa13
 
       subroutine Idriss2012(iper,ip,ia,ndist,di,nmag,magmin,dmag,vs30)
 c Dec 2012: for pga and many periods to 10s.
@@ -10749,7 +10764,7 @@ c          The approximate method (Equation 21)
 
       subroutine bssa2013drv( ip,indx_per, ia,ndist,di,nmag,magmin,
      * dmag,v30)
-      parameter (npermx=23)
+      parameter (npermx=23, sqrt2 = 1.414213562)
       real, dimension(3)::  c,gndout
 c this driver code runs the NGAW BSSA model for PGA and then for period with index indx_per
 c the outputs are lny = logged SA, and sigmaf =1/sigma/sqrt2 
@@ -11032,8 +11047,9 @@ c       if(abs(m-7.).lt.0.05.and.ip.eq.1)print *,rjb,exp(lny),r,' pgaw'
 
 
          if(e_wind(ip))then
-         gndout(2)= y+gndx
-         gndout(3)= y-gndx
+         gndout(2)= lny+gndx
+         gndout(3)= lny-gndx
+c         if(ii.eq.1)print *,m,gndout(1),gndout(2),gndout(3),lny
          endif
        if(fix_sigma)sigmaf=1./sigma_fx/sqrt2
       do ie=1,nfi
@@ -11114,6 +11130,7 @@ c       if(abs(m-7.).lt.0.05.and.ip.eq.1)print *,rjb,exp(lny),r,' pgaw'
      :        lambda1, lambda2, 
      :        tau1, tau2,
      :        alny, sigmaf)     
+! --------------------------------------------------------- bssa13_gm_sub4y
 c Note output log(SA) not SA in this version. No need for SA in downstream calcs. 
 c removed iregion: taken care of before arriving here.    
 c z1 is depth to 1 km/s Vs. Units km (?). Meters doesn't work. 
@@ -11240,7 +11257,6 @@ c "Rake" variable removed because not used SH Mar 15 2013.
       real sigma, tau,lnSa, pgaRock, vs30, rjb, rRup, R_x, aspectratio, rake,
      1     dip, mag, sigcorr(MAXPER), taucorr(MAXPER) 
 c      real sig1(MAXPER), sig2(MAXPER), tau1(MAXPER), tau2(MAXPER)
-c      real tauCorr, sigCorr
       real taper1, taper2, taper3, taper4, taper5
       real a1T, a2T, a3T, a5T, a6T, a7T, a8T, a9T
       real a10T, a11T, a12T, a13T, a14T, a15T, a18T
