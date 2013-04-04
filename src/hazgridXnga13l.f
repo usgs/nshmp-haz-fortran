@@ -1,4 +1,7 @@
-c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  04.01. 2013. Long header version.
+c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  04.04. 2013. Long header version.
+c 4/04/2013: asum first dim up dimension to 40 to accomodate big range of magnitudes.
+c 4/02/2013: added a definition for di2 = di/2 that was needed (PC Liu Discovery). also small
+c		repair of a line controlling logic for variable Vs30 input model.
 c 4/01/2013: Add GK13. Calif Q is 156.6 here (new). Same index as GK12.
 c 3/20/2013: clean up declarations. dont use dimension without specifying type. This
 c step is a disambiguation where subroutines specify "implicit none". Some array items
@@ -97,6 +100,9 @@ c in a default offshore Mmax which is the magmax read in in the input file. This
 c This option also requires that you read in an mmax array which defines the absolute upper limit of Mmax at
 c each grid point (maxmat = 1 must be selected). If you set maxmat to 0, the input magmax will be applied at
 c all geographic locations (no craton / margin distinction).
+c maxmat has additional option in 2013: maxmat>1 means read in a model of Mmax regions. In each Mmax
+c region, a distribution of Mmax values is read in. The hazard is calculated based on the CCD of Mmax
+c in each of these regions (up to 10 such zones are allowed)
 c
 c sept 30 2008: define dy inside getBooreNGA (prior omitted)
 c October 26 2007: add Oct version of CY NGA relation. Subroutine CY2007H.
@@ -168,7 +174,7 @@ c --- Future directions: finite reverse and normal slip faults need to be coded 
 c ---  Simplest model might be a circular surface with center at each source point.
 c
 c --- Compile with  f95 or gfortran. On Solaris, use -e for extended line length. link to iosubs.o
-c Try this on sun  using Solaris 10 fortran 2006:
+c Try this on sun  using Solaris 10 fortran 95:
 c f95 hazgridXnga13l.f -o hazgridXnga13l -fast iosubs_128.o -e -ftrap=%none
 c
 c Try this on PCs with gfortran:
@@ -338,6 +344,7 @@ c--- period=0 indicates PGA. period = -1 indicates PGV
         parameter (nlmx=20,npmx=8,nsrcmx=200000)   
       real*8 emax/3.0/,sqrt2/1.4142135623/
       real, dimension(2) :: mcut,dcut,tarray
+      real, dimension(10) :: mwmaxx	!mwmaxx=the absolutely largest mag in a zone. new 4/04/2013.
 c You can raise p dim & make some minor code changes to improve accuracy (currently
 c p() has about 4 decimal place accuracy which is likely to be good enough)
       common/prob/p(25005),plim,dp2     !table of complementary normal probab.
@@ -364,6 +371,8 @@ c add SDI-related common block sdi feb 22 2013
         real, dimension(0:9):: dipbck
       real, dimension (3,3,8) :: gnd_ep
       real, dimension(16,40,8,3,3) :: hbin,ebar,rbar,mbar
+      real, dimension(40,10):: mmax_ccd	!new 4/02/2013 complementary cum. distribution of mmax
+c (first dimension) in zones 1 to 10 (2nd dimension)
       common/epistemic/nfi,e_wind,gnd_ep,mcut,dcut
       common/deagg/deagg
 c epsilon_0 pre-calcs. will occur if and only if deagg = .true.
@@ -385,16 +394,18 @@ c e0_ceus not saving a depth of rupture dim, not sens. to this. last dim is ip (
        common/e0_ceus/e0_ceus(260,31,8)
         common/ceus_sig/lceus_sigma,ceus_sigma
       real, dimension (23):: perbssa13
+      real, dimension(40,10):: mwmax,wtmw,wt_zone
        common/cb13p/Percb13
-      integer flush,m_ind
+      integer m_ind
       real, dimension(13):: a11fr,freq
 c wtmj_cra = wt applied to rate when using Johnston mb to M for src in stable craton
 c wtmj_ext = wt applied to M when using Johnston mb to M for src in extended margin
 c wtmab_cra, wtmab_ext = ditto for Atkinson-Boore mb to M
-      real, dimension(30) :: wtmj_cra,wtmj_ext,wtmab_cra,wtmab_ext,wt_cra,wt_marg
-      real, dimension(40) :: wt_mb,xmw
-c wt_mb is assigned to one of the above depending on current site location and
+      real, dimension(40) :: wtmj_cra,wtmj_ext,wtmab_cra,wtmab_ext,wt_cra,wt_marg
+      real, dimension(40) :: wt_mask,xmw
+c CEUS, 2008:wt_mask is assigned to one of the above depending on current site location and
 c current mb --> Mw in input
+c CEUS, 2013: wt_mask is assigned to one of the wtmw() vectors, the one corresponding to zone(k)
       real v30(100000)      !possible array of site-specific vs30 new mar 2006.
       type header_type
         character*128 name(6)
@@ -424,7 +435,8 @@ c current mb --> Mw in input
       real, dimension(13) :: pcut 
       integer, dimension(13) :: icut
       integer readn,iq_ka,iq_as,jabs,vs30_class
-      logical finite,grid,isok      ! grid=.true. if stations form a regular grid
+      logical finite,grid,isok,m_zones/.false./      ! grid=.true. if stations form a regular grid
+c m_zones is an indicator that magnitude zones are (are not) active
       logical lceus_sigma/.false./,wus/.false./,ceus/.false./,slab/.false./,readcb13/.true./
       logical byeca,byesoc,byeext,byepug,v30a,override_vs,l_mmax,hardrock,useRy0
 c override_vs becomes true if for deaggregation work user inputs a vs30 on command line.
@@ -474,9 +486,10 @@ c some arrays for BSSA NGAW model
              real per_pga4nl, e_pga4nl(7), amh_pga4nl, 
      :     c_pga4nl(4), amref_pga4nl, rref_pga4nl, h_pga4nl 
 c safix is for fixed-SA or fixed PGA runs, usually with deaggregation.
-      dimension asum(30,1000,3),arate(nsrcmx,40)
+      dimension asum(40,1000,3),arate(nsrcmx,40)
 c nov 14 2007: add wtgrid matrix for use if Mtaper > 5 (agrid tapering magnitude)
       real, dimension(nsrcmx) :: a,b,mmax,wtgrid,fltstrk
+      integer, dimension(nsrcmx) :: mzone	!zone indicator
 c Spectral period -1 is reserved for pgv
 c      pcut=(/0.0062,0.0228,0.0668,0.1587,0.3085,0.5,0.6915,.8413,.9332,
 c     + 0.9772,0.9938,1.,1./)
@@ -570,14 +583,15 @@ c use 2008 USGS logic tree for Mmax for the wts for mbLg from 5.05 to 7.45. We m
 c read in this distribution but this is safe for envisioned purpose: web site server for
 c site-specific deagg.
       dipbck =(/90.0,80.,70.,60.,50.,45.,40.,35.,30.,25.0/)
+c the size of below arrays was increased to 40 because of potentially greater Mmax under consideration.
       wtmj_cra=(/1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,
-     +0.9,0.7,0.2,0.2,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0./)
+     +0.9,0.7,0.2,0.2,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0./)
       wtmj_ext=(/1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,
-     +1.,1.,1.,0.9,0.7,0.7,0.2,0.,0.,0.,0.,0.,0.,0.,0./)
+     +1.,1.,1.,0.9,0.7,0.7,0.2,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0./)
       wtmab_cra=(/1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,
-     +1.,1.,0.9,0.9,0.7,0.2,0.,0.,0.,0.,0.,0.,0.,0.,0./)
+     +1.,1.,0.9,0.9,0.7,0.2,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0./)
       wtmab_ext=(/1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,
-     +1.,1.,1.,1.,1.,1.,0.9,0.7,0.2,0.,0.,0.,0.,0.,0./)
+     +1.,1.,1.,1.,1.,1.,0.9,0.7,0.2,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0./)
       pithy = (/'Using Median','Median+EpUnc','Median-EpUnc'/)
 
 c      write(6,*) "enter name of input file"
@@ -698,7 +712,7 @@ c you have to be careful that your erf can take a real*8. If not, spr0=pr0 assig
 c where spr0 is single precision should be tried.
       v30a = .false.
        distnf = 0.0; sigmanf = 0.0
-      wt_mb=1.0
+      wt_mask=1.0
       craton=.false.
       margin=.false.
       write(6,580)'Enter a zero for grid of sites 1 to 30 for list: '
@@ -874,6 +888,7 @@ c check for reasonable weights
       read(1,*) di,dmax
       write(6,*)'dist incr ',di,' max dist ',dmax
 c New: source grid independent of station grid.
+	di2=di/2.0
 c      write(6,*) "for sources: enter min lat, max lat, dlat"
       read(1,*) ysmin, ysmax, dsy
 c      write(6,*) "for sources: enter min lon, max lon, dlon"
@@ -904,7 +919,7 @@ c === iflt = -3 use point src with Johnston mblg to Mw conv.
 c --- iflt = -4 use point src with Boore-Atkinson nblg to Mw conv. new sept 2008
 c
 c--- ibmat=1 uses b-value matrix
-c--- maxmat = 1 uses Mmax matrix. 
+c--- maxmat = 1 uses Mmax matrix. mmax>1 uses zones of Mmax. New April 2013.
 c --  maxmat = -1, use min of Mmax matrix and magmax scalar value input below
 c-- set each to zero if you don't want these
 c New nov 14 07L add field Mtaper (real variable). If M>Mtaper, multiply rate by wtgrid(k)
@@ -944,6 +959,7 @@ c New sept 2008: Use logical variable finite to control whether it's handled as 
       craton=.false.
       endif
       write(6,*)'Magmin,magmax ',magmin,magmax
+      dmag2= dmag/2.
       if(magmin.lt.4.5)stop' magmin appears unreasonably low.'
       if(ibmat.eq.1) then
 c        write(6,*) "enter name of b-value file"
@@ -962,7 +978,7 @@ c      write(6,*) "ymin=",ymin
         else
         write(6,*)'Constant b-value used ',bval,' scalar mmax ',magmax
         endif
-      if(maxmat.eq.1.or.maxmat.eq.-1) then
+      if(maxmat.ge.1.or.maxmat.eq.-1) then
 c        write(6,*) "enter name of Mmax file"
         read(1,900) name4
       inquire(file=name4,exist=isok)
@@ -973,17 +989,46 @@ c        write(6,*) "enter name of Mmax file"
         if(nsrc.gt.readn)stop 'these must be equal.'
         if(maxmat.eq.1)then
       write(6,*)'Geographic mmax file replaces const. mmax ',name4
-      else
+      elseif(maxmat.lt.0)then
       l_mmax=.true.
 c      s_magmax=magmax
       write(6,*)'Code takes minimum of mmax file and ',magmax
+      else
+      m_zones=.true.	!logical to indicate that magnitude "zones" are active
+      write(6,*)'Indicator file of mmax zones is: ',name4
+      write(6,*)'New feature Apr 2 2013: zones define regions with different MMax distributions'
+c the zone mmax distribution with weights
+c example line: 5 6.5 0.1 6.7 0.2 6.9 0.4 7.1 0.2 7.3 0.1
+      do k=1,maxmat
+      read(1,*)izone,nm,(mwmax(j,izone),wtmw(j,izone),j=1,nm)
+      mwmaxx(izone)=mwmax(nm,izone)
+      wnow=1.
+      i1=1
+      sum=0.0
+      do j=1,nm
+      i2= nint((mwmax(j,izone)-magmin)/dmag)+1
+      print *,i2,mwmax(j,izone), magmin,dmag,izone
+      wt_zone(i1:i2,izone)=wnow
+      i1=i2+1
+      wnow=wnow-wtmw(j,izone)
+      sum=sum+wtmw(j,izone)
+      enddo	!j loop
+      if(abs(sum-1.).gt.1e-6)then
+      print *,'Sum of weights in zone ',k,' is not 1. Renormalizing. Sum ',sum
+      wt_zone(1:i1,izone)=wt_zone(1:i1,izone)/sum
+      endif
+      wt_zone(i1:40,izone)=0.0	!Pr[ M>max(Mmax)] is zero
+      print 3434,'For magnitude zone ',k,' CCD of Mmax beginning at ',magmin
+3434	format(a,i2,a,f5.2)
+      print *,wt_zone(1:i1,k)
+      enddo	!k loop
+      mzone=int(mmax)	!mzone is integer field over the region {1,2,..,mmax}
       endif
         else
         write(6,*)'This mmax file was not found: ',name4
         stop
         endif
         endif
-      dmag2= dmag/2.
       fac= alog10(10.**(bval*dmag2)-10.**(-bval*dmag2))
 c new Nov 14 2007: enter wtgrid file name if Mtaper is between 5 and 8. Mtaper is a magnitude
 c above which the rate of events will be decreased by a factor to be found in a file
@@ -1010,11 +1055,11 @@ c      write(6,*) "enter name of a-value file"
       read(1,900) name
       inquire(file=name,exist=isok)
       if(isok)then
-      call openrx(iag,name)
+      call openr(name)
 c dpes the agrid file have a header record? If so read it.
       if(iflt.ge.10)then
       nhd = 896
-      call getheadx(iag,hd_a,nhd,n)
+      call gethead(hd_a,nhd,n)
       ysmin=hd_a%minlat; ysmax=hd_a%maxlat; dsy=hd_a%dlat
       print *,'From header, ymin,ymax,dy for sources: ',ysmin,ysmax,dsy
       nsx= nint((hd_a%maxlon-hd_a%minlon)/hd_a%dlon)+1
@@ -1026,7 +1071,7 @@ c dpes the agrid file have a header record? If so read it.
       print *,'Agrid header info replaces input file. Nsx,nsy,bval ',nsx,nsy,bval
       print *,'Mean return time (yrs) for this zone: ',hd_a%ri
       endif
-      call getbufx(iag,a,nsrc,readn)
+      call getbuf2(a,nsrc,readn)
       write(6,*)'agrid file ',name
       write(6,*) nsrc,readn,' agrid counts'
         if(nsrc.gt.readn)stop 'These must be equal.'
@@ -1104,6 +1149,8 @@ c only after mmax(j) has been given its annual checkup above.
       if(maxmat.eq.0) nmag= (magmax-dmag2-magmin)/dmag +1.4
       if((maxmat.eq.0).and.(magmax.eq.magmin)) nmag=1
       if(abs(maxmat).eq.1) nmag= (mmax(j)-dmag2-magmin)/dmag +1.4
+c new 4/04/2013: for the multiple zones of mmax, find nmag for each source location
+      if (maxmat.gt.1)nmag=(mwmaxx(mzone(j))-dmag2-magmin)/dmag +1.4
       if(nmag.gt.nmagmax) nmagmax=nmag
       do 91 m=1,nmag
       xmag= magmin+(m-1)*dmag
@@ -1122,6 +1169,7 @@ c only after mmax(j) has been given its annual checkup above.
   90  continue
       write(6,*)'Minimum mag for this run: ',magmin
       print *,'maximum eq rate is ',aratemx,' at j=',jp
+      if(aratemx.le.0.)stop'No hazard. Nothing to calculate'
       coef= 3.14159/180.
       ndist= dmax/di +0.5
       nmag= nmagmax
@@ -1742,8 +1790,7 @@ c Determine index of period in the campbell set, camper.
         call getCampNGA1107 
      + (ip,icb,ia,ndist,di,nmag,magmin,dmag,sigmanf,distnf)
 c below added mar 6 2008 from email comment by Ken Campbell
-       if(vs30.gt.1500.)stop 'Vs30 >1500 m/s and CB NGA relation does 
-     *not permit this.'   
+       if(vs30.gt.1500.)stop 'Vs30 >1500 m/s and CB NGA relation does not permit this.'   
          elseif(ipia.eq.32) then
          if(icode(ip,ia).lt.0)then
          icode(ip,ia)=-icode(ip,ia)
@@ -1816,8 +1863,7 @@ c CY2013 index is 33.
       dowhile(percy13(k).ne.per.and.k.lt.24)
       k=k+1
       enddo
-      if(abs(percy13(k)-per).gt.0.002)stop'period not available for 
-     *CY2013 GMPE'
+      if(abs(percy13(k)-per).gt.0.002)stop'period not available for CY2013 GMPE'
       write(6,*)'Calling CY2013 NGA-W revision with deltaz1=',deltaz1
       write(6,*)'Calling CY2013 NGA-W with period index ',k
       iper(ip) = k
@@ -1845,7 +1891,12 @@ c        call CY2013_NGA(ip,iper(ip),ia,ndist,di,nmag,magmin,dmag,DIP,deltaz1,vs
        else
       Q=435.	!GK 13 update for basin and range outside CA
       endif
-      Bdepth=0.25*dbasin+0.75*z1km	!use 1km according to GK for testing, assuming Campbell basin=2 km.
+c keep Bdepth very shallow for rock sites. new 4/4/2013.
+	if(vs30.ge.600.)then
+	 Bdepth=1.1*z1km
+	else
+         Bdepth=0.75 * z1km + 0.25*dbasin      !Vladimir says his basin is 1.5 km/s isosurface. Campbell is
+	endif
       print *,'Calling gksa13 with basin depth ',Bdepth,' Q ',Q
       call gksa13(ip,ipgk,ia,ndist,di,nmag,magmin,dmag,vs30,Bdepth,Q)	
       elseif(ipia.eq.34)then
@@ -2011,6 +2062,7 @@ c xwide(i) is max distance at which Rjb is zero (hw on)
 c The flush function dumps buffered print material. Gfortran objects to the flush call
 c so it is commentd out.
 c        i=flush(6)
+        call flush(6)
 c If flush works for your computer, you can look at log file before the big grid gets underway.
 c---Here's the guts
       icnt=1
@@ -2031,7 +2083,7 @@ c      write(6,*)rx,ry,i
             endif
       if(v30a)then
 c find nearest gridpoint in vs30 array to the site with coords rx,ry
-      if(rx.gt.vxmax.or.rx.lt.vxmin.or.rx.gt.vymax.or.ry.lt.vymin)then
+      if(rx.gt.vxmax.or.rx.lt.vxmin.or.ry.gt.vymax.or.ry.lt.vymin)then
       vs30=vs30dflt
       else
       ivx=1+nint((rx-vxmin)/vdx)	
@@ -2078,10 +2130,12 @@ c
       wt2= frac
       wt1=1.-wt2
       endif
-      if(craton(j))then
-         wt_mb(1:30)=wt_cra
+      if(m_zones)then
+      wt_mask(1:40)=wt_zone(1:40,mzone(j))
+      elseif(craton(j))then
+         wt_mask(1:40)=wt_cra
         elseif(margin(j))then
-        wt_mb(1:30)=wt_marg
+        wt_mask(1:40)=wt_marg
         endif
              do m=1,nmagmax
       xmag= xmw(m)      !use the array of moment mag.
@@ -2090,11 +2144,11 @@ c point source calc based on moment mag being < 6.
 c point-source summation
       do kk=1,ntor
       if(xmag.lt.6.5)then
-         asum(m,idist,kk)= asum(m,idist,kk) + arate(j,m)*wtor(kk)*wt_mb(m)*wt1
-         asum(m,ifrac,kk)= asum(m,ifrac,kk) + arate(j,m)*wtor(kk)*wt_mb(m)*wt2
+         asum(m,idist,kk)= asum(m,idist,kk) + arate(j,m)*wtor(kk)*wt_mask(m)*wt1
+         asum(m,ifrac,kk)= asum(m,ifrac,kk) + arate(j,m)*wtor(kk)*wt_mask(m)*wt2
           else
-         asum(m,idist,kk)= asum(m,idist,kk) + arate(j,m)*wtor65(kk)*wt_mb(m)*wt1
-         asum(m,ifrac,kk)= asum(m,ifrac,kk) + arate(j,m)*wtor65(kk)*wt_mb(m)*wt2
+         asum(m,idist,kk)= asum(m,idist,kk) + arate(j,m)*wtor65(kk)*wt_mask(m)*wt1
+         asum(m,ifrac,kk)= asum(m,ifrac,kk) + arate(j,m)*wtor65(kk)*wt_mask(m)*wt2
          endif
          enddo      !top of rupture kk index
       else      !finite fault follows
@@ -2141,11 +2195,11 @@ c less or more depending on aspect ratio, dip, other fault geom details.
 c Rjb is distance. Different weights to different depths & M applied here
          do kk=1,ntor
          if(xmag.lt.6.5)then
-         asum(m,idist,kk)= asum(m,idist,kk) + arate(j,m)*wtor(kk)*wt_mb(m)*wt1
-         asum(m,ifrac,kk)= asum(m,ifrac,kk) + arate(j,m)*wtor(kk)*wt_mb(m)*wt2
+         asum(m,idist,kk)= asum(m,idist,kk) + arate(j,m)*wtor(kk)*wt_mask(m)*wt1
+         asum(m,ifrac,kk)= asum(m,ifrac,kk) + arate(j,m)*wtor(kk)*wt_mask(m)*wt2
          else
-         asum(m,idist,kk)= asum(m,idist,kk) + arate(j,m)*wtor65(kk)*wt_mb(m)*wt1
-         asum(m,ifrac,kk)= asum(m,ifrac,kk) + arate(j,m)*wtor65(kk)*wt_mb(m)*wt2
+         asum(m,idist,kk)= asum(m,idist,kk) + arate(j,m)*wtor65(kk)*wt_mask(m)*wt1
+         asum(m,ifrac,kk)= asum(m,ifrac,kk) + arate(j,m)*wtor65(kk)*wt_mask(m)*wt2
          endif
          enddo
          endif      !close enough to add rate
@@ -9127,10 +9181,10 @@ c lines from hazgrid. table production
      &         0.16,0.18,0.20,0.22,0.24,0.27,0.30,0.33,
      &         0.36,0.4,0.46,0.5,0.6,0.75,0.85,1.0,1.5,
      &         2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0/
-      DATA sigma/0.542,0.543,0.544,0.547,0.549,0.549,0.553,0.558,0.568,
-     &         0.577,0.584,0.591,0.597,0.602,0.610,0.616,0.622,
-     &         0.627,0.634,0.642,0.647,0.658,0.667,0.672,0.681,0.703,
-     &         0.718,0.74,0.756,0.768,0.775,0.78,0.78,0.78,0.78/
+c      DATA sigma/0.542,0.543,0.544,0.547,0.549,0.549,0.553,0.558,0.568,
+c     &         0.577,0.584,0.591,0.597,0.602,0.610,0.616,0.622,
+c     &         0.627,0.634,0.642,0.647,0.658,0.667,0.672,0.681,0.703,
+c     &         0.718,0.74,0.756,0.768,0.775,0.78,0.78,0.78,0.78/
 C***********************************************************
 C*********Coefficients file, dec 2012 ***************
          c1 =  0.140
@@ -9149,6 +9203,12 @@ C*********Coefficients file, dec 2012 ***************
          D1 = 0.65
          sigpga = 0.550
          sigmaf=1./sigpga/sqrt2
+c revised sigma in the latest GK13fl model... added apr 4 2013.
+         if (per(L).le.0.12) then
+            Sigma(L)=0.0047*alog(per(L))+0.5522
+          else
+            Sigma(L)=0.0497*alog(per(L))+0.646
+          endif
 c------SA calculations ----------mod coeffs mar 29 2013 SH-----
           e1=-0.0012
           e2=-0.40854
@@ -11130,7 +11190,6 @@ c         if(ii.eq.1)print *,m,gndout(1),gndout(2),gndout(3),lny
      :        lambda1, lambda2, 
      :        tau1, tau2,
      :        alny, sigmaf)     
-! --------------------------------------------------------- bssa13_gm_sub4y
 c Note output log(SA) not SA in this version. No need for SA in downstream calcs. 
 c removed iregion: taken care of before arriving here.    
 c z1 is depth to 1 km/s Vs. Units km (?). Meters doesn't work. 
