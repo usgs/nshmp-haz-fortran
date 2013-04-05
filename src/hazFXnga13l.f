@@ -1,4 +1,8 @@
 c--- program  hazFXnga13l.f; 03/29/2013; Use  with NGA relations, or others.
+c 4/04/2013: increase iamax, number of atten models, to 10 (per spectral period)
+c
+c 4/04/2013: Reduce basin effect in GK13 if Vs30>600 m/s.  Basin bottom is depth where Vs>1.5 km/s. Cant be 0 for BC
+c	site condition. Update sigma_aleatory model in gk13.
 c 3/29/2013: include GK13 model which replaces GK12. Index 38.
 c 3/19/2013 : increase nfltmx to 1000.
 c 3/13/2013: revise AS13 to v10. The subroutine with v10 is according to Norm closer to AS08 than the v5 version.
@@ -333,9 +337,9 @@ c --- PGD units cm (CB only, oct 2006)
       parameter ( pi=3.14159265,fourpisq=39.4784175,tiny=1e-12)
 c Prob. calcs associated with fault rates less than tiny will be omitted.
 c Some of the Aug 2007 AFault segmodels have rates of 0 and of 1e-20 for example.
-      parameter (nfltmx=1000, nlvmx=20, npmx=8)  
+      parameter (nfltmx=1000, nlvmx=20, npmx=8,iamx=10)  
       REAL, PARAMETER :: vref = 760.0
-      dimension xlev(nlvmx,npmx),ylev(nlvmx,npmx),nlev(npmx),icode(npmx,8)
+      dimension xlev(nlvmx,npmx),ylev(nlvmx,npmx),nlev(npmx),icode(npmx,iamx)
       dimension p(250005)      !table of complementary normal probab.
 c You can raise p dim & make some minor code changes to improve accuracy. Currently
 c p() has about 4 or 5 decimal place accuracy which is likely good enough.
@@ -347,7 +351,7 @@ c p() has about 4 or 5 decimal place accuracy which is likely good enough.
 c wind used to determine if additional epistemic uncert will be added to
 c or subtracted from log(median) of each relation for that period
       real, dimension (6,6) :: dminr
-c      real, dimension (8,8) :: nga13l
+c      real, dimension (8,iamx) :: nga13l
       real, dimension (3,3,8) :: gnd_ep
       real, dimension(3) :: gnd,gmwt
 c gnd(1) contains the median; gnd(2) contains median+gnd_ep(); and gnd(3)
@@ -381,7 +385,7 @@ c
       character*12, dimension(-10:39) :: att_typ     
       real ar(400,6)      !aspect ratio for floating ruptures. Can have 5 downdip
       logical ss,rev,normal,obl,pgacalc,nearsrc,noas97,l_gnd_ep(8)      
-      logical lb0,cluster,grid,isok,isbig,isclose,norpt(8,8),sdi/.false./
+      logical lb0,cluster,grid,isok,isbig,isclose,norpt(8,iamx),sdi/.false./
       logical lxyin,segin,poly,slist,openme/.true./,override_vs
 c     grid = true if stations form a regular grid
 c firstf is a logical variable to instruct code to perform certain fault calcs
@@ -455,11 +459,11 @@ c for footwall, same is true but code not altered for this case.
       real, dimension (990,4,nfltmx) :: u,v      
       real, dimension (10) :: dmbranch,wtbranch,grp_rate
 c not using testhw3(1000,50)
-      real prd(106),prob(1000,20,npmx,3,5),out(800000),wt(8,8,2),wtdist(8,8)
+      real prd(106),prob(1000,20,npmx,3,5),out(800000),wt(8,iamx,2),wtdist(8,iamx)
       real, dimension(80):: px,py 
       real, dimension(0:35) :: pdgk      !graizer and kalkan
       integer ival(8),icc(8,5)
-      integer, dimension(8,8):: iatten,irab
+      integer, dimension(8,iamx):: iatten,irab
 c ipertp = map to tabakoli-pezeshsk;iperb = map from input file to boore set of per
 c irab is an index for 4 possible varieties of the AB06 model. 2 for 140 bar & 2 for 200 bar stress
 c irab became 2-D on December 5, 2007. S Harmsen
@@ -473,7 +477,7 @@ c      real, dimension (22):: Percb13,PerIMIdriss
       integer ifn,isz,ipia,nscene
       integer, dimension(npmx,5,3) :: ifp
       integer, dimension (nfltmx) :: itype,npts,npts1,iftype,ibtype
-      logical, dimension(npmx,8) :: nga,wus02,ceus02,ceus11     
+      logical, dimension(npmx,iamx) :: nga,wus02,ceus02,ceus11     
 c logical variables for subsets of attenuation models should help narrow
 c the search more efficiently.   CEUS11 added mar 18 2011: Gail Atkinson's 3 new
 C CENA models, with indexes 25, 26, and 27. 
@@ -820,7 +824,11 @@ c     Norm Abrahamson's CA z1 reference (eq 18)
        z1_ref = exp ( -7.67/4. * alog( (Vs30**4 + 610.**4)/(1360.**4+610.**4) ) ) / 1000.
       z1=z1cal	!CY2013 function used until we know better for wus...
       z1km=Z1*0.001	!for AS need units km
+	if(vs30.ge.600.)then
+	dgkbasin=1.1*z1km
+	else
       dgkbasin=0.75 * z1km + 0.25*dbasin      !Vladimir says his basin is 1.5 km/s isosurface. Campbell is
+	endif
 c this Z1 is  the recommended value of CY. May need to be changed (40 m for 760 m/s vs30)
       write(6,*)' Vs30 (m/s), Z1 (m) and depth of basin (km): ',vs30,Z1,dbasin
       if(vs30.lt.90..and.vs30.gt.0.)then
@@ -7136,7 +7144,7 @@ c Can code handle very shallow dipping faults? not with Plan A.
        endif
       nlenx=int((tlen+1.)/dlen)
       npts1=nlenx
-      write(6,*)nlenx,nleny,avaz
+c      write(6,*)nlenx,nleny,avaz
       do 101 ix=1,nlenx
       delta= float(ix-1)*dlen
       do 500 iseg=1,nseg
@@ -8347,10 +8355,10 @@ c sigmaf = 1/sigma/sqrt2
      &         0.16,0.18,0.20,0.22,0.24,0.27,0.30,0.33,
      &         0.36,0.4,0.46,0.5,0.6,0.75,0.85,1.0,1.5,
      &         2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0/
-      DATA sigma/0.542,0.543,0.544,0.547,0.549,0.549,0.553,0.558,0.568,
-     &         0.577,0.584,0.591,0.597,0.602,0.610,0.616,0.622,
-     &         0.627,0.634,0.642,0.647,0.658,0.667,0.672,0.681,0.703,
-     &         0.718,0.74,0.756,0.768,0.775,0.78,0.78,0.78,0.78/
+c      DATA sigma/0.542,0.543,0.544,0.547,0.549,0.549,0.553,0.558,0.568,
+c     &         0.577,0.584,0.591,0.597,0.602,0.610,0.616,0.622,
+c     &         0.627,0.634,0.642,0.647,0.658,0.667,0.672,0.681,0.703,
+c     &         0.718,0.74,0.756,0.768,0.775,0.78,0.78,0.78,0.78/
 C***********************************************************
 C*********Coefficients file, dec 2012 ***************
          c1 =  0.140
@@ -8368,6 +8376,11 @@ C*********Coefficients file, dec 2012 ***************
          c11= 1.0
          D1 = 0.65
          sigpga = 0.550
+         if (per(L).le.0.12) then
+            Sigma(L)=0.0047*alog(per(L))+0.5522
+          else
+            Sigma(L)=0.0497*alog(per(L))+0.646
+          endif
          if(fix_sigma)sigpga=sigma_fx
          sigmaf=1./sigpga/sqrt2
 
