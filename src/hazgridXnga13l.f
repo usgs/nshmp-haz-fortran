@@ -1006,7 +1006,8 @@ c example line: 5 6.5 0.1 6.7 0.2 6.9 0.4 7.1 0.2 7.3 0.1
       i1=1
       sum=0.0
       do j=1,nm
-      i2= nint((mwmax(j,izone)-magmin)/dmag)+1
+c      i2= nint((mwmax(j,izone)-magmin)/dmag)+1
+      i2= nint((mwmax(j,izone)-magmin)/dmag)
       print *,i2,mwmax(j,izone), magmin,dmag,izone
       wt_zone(i1:i2,izone)=wnow
       i1=i2+1
