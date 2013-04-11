@@ -1,4 +1,5 @@
 c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  04.04. 2013. Long header version.
+c 4/09/2013: modify CB13 and GK13. Modify Basin and Range Q for GK13 to 205
 c 4/04/2013: asum first dim up dimension to 40 to accomodate big range of magnitudes.
 c 4/02/2013: added a definition for di2 = di/2 that was needed (PC Liu Discovery). also small
 c		repair of a line controlling logic for variable Vs30 input model.
@@ -1006,8 +1007,7 @@ c example line: 5 6.5 0.1 6.7 0.2 6.9 0.4 7.1 0.2 7.3 0.1
       i1=1
       sum=0.0
       do j=1,nm
-c      i2= nint((mwmax(j,izone)-magmin)/dmag)+1
-      i2= nint((mwmax(j,izone)-magmin)/dmag)
+      i2= nint((mwmax(j,izone)-magmin)/dmag)+1
       print *,i2,mwmax(j,izone), magmin,dmag,izone
       wt_zone(i1:i2,izone)=wnow
       i1=i2+1
@@ -1890,7 +1890,7 @@ c        call CY2013_NGA(ip,iper(ip),ia,ndist,di,nmag,magmin,dmag,DIP,deltaz1,vs
       elseif(ry.le.39.0 - 0.8*(rx+120.))then
       Q=156.6 	!more      california Q
        else
-      Q=435.	!GK 13 update for basin and range outside CA
+      Q=205.	!GK 13 update for basin and range outside CA
       endif
 c keep Bdepth very shallow for rock sites. new 4/4/2013.
 	if(vs30.ge.600.)then
@@ -1898,8 +1898,8 @@ c keep Bdepth very shallow for rock sites. new 4/4/2013.
 	else
          Bdepth=0.75 * z1km + 0.25*dbasin      !Vladimir says his basin is 1.5 km/s isosurface. Campbell is
 	endif
-      print *,'Calling gksa13 with basin depth ',Bdepth,' Q ',Q
-      call gksa13(ip,ipgk,ia,ndist,di,nmag,magmin,dmag,vs30,Bdepth,Q)	
+      print *,'Calling gksa13v2 with basin depth ',Bdepth,' Q ',Q
+      call gksa13v2(ip,ipgk,ia,ndist,di,nmag,magmin,dmag,vs30,Bdepth,Q)	
       elseif(ipia.eq.34)then
          if(icode(ip,ia).lt.0)then
          icode(ip,ia)=-icode(ip,ia)
@@ -2062,7 +2062,6 @@ c xwide(i) is max distance at which Rjb is zero (hw on)
   37     continue
 c The flush function dumps buffered print material. Gfortran objects to the flush call
 c so it is commentd out.
-c        i=flush(6)
         call flush(6)
 c If flush works for your computer, you can look at log file before the big grid gets underway.
 c---Here's the guts
@@ -9131,11 +9130,12 @@ c        if(ii.eq.1)print *,M,psa,sigmaf,iprd
 
         end subroutine CY2012_NGA
      
-      subroutine gksa13(ip,L,ia,ndist,di,nmag,magmin,dmag,vs,Bdepth,Q)
+      subroutine gksa13v2(ip,L,ia,ndist,di,nmag,magmin,dmag,vs,Bdepth,Q)
 c Revised Graizer and Kalkan model with continuous response variation with 
 c      basin depth. Also PGA has been identified with 0.01s SA due to basin
 c      effect. 
-c Revised to March 2013 version. Apr 1 2013. SHarmsen.
+c Revised to April V2 2013 version. Apr 9 2013. SHarmsen. Changed these coeff. values:
+c c9, e2, e4, t2, and t4. All others the same as in previous GK13.
 c Input: L = period index in below per array.
 c Bdepth = basin depth (km). new parm. 2012. Geotech: depth to Vs=1.5 km/s
 c       Q quality factor 435 for California according to GK
@@ -9196,7 +9196,8 @@ C*********Coefficients file, dec 2012 ***************
          c6 = -0.125
          c7 =  1.190
          c8 = -6.150
-         c9 =  0.525
+c         c9 =  0.525
+	c9 = 0.6
          bv = -0.240 
          Va = 484.5
          R1 = 100.0
@@ -9212,19 +9213,22 @@ c revised sigma in the latest GK13fl model... added apr 4 2013.
           endif
 c------SA calculations ----------mod coeffs mar 29 2013 SH-----
           e1=-0.0012
-          e2=-0.40854
+c          e2=-0.40854
+          e2=-0.38
           e3= 0.0006
-          e4= 3.63
+c          e4= 3.63
+	  e4=3.9
           a1= 0.01686
           a2= 1.2695
           a3= 0.0001
           Dsp=0.75
 c          t1= 0.0022
           t1= 0.001
-c          t2= 0.63
-          t2= 0.60
+c          t2= 0.60
+          t2= 0.59
           t3=-0.0005
-          t4=-2.1
+c          t4=-2.1
+          t4=-2.3
 c          s1=0.001
           s1=0.00
           s2=0.077
@@ -9367,7 +9371,7 @@ c         if (ii.eq.1.or.ii.eq.2)print *,x,SA1,Mw,sigma(L)
            enddo	!jj mag loop
            enddo	!kk source-depth loop
            return
-        END subroutine gksa13
+        END subroutine gksa13v2
 
       subroutine Idriss2012(iper,ip,ia,ndist,di,nmag,magmin,dmag,vs30)
 c Dec 2012: for pga and many periods to 10s.
@@ -10344,7 +10348,7 @@ C     Written by Yousef Bozorgnia (November 25, 2012)
       REAL, dimension(nper) :: c12, c13low,c13hi, c14,c15,k1, k2, k3,a2,h1,h2,h3
       REAL, dimension(nper) :: h4,h5,h6, phi_low, phi_hi,phi_lny,tau_lny,tau_lnyB
       REAL phi_lnAF(nper), rho(nper)
-      character*1 dum1
+      character*5 dum1
    
 C.....
 C.....READ MODEL COEFFICIENTS FROM AN EXCEL FILE (text FORMAT, csv does not work on sun workstation)
@@ -10352,10 +10356,18 @@ C.....
 c      if(icase.ne.1) go to 21 
       call get_lun(m)
 c updated input file name Feb 25 2013.
-        open (m,file='GR/CB13_Coeffs_Atten113_RE_fix_all_Feb_15_2013.txt',status='old',err=2012)
+c        open (m,file='GR/CB13_Coeffs_Atten113_RE_fix_all_Feb_15_2013.txt',status='old',err=2012)
+        open (m,file='GR/CB13_Apr8_coeffs.txt',status='old',err=2012)
+c CB coefficient file modified April 8 2013. Same structure. Different values. Also 3 comment lines
+c instead of 1.
       print *,'CB coefficient file opened OK unit ',m
       read (m,1) dum1
- 1    format(a1)
+ 1    format(a)
+ 	print *,dum1
+ 	read(m,1)dum1
+ 	print *,dum1
+ 	read(m,1)dum1
+ 	print *,dum1	!three lines
 
       do 20 iper=1,nper
         read (m,*)Per(iper),c0(iper),c1(iper),c2low(iper),c2(iper),c3(iper),

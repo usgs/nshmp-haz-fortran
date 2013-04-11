@@ -1,4 +1,9 @@
-c--- program  hazFXnga13l.f; 03/29/2013; Use  with NGA relations, or others.
+c--- program  hazFXnga13l.f; 04/09/2013; Use  with NGA relations, or others.
+c 4/09/2013: revise CB coeff file. The GMPE has not changed from feb, only the coeffs.
+c 4/09/2013: GK13 routine modified to version 2. Index is still 38. Basin and Range Q reset to 205
+c
+c 4/05/2013: correct the ia limit in wus02 ceus02 and some other arrays. IAMX is the limit, now set to 10
+c
 c 4/04/2013: increase iamax, number of atten models, to 10 (per spectral period)
 c
 c 4/04/2013: Reduce basin effect in GK13 if Vs30>600 m/s.  Basin bottom is depth where Vs>1.5 km/s. Cant be 0 for BC
@@ -725,7 +730,7 @@ c adum could be sa(g) or pgv (cm/s). need flexible format
             endif
       endif
       write (6,61)date,time,name
-61      format('# *** hazFXnga13l 03/29/2013 log file. Pgm run on ',a,' at ',a,/,
+61      format('# *** hazFXnga13l 04/09/2013 log file. Pgm run on ',a,' at ',a,/,
      +'# *** Input control file: ',a)
       if(poly)write(6,*)'hazFXnga13l: Polygon file &npts: ',polygon,npmax
 c Below bypasses are based on file name. Bypass wont work if file names change
@@ -1410,7 +1415,7 @@ c      print *,nper_gmpe,' number of periods having coeffs BSSA'
       write(6,*)'Calling Grazier Kalkan13 model.  Pd index ',ipgk(ip)
       write(6,*)'Graizer13 basin depth (km) set to ',dgkbasin
       Q_CA=157.	!New Q for California from Vladimir Graizer. His Q was 435
-      Q_BR = 435.     ! might be a reasonable average value for basin and range Q.
+      Q_BR = 205.     ! Possible reasonable average value for basin and range Q.
       write(6,*)'Graizer13 Quality factor for California= ',Q_CA
       write(6,*)'For WUS sites with longitude>-120E, use this Q ',Q_BR
       endif
@@ -2405,7 +2410,7 @@ c skip the 2nd period for now assume the period of interest was tabulated.
       else
       Q=Q_BR
       endif
-      call gksa13(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q)
+      call gksa13v2(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q)
       elseif(ipia.eq.39)then
       ib=0	!basin term Graizer & kalkan model of 2011? Out of date.
       call  gksa(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),IB)
@@ -2775,7 +2780,7 @@ c skip the 2nd period for now assume the period of interest was tabulated.
       else
       Q=Q_BR
       endif
-      call gksa13(ipgk(ip),ip,xmag2,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q)
+      call gksa13v2(ipgk(ip),ip,xmag2,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q)
       elseif(ipia.eq.39)then
       ib=0	!basin term Graizer & kalkan model
       call  gksa(ipgk(ip),ip,xmag2,rrup,gnd,sigmaf,vs30,iftype(ift),IB)
@@ -3145,7 +3150,7 @@ c skip the 2nd period for now assume the period of interest was tabulated.
       else
       Q=Q_BR
       endif
-      call gksa13(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q)
+      call gksa13v2(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q)
       elseif(ipia.eq.39)then
       ib=0	!basin term Graizer & kalkan model
       call  gksa(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),IB)
@@ -3521,7 +3526,7 @@ c      endif
       else
       Q=Q_BR
       endif
-      call gksa13(ipgk(ip),ip,xmag2,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q)
+      call gksa13v2(ipgk(ip),ip,xmag2,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q)
 c      print *,xmag2,rrup,gnd(1),sigmaf
       elseif(ipia.eq.39)then
       ib=0	!basin term Graizer & kalkan model
@@ -3912,7 +3917,7 @@ c skip the 2nd period for now assume the period of interest was tabulated.
       else
       Q=Q_BR
       endif
-      call gksa13(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q)
+      call gksa13v2(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q)
 c      print *,xmag,rrup,gnd(1),sigmaf
       elseif(ipia.eq.39)then
       ib=0	!basin term Graizer & kalkan model
@@ -3953,7 +3958,7 @@ c     Compute Sa at spectral period for given Vs30
      1                     vs30, SA1100, z1km, z1_ref, hwflag, vs30_class,lnSa, phi, tau, useRy0(ip) )
       gnd(1)=lnSa
       sig=sqrt( phi**2 + tau**2 )
-      print *,exp(lnSa),sig,Sa1100,period(ip),xmag,rRup
+c      print *,exp(lnSa),sig,Sa1100,period(ip),xmag,rRup
                if(l_gnd_ep(ip))then
          gnd(2)= gnd(1)+gnd_ep(ide,ime,ip)
          gnd(3)= gnd(1)-gnd_ep(ide,ime,ip)
@@ -8318,8 +8323,8 @@ c            print *,gndout(1),total_app
         return
         end subroutine CY2012_NGA
 
-      subroutine gksa13(L,ip,Mw,x,gndout,sigmaf,Vs,mec,Bdepth,Q)
-c from GKSA13fl.f sent Mar 22 2013. 
+      subroutine gksa13v2(L,ip,Mw,x,gndout,sigmaf,Vs,mec,Bdepth,Q)
+c from GKSA13fl.f sent Mar 22 2013. Then updated apr 9 2013 (v2).
 c Revised Graizer and Kalkan model with continuous response variation with 
 c      basin depth. Also PGA has been identified with 0.01s SA due to basin
 c      effect. 
@@ -8369,7 +8374,8 @@ C*********Coefficients file, dec 2012 ***************
          c6 = -0.125
          c7 =  1.190
          c8 = -6.150
-         c9 =  0.525
+c         c9 =  0.525
+	c9 = 0.6	!V.G. updates of apr 8 2013
          bv = -0.240 
          Va = 484.5
          R1 = 100.0
@@ -8444,9 +8450,11 @@ ccccccc End non-basin PGA Calculation cccccccccccccccccccccccc
 
 c------SA calculations ----------mod coeffs mar 29 2013 SH-----
           e1=-0.0012
-          e2=-0.40854
+c          e2=-0.40854
+	e2 = -0.38
           e3= 0.0006
-          e4= 3.63
+c          e4= 3.63
+	e4 = 3.9	!V.G. updates of apr 8 2013
           a1= 0.01686
           a2= 1.2695
           a3= 0.0001
@@ -8454,9 +8462,11 @@ c------SA calculations ----------mod coeffs mar 29 2013 SH-----
 c          t1= 0.0022
           t1= 0.001
 c          t2= 0.63
-          t2= 0.60
+c          t2= 0.60
+	t2 = 0.59
           t3=-0.0005
-          t4=-2.1
+c          t4=-2.1
+	t4 = -2.3	!V.G. updates of apr 8 2013
 c          s1=0.001
           s1=0.00
           s2=0.077
@@ -8492,7 +8502,7 @@ c          s1=0.001
            sigmaf=1./sigma(L)/sqrt2
            endif
            return
-        END subroutine gksa13
+        END subroutine gksa13v2
 
       subroutine gksa(ipgk,ip,xmag,rcd,gndout,sigmaf,Vs,islip,IB)
 c***  Graizer & Kalkan July 2007, Attenuation **************
@@ -8855,7 +8865,7 @@ c sense of slip sensitivity: oblique-reverse or reverse slip. Otherwise none.
 
 c------------------------------------------------------------------------------
       SUBROUTINE CB13_NGA_SPEC_IN
-c read in the coeffs only. Harmsen Feb 25 2013. Additional coeffs such as phi_low
+c read in the coeffs only. Harmsen Apr 9 2013. Additional coeffs such as phi_low
 C     This program computes 5%-damped linear elastic response spectra from the 
 C     2012 Campbell-Bozorgnia NGA-West2 Ground Motion Prediction Equation (GMPE)
 C
@@ -8879,7 +8889,7 @@ c should this be 23 or 22 - declared with 22 in main routine
       REAL, dimension(nper) :: c12, c13low,c13hi, c14,c15,k1, k2, k3,a2,h1,h2,h3
       REAL, dimension(nper) :: h4,h5,h6, phi_low, phi_hi,phi_lny,phi_lnyB,tau_lny,tau_lnyB
       REAL phi_lnAF(nper), rho(nper)
-      character*1 dum1
+      character*5 dum1
    
 C.....
 C.....READ MODEL COEFFICIENTS FROM AN EXCEL FILE (text FORMAT, csv does not work on sun workstation)
@@ -8887,11 +8897,18 @@ C.....
 c      if(icase.ne.1) go to 21 
       call get_lun(m)
 c updated input file name Feb 25 2013.
-        open (m,file='GR/CB13_Coeffs_Atten113_RE_fix_all_Feb_15_2013.txt',status='old',err=2012)
+c        open (m,file='GR/CB13_Coeffs_Atten113_RE_fix_all_Feb_15_2013.txt',status='old',err=2012)
+        open (m,file='GR/CB13_Apr8_coeffs.txt',status='old',err=2012)
+c from Atten113_CB13_Feb22_23Pers_Free_All_Fix_k2c9c6_SAT_Smooth2_USGS.xlsx (april 9 2013)
       print *,'CB coefficient file opened OK unit ',m
       read (m,1) dum1
- 1    format(a1)
-
+ 1    format(a)
+ 	print *,dum1
+ 	read(m,1)dum1
+ 	print *,dum1
+ 	read(m,1)dum1
+ 	print *,dum1	!three lines
+ 	
       do 20 iper=1,nper
         read (m,*)Per(iper),c0(iper),c1(iper),c2low(iper),c2(iper),c3(iper),
      +c4(iper),
