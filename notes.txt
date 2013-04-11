@@ -5,7 +5,9 @@ TODO for release:
 			- gfortran via Cygwin?
 	Update hazrun script to spawn thread for long running calcs (WUS gr)
 	How long does single processor run take
-	Migrate code to USGS GitHub?			
+	Migrate code to USGS GitHub?
+	
+	note		
 
 
 ===============================================
