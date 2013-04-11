@@ -1,4 +1,6 @@
-c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  04.04. 2013. Long header version.
+c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  04.09. 2013. Long header version.
+c 4/10/2013: correct logic for fixed-strike source and agrid with header (iflt=20)
+c	Increase number of maximum-magnitude zones to 15 (controlled by nzonex parameter)
 c 4/09/2013: modify CB13 and GK13. Modify Basin and Range Q for GK13 to 205
 c 4/04/2013: asum first dim up dimension to 40 to accomodate big range of magnitudes.
 c 4/02/2013: added a definition for di2 = di/2 that was needed (PC Liu Discovery). also small
@@ -176,8 +178,8 @@ c ---  Simplest model might be a circular surface with center at each source poi
 c
 c --- Compile with  f95 or gfortran. On Solaris, use -e for extended line length. link to iosubs.o
 c Try this on sun  using Solaris 10 fortran 95:
-c f95 hazgridXnga13l.f -o hazgridXnga13l -fast iosubs_128.o -e -ftrap=%none
-c
+c f95 hazgridXnga13l.f -o hazgridXnga13l -O iosubs_128.o -e -ftrap=%none
+c	the -fast flag has been known to fail on hazgridXnga13l runs...
 c Try this on PCs with gfortran:
 c      gfortran hazgridXnga13l.f iosubs.o -ffixed-line-length-none -static -o hazgridXnga13l.exe -finit-local-zerro -ffpe-trap=
 c
@@ -342,10 +344,10 @@ c--- Ground motion levels should be in units of g, except for PGV. Code checks f
 c --- and stops if this is found. For PGV there is a related check, for PGV max < 20 cm/s.
 c--- period=0 indicates PGA. period = -1 indicates PGV
       parameter ( d2r=0.0174533,pi=3.14159265,fourpisq=39.4784175)
-        parameter (nlmx=20,npmx=8,nsrcmx=200000)   
+        parameter (nlmx=20,npmx=8,nsrcmx=200000,nzonex=15)   
       real*8 emax/3.0/,sqrt2/1.4142135623/
       real, dimension(2) :: mcut,dcut,tarray
-      real, dimension(10) :: mwmaxx	!mwmaxx=the absolutely largest mag in a zone. new 4/04/2013.
+      real, dimension(nzonex) :: mwmaxx	!mwmaxx=the absolutely largest mag in a zone. new 4/04/2013.
 c You can raise p dim & make some minor code changes to improve accuracy (currently
 c p() has about 4 decimal place accuracy which is likely to be good enough)
       common/prob/p(25005),plim,dp2     !table of complementary normal probab.
@@ -372,7 +374,7 @@ c add SDI-related common block sdi feb 22 2013
         real, dimension(0:9):: dipbck
       real, dimension (3,3,8) :: gnd_ep
       real, dimension(16,40,8,3,3) :: hbin,ebar,rbar,mbar
-      real, dimension(40,10):: mmax_ccd	!new 4/02/2013 complementary cum. distribution of mmax
+      real, dimension(40,nzonex):: mmax_ccd	!new 4/02/2013 complementary cum. distribution of mmax
 c (first dimension) in zones 1 to 10 (2nd dimension)
       common/epistemic/nfi,e_wind,gnd_ep,mcut,dcut
       common/deagg/deagg
@@ -395,7 +397,7 @@ c e0_ceus not saving a depth of rupture dim, not sens. to this. last dim is ip (
        common/e0_ceus/e0_ceus(260,31,8)
         common/ceus_sig/lceus_sigma,ceus_sigma
       real, dimension (23):: perbssa13
-      real, dimension(40,10):: mwmax,wtmw,wt_zone
+      real, dimension(40,nzonex):: mwmax,wtmw,wt_zone
        common/cb13p/Percb13
       integer m_ind
       real, dimension(13):: a11fr,freq
@@ -912,8 +914,8 @@ c      write(6,*) "for sources: enter min lon, max lon, dlon"
 c      write(6,*) "enter bval,magmin,magmax,dmag,magref"
       read(1,*) bval,magmin,magmax,dmag,magref
       rmagmin=magmin
-c--- iflt=1 uses finite faults for M>6.0
-c--- iflt=2 uses finite faults and fixes strike
+c--- iflt=1 or 10 uses finite faults for M>6.0 with random strike
+c--- iflt=2 or 20 uses finite faults and fixes strike
 c--- iflt=3 uses finite faults with Johnston mblg to Mw conv.
 c---- iflt=4 uses finite faults with Boore-Atkinson mblg to Mw conv.
 c === iflt = -3 use point src with Johnston mblg to Mw conv.
@@ -930,6 +932,7 @@ c      write(6,*) "enter iflt,ibmat,maxmat, Mtaper"
 c New nov 14 07L add field Mtaper (real variable). If M>Mtaper, multiply rate by wtgrid(k)
 c to include CA
       read (1,*) iflt,ibmat,maxmat,Mtaper
+      if(maxmat.gt.nzonex)stop'maximum number of Mmax zones is exceeded'
 c New sept 2008: Use logical variable finite to control whether it's handled as a point src.
       if(iflt.le.0.and.iflt.ne.-2)then
       finite=.false.
@@ -1093,7 +1096,7 @@ c--- convert from cumulative a-value to incremental a-value if necessary
  112  continue
       endif
 c----------- new line for fixing fault strike if iflt=2
-      if(iflt.eq.2)then
+      if(iflt.eq.2.or. iflt.eq.20)then
        read(1,*) fltstr
        write(6,*)'Fixed-strike angle is ',fltstr
        sinf=sin(coef*fltstr); cosf=cos(coef*fltstr)
@@ -2060,8 +2063,7 @@ c         xlim(i)=xwide(i)/cos(dipf) + dtor(1)*tan(dipf)
 c xwide(i) is max distance at which Rjb is zero (hw on)        
          xwide(i)=xwide(i)*cos(dipf)
   37     continue
-c The flush function dumps buffered print material. Gfortran objects to the flush call
-c so it is commentd out.
+c The flush subroutine dumps buffered print material. Gfortran OK with subr. not with function.
         call flush(6)
 c If flush works for your computer, you can look at log file before the big grid gets underway.
 c---Here's the guts
@@ -2152,7 +2154,7 @@ c point-source summation
          endif
          enddo      !top of rupture kk index
       else      !finite fault follows
-      if(iflt.eq.1.or.iflt.gt.2)then
+      if(iflt.eq.1.or.iflt.gt.2.and.iflt.lt.15)then
 c new apr 30 2008: use 2D rjbmean array to speed up runs. 8.55 is moment-mag
 c limit and 26 is Mmax index.
       irjb=dist/dr_rjb+1
@@ -2161,7 +2163,7 @@ c limit and 26 is Mmax index.
       dmin2 = rjbmean(m_ind,irjb)
 c      write(6,*)xmag,dmin2,sx,sy,m_ind
       else
-c fixed-strike: use Frankel code for vertical plane.
+c fixed-strike: use Frankel code for vertical plane. Index 20 is also fixed strike.
       if(iflt.eq.-2)then
 c fltstrk is already in radian units.
       daz= coef*az - fltstrk(j)
