@@ -1,4 +1,6 @@
-c--- program  hazFXnga13l.f; 04/09/2013; Use  with NGA relations, or others.
+c--- program  hazFXnga13l.f; 04/11/2013; Use  with NGA relations, or others.
+c 4/12/2013: Corrected a line about HW_taper3 in AS-2013 routine
+c 4/11/2013: Update Idriss NGA-W GMPE coeffs to latest available (emailed 4/10)
 c 4/09/2013: revise CB coeff file. The GMPE has not changed from feb, only the coeffs.
 c 4/09/2013: GK13 routine modified to version 2. Index is still 38. Basin and Range Q reset to 205
 c
@@ -32,7 +34,7 @@ c 12/04/2012: add the latest Graizer Kalkan gmpe. Includes basin effect. See dgk
 c
 c 11/28/2012: add the BSSA 2012 GMPE: index 33
 c 12/03/2012: CB12 with v3 update. Previously CB12 had v2 update. Index 34. (removed 2/25/2013)
-c 12/03/2012: Idriss 2012 relation added index 37.
+c 12/03/2012: Idriss 2012 relation added index 37. updated to Idriss 2013
 c 11/14/2012: the Grazier GMPE is included for use in tectonically active areas. Index 39.
 c 11/20/2012: the CY2012 GMPE is included for use in tectonically active areas. Index 35. Use the
 c   sigma model which assumes Vs30 is known. From Chiou email 11/20/2012
@@ -588,13 +590,13 @@ c prd is the C&Y period set, 106 of 'em, jan 2009. Same, Oct 2007. PGA=0.0s in o
      1 'Abr-Silva 97','Campbell2003',
      2 'Camp CEUS BC','BJF     1997','Mota ea PRVI',
      2 'B&A 03/08NGA','C&B03/08 NGA',
-     2 'ChiouY 03/08','Ab-Sil NGA08','Idriss   PGA','Kanno ea2006',
+     2 'ChiouY 03/08','Ab-Sil NGA08','Idriss05 PGA','Kanno ea2006',
      2 'T&P CEUS  06','Silva CEUS02','AB06s200CEUS',
      3 'Space Unoccu','Space Unoccu','Space Unoccu',
      3 'AB08p Prelim','AB06p Prelim','Pez11 Prelim','Silva M-depS',
      3 'Space Unoccu','Space Unoccu','Space Unoccu',
-     3 'Space Unoccu','BSSA 03/2013','C&B02/13 NGA',
-     3 'ChiouY 03/13','Ab-Silva2013','Idriss 2012a','GraizKalkn13',
+     3 'Space Unoccu','BSSA 03/2013','C&B04/13 NGA',
+     3 'ChiouY 03/13','Ab-Silva2013','IIdriss 2013','GraizKalkn13',
      4 'GrazKalkan09'/)
        gname=(/'.g1','.g2','.g3','.g4','.g5'/)
       do ia=1,8
@@ -2401,7 +2403,7 @@ c skip the 2nd period for now assume the period of interest was tabulated.
           print *, per1, xmag, rjb, r1,' per1, xmag, rjb, r1,sigmaf'
       endif
       elseif(ipia.eq.37)then
-      call  getIdriss2012(idriss(ip),ip,xmag,rrup,vs30,gnd,sigmaf)
+      call  getIdriss2013(idriss(ip),ip,xmag,rrup,vs30,gnd,sigmaf)
       elseif(ipia.eq.38)then
       if(rx.lt.-120..and.ry.gt.39.)then
       Q=Q_CA
@@ -2771,7 +2773,7 @@ c skip the 2nd period for now assume the period of interest was tabulated.
         print *,  mech,vs30,y1,expsiglny,' mech,vs30,y1,expsiglny'
       endif
       elseif(ipia.eq.37)then
-      call  getIdriss2012(idriss(ip),ip,xmag2,rrup,vs30,gnd,sigmaf)
+      call  getIdriss2013(idriss(ip),ip,xmag2,rrup,vs30,gnd,sigmaf)
       elseif(ipia.eq.38)then
       if(rx.lt.-120..and.ry.gt.39.)then
       Q=Q_CA
@@ -3141,7 +3143,7 @@ c skip the 2nd period for now assume the period of interest was tabulated.
         print *,  mech,vs30,y1,expsiglny,' mech,vs30,y1,expsiglny'
       endif
       elseif(ipia.eq.37)then
-      call  getIdriss2012(idriss(ip),ip,xmag,rrup,vs30,gnd,sigmaf)
+      call  getIdriss2013(idriss(ip),ip,xmag,rrup,vs30,gnd,sigmaf)
       elseif(ipia.eq.38)then
       if(rx.lt.-120..and.ry.gt.39.)then
       Q=Q_CA
@@ -3517,7 +3519,7 @@ c          if(ip.eq.2)print *,rjb,xmag2,exp(alny),1./sigmaf/sqrt2
 c          print *, per1,  rjb, r1,' per1, rjb, r1'
 c      endif
       elseif(ipia.eq.37)then
-      call  getIdriss2012(idriss(ip),ip,xmag2,rrup,vs30,gnd,sigmaf)
+      call  getIdriss2013(idriss(ip),ip,xmag2,rrup,vs30,gnd,sigmaf)
       elseif(ipia.eq.38)then
       if(rx.lt.-120..and.ry.gt.39.)then
       Q=Q_CA
@@ -3908,7 +3910,7 @@ c skip the 2nd period for now assume the period of interest was tabulated.
           print *, per1, xmag, rjb, r1,' per1, xmag, rjb, r1'
       endif
       elseif(ipia.eq.37)then
-      call  getIdriss2012(idriss(ip),ip,xmag,rrup,vs30,gnd,sigmaf)
+      call  getIdriss2013(idriss(ip),ip,xmag,rrup,vs30,gnd,sigmaf)
       elseif(ipia.eq.38)then
       if(rx.lt.-120..and.ry.gt.39.)then
       Q=Q_CA
@@ -8780,8 +8782,8 @@ c           SA2=SA*exp(sigma(ipgk))
       return
       end function y_ngaw2_no_site_amps
 c >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>      
-      subroutine getIdriss2012(iper,ip,xmag,rrup,vs30,gndout,sigmaf)
-c Dec 3 2012: for pga and many periods to 10s.
+      subroutine getIdriss2013(iper,ip,xmag,rrup,vs30,gndout,sigmaf)
+c Dec 3 2012: for pga and many periods to 10s. Updated 4/2013.
 c ip is period index in calling program. 
 c iper is period index in this subroutine. 
       parameter (pi=3.14159265,sqrt2=1.414213562,vref=760.,nper=22)
@@ -8789,8 +8791,8 @@ c iper is period index in this subroutine.
       real gnd_ep(3,3,8),gndout(3)
       logical l_gnd_ep(8)
       common/mech/ss,rev,normal,obl
-      real, dimension (nper):: a1, a2, a3, b1,b2, x,g,j, Period
-c 22 periods in Idriss2012 NGA Dec 2012:
+      real, dimension (nper):: a1, a2, a3, b1,b2, x,g,phi, Period
+c 22 periods in Idriss2013NGA updated April 11 2013:
 c----  This version assumes v30 in neighborhood of 760 m/sec (linear Vs30 dependency)
 c----  uses ln coefficients
 c Limits 2012:
@@ -8804,37 +8806,37 @@ c
         Period  = (/0.01,0.02,0.03,0.04,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,0.5,0.75,1.,1.5,2.,3.,4.,5.,7.5,10./)
 c coeffs. from dec 2012 powerpoint progress report. Two sets which to use depends on Mw (xmag)
       if(xmag.le.6.75)then
-        a1 = (/4.0246,4.0496,4.1246,4.3982,3.6009,2.877,4.4729,5.0966,6.607,7.2428,7.9132,7.6416,
-     & 7.6753,7.3511,6.2227,4.19,3.1218,0.1913,-2.2774,-4.3775,-7.3922,-8.8253/)
-        a2 = (/0.2058,0.2058,0.2058,-0.0113,0.0625,0.1128,0.0848,0.1713,0.1041,0.0875,0.0003,0.0027,
-     & 0.0399,0.0689,0.16,0.2429,0.3966,0.756,0.9283,1.1209,1.4016,1.5574/)
-        a3 = (/0.0589,0.0589,0.0589,0.0265,0.0417,0.0527,0.0442,0.0329,0.0188,0.0095,-0.0039,
-     & -0.0133,-0.0224,-0.0267,-0.0198,-0.0367,-0.0291,-0.0214,-0.024,-0.0202,-0.0219,-0.0035/)
-        b1 = (/2.9827,2.9827,2.9827,2.9239,2.9629,3.0486,3.0899,2.8296,2.8792,2.8389,2.8378,
-     & 2.8191,2.8196,2.7802,2.7707,2.7388,2.7343,2.7339,2.6448,2.6208,2.5649,2.5454/)
-        b2 = (/-0.2287,-0.2287,-0.2287,-0.239,-0.2418,-0.2513,-0.2516,-0.2236,-0.2229,-0.22,
-     &-0.2284,-0.2318,-0.2337,-0.2392,-0.2398,-0.2417,-0.245,-0.2389,-0.2514,-0.2541,-0.2593,-0.2586/)
-        x = (/-0.36,-0.36,-0.36,-0.2,-0.15,-0.06,-0.23,-0.42,-0.55,-0.65,-0.7,-0.7,-0.77,-0.86,-0.83,
-     & -0.69,-0.76,-0.73,-0.68,-0.62,-0.6,-0.65/)
-      g = (/-0.0025,-0.0025,-0.0025,-0.004,-0.0038,-0.003,-0.0026,-0.0038,-0.0027,-0.0027,-0.0029,-0.0032,-0.0032,-0.0025,
-     & -0.0026,-0.0022,-0.0021,-0.002,-0.0033,-0.0037,-0.0023,-0.002/)
-        j = (/0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.06,0.04,0.02,0.02,0.,0.,0.,0./)
+	a1=(/7.0887,7.1157,7.2087,7.3287,6.2638,5.9051,7.5791,8.0190,9.2812,9.5804,9.8912,9.5342,
+     +9.2142,8.3517,7.0453,5.1307,3.3610,0.1784,-2.4301,-4.3570,-7.8275,-9.2857/)
+	a2=(/0.2058,0.2058,0.2058,0.2058,0.0625,0.1128,0.0848,0.1713,0.1041,
+     +0.0875,0.0003,0.0027,0.0399,0.0689,0.1600,0.2429,0.3966,0.7560,0.9283,1.1209,1.4016,1.5574/)
+	a3=(/0.0589,0.0589,0.0589,0.0589,0.0417,0.0527,0.0442,0.0329,0.0188,
+     +0.0095,-0.0039,-0.0133,-0.0224,-0.0267,-0.0198,-0.0367,-0.0291,-0.0214,-0.0240,-0.0202,-0.0219,-0.0035/)
+	b1=(/2.9935,2.9935,2.9935,2.9935,2.8664,2.9406,3.0190,2.7871,2.8611,
+     +2.8289,2.8423,2.8300,2.8560,2.7544,2.7339,2.6800,2.6837,2.6907,2.5782,2.5468,2.4478,2.3922/)
+	b2=(/-0.2287,-0.2287,-0.2287,-0.2287,-0.2418,-0.2513,-0.2516,-0.2236,
+     +-0.2229,-0.2200,-0.2284,-0.2318,-0.2337,-0.2392,-0.2398,-0.2417,-0.2450,-0.2389,-0.2514,-0.2541,-0.2593,-0.2586/)
+	x=(/-0.854,-0.854,-0.854,-0.854,-0.631,-0.591,-0.757,-0.911,-0.998,
+     +-1.042,-1.030,-1.019,-1.023,-1.056,-1.009,-0.898,-0.851,-0.761,-0.675,-0.629,-0.531,-0.586/)
+	g=(/-0.0027,-0.0027,-0.0027,-0.0027,-0.0061,-0.0056,-0.0042,-0.0046,
+     +-0.0030,-0.0028,-0.0029,-0.0028,-0.0021,-0.0029,-0.0032,-0.0033,-0.0032,-0.0031,-0.0051,-0.0059,-0.0057,-0.0061/)
+	phi=(/0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.06,0.04,0.02,0.02,0.,0.,0.,0./)
                 else
-        a1 = (/5.9497,5.9747,6.0497,6.3233,5.3208,4.7279,6.319,6.7018,8.4558,9.0253,9.8038,9.7171,9.9095,9.9059,9.0339,7.3956,
-     & 6.6264,4.1307,1.9629,0.0772,-2.621,-3.9783/)
-        a2 = (/-0.0794,-0.0794,-0.0794,-0.2965,-0.1923,-0.1614,-0.1887,-0.0665,-0.1698,-0.1766,-0.2798,-0.3048,-0.2911,
-     & -0.3097,-0.2565,-0.232,-0.1226,0.1724,0.3001,0.4609,0.6948,0.8393/)
-        a3 = (/0.0589,0.0589,0.0589,0.0265,0.0417,0.0527,0.0442,0.0329,0.0188,0.0095,-0.0039,-0.0133,-0.0224,-0.0267,-0.0198,
-     & -0.0367,-0.0291,-0.0214,-0.024,-0.0202,-0.0219,-0.0035/)
-        b1 = (/2.9827,2.9827,2.9827,2.9239,2.896,2.9223,2.884,2.4516,2.5119,2.3873,2.3727,2.3304,
-     & 2.3113,2.23,2.1861,2.0996,2.0519,1.984,1.8429,1.777,1.6383,1.5727/)
-        b2 = (/-0.2287,-0.2287,-0.2287,-0.239,-0.2319,-0.2326,-0.2211,-0.1676,-0.1685,-0.1531,-0.1595,-0.1594,-0.1584,-0.1577,
-     & -0.1532,-0.147,-0.1439,-0.1278,-0.1326,-0.1291,-0.122,-0.1145/)
-        x = (/-0.36,-0.36,-0.36,-0.2,-0.15,-0.06,-0.23,-0.42,-0.55,-0.65,-0.7,-0.7,-0.77,-0.86,-0.83,
-     & -0.69,-0.76,-0.73,-0.68,-0.62,-0.6,-0.65/)
-      g = (/-0.0025,-0.0025,-0.0025,-0.0040,-0.0038,-0.0030,-0.0026,-0.0038,-0.0027,-0.0027,-0.0029,-0.0032,-0.0032,
-     & -0.0025,-0.0026,-0.0022,-0.0021,-0.0020,-0.0033,-0.0037,-0.0023,-0.0020/)
-      j = (/0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.06,0.04,0.02,0.02,0.,0.,0.,0./)
+	a1=(/9.0138,9.0408,9.1338,9.2538,7.9837,7.7560,9.4252,9.6242,11.1300,
+     + 11.3629,11.7818,11.6097,11.4484,10.9065,9.8565,8.3363,6.8656,4.1178,1.8102,0.0977,-3.0563,-4.4387/)
+	a2=(/-0.0794,-0.0794,-0.0794,-0.0794,-0.1923,-0.1614,-0.1887,-0.0665,
+     + -0.1698,-0.1766,-0.2798,-0.3048,-0.2911,-0.3097,-0.2565,-0.2320,-0.1226,0.1724,0.3001,0.4609,0.6948,0.8393/)
+	a3=(/0.0589,0.0589,0.0589,0.0589,0.0417,0.0527,0.0442,0.0329,0.0188,
+     + 0.0095,-0.0039,-0.0133,-0.0224,-0.0267,-0.0198,-0.0367,-0.0291,-0.0214,-0.0240,-0.0202,-0.0219,-0.0035/)
+	b1=(/2.9935,2.9935,2.9935,2.9935,2.7995,2.8143,2.8131,2.4091,2.4938,
+     + 2.3773,2.3772,2.3413,2.3477,2.2042,2.1493,2.0408,2.0013,1.9408,1.7763,1.7030,1.5212,1.4195/)
+	b2=(/-0.2287,-0.2287,-0.2287,-0.2287,-0.2319,-0.2326,-0.2211,-0.1676,
+     + -0.1685,-0.1531,-0.1595,-0.1594,-0.1584,-0.1577,-0.1532,-0.1470,-0.1439,-0.1278,-0.1326,-0.1291,-0.1220,-0.1145/)
+	x=(/-0.854,-0.854,-0.854,-0.854,-0.631,-0.591,-0.757,-0.911,-0.998,
+     + -1.042,-1.030,-1.019,-1.023,-1.056,-1.009,-0.898,-0.851,-0.761,-0.675,-0.629,-0.531,-0.586/)
+	g=(/-0.0027,-0.0027,-0.0027,-0.0027,-0.0061,-0.0056,-0.0042,-0.0046,
+     +-0.0030,-0.0028,-0.0029,-0.0028,-0.0021,-0.0029,-0.0032,-0.0033,-0.0032,-0.0031,-0.0051,-0.0059,-0.0057,-0.0061/)
+	phi=(/0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.06,0.04,0.02,0.02,0.,0.,0.,0./)
                 endif
 c T is constrained spectral period see Idriss EqSpectra Mar 2008 for the details. use aleatory sigma from the article.
 c This sigma may be revised.
@@ -8853,7 +8855,7 @@ c 2nd line: extra mag scaling, anelastic attn scaling and site -term scaling
      & + a3(iper)*(8.5-xmag)**2+g(iper)*rrup+ x(iper)*alog(vscap)
 c sense of slip sensitivity: oblique-reverse or reverse slip. Otherwise none.
           if(rev.or.obl)then
-          gnd = gnd+ j(iper)
+          gnd = gnd+ phi(iper)
           endif
         gndout(1)=gnd
          if(l_gnd_ep(ip))then
@@ -8861,7 +8863,7 @@ c sense of slip sensitivity: oblique-reverse or reverse slip. Otherwise none.
          gndout(3)= gnd-gnd_ep(ide,ime,ip)
          endif
         return
-      end subroutine getIdriss2012
+      end subroutine getIdriss2013
 
 c------------------------------------------------------------------------------
       SUBROUTINE CB13_NGA_SPEC_IN
@@ -11219,7 +11221,8 @@ c     Compute HW taper 3 (eq. 11)
       elseif ( Rx . lt. R2 ) then
         HW_taper3 = 1. - (Rx-R1)/(R2-R1)
       else
-        HW_taper3 = 1.
+c        HW_taper3 = 1.
+	 HW_taper3 = 0.	!corrected code from Ronnie Kamai email of 4/11/2013.
       endif 
 
 c     Compute HW taper 4 (eq 12)

@@ -1,4 +1,6 @@
-c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  04.09. 2013. Long header version.
+c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  04.11. 2013. Long header version.
+c 4/12/2013: Corrected a line about HW_taper3 in AS-2013 routine
+c 4/11/2013: Update Idriss NGA-W GMPE coeffs to latest available (emailed 4/10)
 c 4/10/2013: correct logic for fixed-strike source and agrid with header (iflt=20)
 c	Increase number of maximum-magnitude zones to 15 (controlled by nzonex parameter)
 c 4/09/2013: modify CB13 and GK13. Modify Basin and Range Q for GK13 to 205
@@ -24,7 +26,7 @@ c 1/09/2013: improve the asum() accumulation based on P. Powers observation
 c about "banding" of event-rates at certain latitudes. New vers. has no banding.
 c  The effect of this change is visible when comparing with OpenSHA but otherwise too subtle.
 c 12/28/2012: add BSSA12 index 29
-c 12/27/2012: add Idriss2012 index 38. This one has linear siteamp function.
+c 12/27/2012: add Idriss2013 index 38. This one has linear siteamp function.
 c 12/26/2012: add CY2012 index 33 (removed Mar 2013) Use CY2013.
 c 12/24/2012: add AS2012 model index 34. As in CB12, you can vary dip of virtual flts
 c by using icode values in the range 0 to 9, or 0 to -9 to put all sites on footwall side
@@ -396,7 +398,7 @@ c
 c e0_ceus not saving a depth of rupture dim, not sens. to this. last dim is ip (period index)
        common/e0_ceus/e0_ceus(260,31,8)
         common/ceus_sig/lceus_sigma,ceus_sigma
-      real, dimension (23):: perbssa13
+      real, dimension (107):: perbssa13
       real, dimension(40,nzonex):: mwmax,wtmw,wt_zone
        common/cb13p/Percb13
       integer m_ind
@@ -538,9 +540,18 @@ c perb = Boore-Atkinson NGA 4/2007 period set, -1 = pgv. Now 23. 10 s is longest
      1              5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0 /)
 c modified the .3155 to .3, modified the .0996 to 0.1 sh mar 16. mod .3968 to 0.4
 c june 30 2007. 
-      perbssa13=(/-1.0, 0.0, 0.010000, 0.020000, 0.030000, 0.040000, 0.050000
-     +, 0.075000, 0.10, 0.150000, 0.20, 0.250000, 0.30, 0.40, 0.50
-     +, 0.750000, 1.0, 1.50, 2.0, 3.0, 4.0, 5.0,10.0/)
+      perbssa13=(/-1.000000, 0.000000, 0.010000, 0.020000, 0.022000, 0.025000, 0.029000,
+     + 0.030000, 0.032000, 0.035000, 0.036000, 0.040000, 0.042000, 0.044000, 0.045000, 0.046000, 0.048000,
+     + 0.050000, 0.055000, 0.060000, 0.065000, 0.067000, 0.070000, 0.075000, 0.080000, 0.085000, 0.090000,
+     + 0.095000, 0.100000, 0.110000, 0.120000, 0.130000, 0.133000, 0.140000, 0.150000, 0.160000, 0.170000,
+     + 0.180000, 0.190000, 0.200000, 0.220000, 0.240000, 0.250000, 0.260000, 0.280000, 0.290000, 0.300000,
+     + 0.320000, 0.340000, 0.350000, 0.360000, 0.380000, 0.400000, 0.420000, 0.440000, 0.450000, 0.460000,
+     + 0.480000, 0.500000, 0.550000, 0.600000, 0.650000, 0.667000, 0.700000, 0.750000, 0.800000, 0.850000,
+     + 0.900000, 0.950000, 1.000000, 1.100000, 1.200000, 1.300000, 1.400000, 1.500000, 1.600000, 1.700000,
+     + 1.800000, 1.900000, 2.000000, 2.200000, 2.400000, 2.500000, 2.600000, 2.800000, 3.000000, 3.200000,
+     + 3.400000, 3.500000, 3.600000, 3.800000, 4.000000, 4.200000, 4.400000, 4.600000, 4.800000, 5.000000,
+     + 5.500000, 6.000000, 6.500000, 7.000000, 7.500000, 8.000000, 8.500000, 9.000000, 9.50,10.0/)
+
 c per_camp available spectral periods for CampCEUS (2003). PGA is 0.0 s here.
       per_camp = (/0.00,0.2,1.0,0.1,0.3,0.4,
      + 0.5,2.0,.03,.04,.05/)
@@ -670,7 +681,7 @@ c adum could be sa(g) or pgv (cm/s). need flexi format
       endif
       call date_and_time(date,time,zone,ival)
       write (6,61)date,time,zone,namein
-61      format('hazgridXnga13l (4/01/2013) log file. Pgm run on ',a,' at ',a,1x,a,/,
+61      format('hazgridXnga13l (4/11/2013) log file. Pgm run on ',a,' at ',a,1x,a,/,
      + '# Control file:',a)
         call getarg(0,progname)
         ind=index(progname,' ')
@@ -1337,7 +1348,6 @@ c new Oct 31 2012: deal with new CEUS relations
       if(ipia.eq.29)then
       indx_pga=2;indx_pgv=1
 c      ipbssa(1)=indx_pga
-      print *,' BSSA index for pga ',indx_pga
       k=1
       if(per.eq.-1.)then
       k=1
@@ -1348,12 +1358,12 @@ c      ipbssa(1)=indx_pga
       print *,' BSSA index for pga ',indx_pga
       else
       k=3
-      dowhile(Perbssa13(k).ne.per.and.k.lt.23)
+      dowhile(Perbssa13(k).ne.per.and.k.lt.107)
       k=k+1
       enddo
-      if(k.eq.23.and.per.ne.10.)stop' Period not found for BSSA relation.'
+      if(k.eq.107.and.per.ne.10.)stop' Period not found for BSSA relation.'
 c      if(fix_sigma)sigt_gmpe=sigma_fx      !override table with fixed sigma jan 7 2012.
-       nper_gmpe = 23
+       nper_gmpe = 107
 c      print *,nper_gmpe,' number of periods having coeffs BSSA'
       print *,per,Perbssa13(k),' BSSA period match? Index is ',k
       endif
@@ -1780,7 +1790,7 @@ c index 29 redefined to correspond to the new Boore et al GMPE for WUS (NGA-W2)(
 c      v30ref = 760.      !
       print *,'calling bssa13 with indx, v30 = ',indx1,vs30,' spectral 
      * period ',period(ip)
-      call bssa2013drv( ip,indx1, ia,ndist,di,nmag,magmin,dmag,vs30)
+      call bssa2013drv( ip,indx1, ia,ndist,di,nmag,magmin,dmag,vs30,z1_ref)
              elseif(ipia.eq.22) then
       icb=1
 c Determine index of period in the campbell set, camper.
@@ -1943,14 +1953,14 @@ c      call AS2013_v10_model (ip,iper,ia,ndist,di,nmag,magmin,dmag,DIP,z1,useRy0
         k=2
         dowhile(perId12(k).ne.period(ip))
         k=k+1
-        if(k.gt.22)stop'period not found in Idr2012'
+        if(k.gt.22)stop'period not found in Idr2013'
         enddo
-        print *,'Calling Idriss-2012 GMPE for period ',period(ip)
+        print *,'Calling Idriss-2013 GMPE for period ',period(ip)
       iper(ip)=k
       endif
       wus=.true.
-c      call Idriss2012(iper,ip,ia,ndist,di,nmag,magmin,dmag,vs30)	
-      call Idriss2012(k,ip,ia,ndist,di,nmag,magmin,dmag,vs30)	
+c      call Idriss2013(iper,ip,ia,ndist,di,nmag,magmin,dmag,vs30)	
+      call Idriss2013(k,ip,ia,ndist,di,nmag,magmin,dmag,vs30)	
       elseif(ipia.eq.25)then
       wus=.true.
       call getIdriss 
@@ -8729,7 +8739,8 @@ c     Compute HW taper 3 *** NoRy0 version, uses tapers from As08 for Rx > R1***
       elseif ( Rx . lt. R2 ) then
         HW_taper3 = 1. - (Rx-R1)/(R2-R1)
       else
-        HW_taper3 = 1.
+c        HW_taper3 = 1.
+	HW_taper3= 0.0	!corrected an error from Ronnie Kamai email apr 11 2013.
       endif 
       if ( mag .le. M2 ) then
         f1 = a1(iper) + a6(iper)*(Mag-M2) + a7(iper)*(Mag-M2)**2 + a4(iper)*(M2-M1) + a8(iper)*(8.5-M2)**2 +
@@ -9375,8 +9386,8 @@ c         if (ii.eq.1.or.ii.eq.2)print *,x,SA1,Mw,sigma(L)
            return
         END subroutine gksa13v2
 
-      subroutine Idriss2012(iper,ip,ia,ndist,di,nmag,magmin,dmag,vs30)
-c Dec 2012: for pga and many periods to 10s.
+      subroutine Idriss2013(iper,ip,ia,ndist,di,nmag,magmin,dmag,vs30)
+c Apr 2013: for pga and many periods to 10s. Idriss Coeffs are updated april 11 2013.
 c ip is period index in calling program. 
 c iper is period index in this subroutine.
 c User can fix sigma_aleatory to a preset value if fix_sigma is .true. Jan 9 2013. 
@@ -9390,7 +9401,7 @@ c lines from hazgrid. table production
 c lines from hazgrid. table production
       common/depth_rup/ntor,dtor,wtor,wtor65
       common/epistemic/nfi,e_wind,gnd_ep,mcut,dcut
-      real, dimension (nper):: a1, a2, a3, b1,b2, x,g,j, Period
+      real, dimension (nper):: a1, a2, a3, b1,b2, x,g, phi, Period
       real gnd_ep(3,3,8),mcut(2),dcut(2),gndout(3),gndx,gnd0,gndm,gnd,sigma_fx
       real, dimension(25005):: p
       real, dimension (260,38,20,8,3,3):: pr
@@ -9407,22 +9418,24 @@ c----  uses ln coefficients
       real xmag,magmin,dmag
       logical changem
 c coeffs. from oct 5 2005 powerpoint progress report
+c	Period=(/0.01,0.02,0.03,0.04,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,0.5,0.75,1.,1.5,2.,3.,4.,5.,7.5,10.0/)
         Period  = (/0.01,0.02,0.03,0.04,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,0.5,0.75,1.0,1.5,2.,3.,4.0,5.,7.5,10./)
-        a1 = (/4.0246,4.0496,4.1246,4.3982,3.6009,2.877,4.4729,5.0966,6.607,7.2428,7.9132,7.6416,
-     & 7.6753,7.3511,6.2227,4.19,3.1218,0.1913,-2.2774,-4.3775,-7.3922,-8.8253/)
-        a2 = (/0.2058,0.2058,0.2058,-0.0113,0.0625,0.1128,0.0848,0.1713,0.1041,0.0875,0.0003,0.0027,
-     & 0.0399,0.0689,0.16,0.2429,0.3966,0.756,0.9283,1.1209,1.4016,1.5574/)
-        a3 = (/0.0589,0.0589,0.0589,0.0265,0.0417,0.0527,0.0442,0.0329,0.0188,0.0095,-0.0039,
-     & -0.0133,-0.0224,-0.0267,-0.0198,-0.0367,-0.0291,-0.0214,-0.024,-0.0202,-0.0219,-0.0035/)
-        b1 = (/2.9827,2.9827,2.9827,2.9239,2.9629,3.0486,3.0899,2.8296,2.8792,2.8389,2.8378,
-     & 2.8191,2.8196,2.7802,2.7707,2.7388,2.7343,2.7339,2.6448,2.6208,2.5649,2.5454/)
-        b2 = (/-0.2287,-0.2287,-0.2287,-0.239,-0.2418,-0.2513,-0.2516,-0.2236,-0.2229,-0.22,
-     &-0.2284,-0.2318,-0.2337,-0.2392,-0.2398,-0.2417,-0.245,-0.2389,-0.2514,-0.2541,-0.2593,-0.2586/)
-        x = (/-0.36,-0.36,-0.36,-0.2,-0.15,-0.06,-0.23,-0.42,-0.55,-0.65,-0.7,-0.7,-0.77,-0.86,-0.83,
-     & -0.69,-0.76,-0.73,-0.68,-0.62,-0.6,-0.65/)
-        g = (/-0.0025,-0.0025,-0.0025,-0.004,-0.0038,-0.003,-0.0026,-0.0038,-0.0027,-0.0027,-0.0029,-0.0032,-0.0032,
-     & -0.0025,-0.0026,-0.0022,-0.0021,-0.002,-0.0033,-0.0037,-0.0023,-0.002/)
-        j = (/0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.06,0.04,0.02,0.02,0.,0.,0.,0./)
+	a1=(/7.0887,7.1157,7.2087,7.3287,6.2638,5.9051,7.5791,8.0190,9.2812,9.5804,9.8912,9.5342,
+     +9.2142,8.3517,7.0453,5.1307,3.3610,0.1784,-2.4301,-4.3570,-7.8275,-9.2857/)
+	a2=(/0.2058,0.2058,0.2058,0.2058,0.0625,0.1128,0.0848,0.1713,0.1041,
+     +0.0875,0.0003,0.0027,0.0399,0.0689,0.1600,0.2429,0.3966,0.7560,0.9283,1.1209,1.4016,1.5574/)
+	a3=(/0.0589,0.0589,0.0589,0.0589,0.0417,0.0527,0.0442,0.0329,0.0188,
+     +0.0095,-0.0039,-0.0133,-0.0224,-0.0267,-0.0198,-0.0367,-0.0291,-0.0214,-0.0240,-0.0202,-0.0219,-0.0035/)
+	b1=(/2.9935,2.9935,2.9935,2.9935,2.8664,2.9406,3.0190,2.7871,2.8611,
+     +2.8289,2.8423,2.8300,2.8560,2.7544,2.7339,2.6800,2.6837,2.6907,2.5782,2.5468,2.4478,2.3922/)
+	b2=(/-0.2287,-0.2287,-0.2287,-0.2287,-0.2418,-0.2513,-0.2516,-0.2236,
+     +-0.2229,-0.2200,-0.2284,-0.2318,-0.2337,-0.2392,-0.2398,-0.2417,-0.2450,-0.2389,-0.2514,-0.2541,-0.2593,-0.2586/)
+	x=(/-0.854,-0.854,-0.854,-0.854,-0.631,-0.591,-0.757,-0.911,-0.998,
+     +-1.042,-1.030,-1.019,-1.023,-1.056,-1.009,-0.898,-0.851,-0.761,-0.675,-0.629,-0.531,-0.586/)
+	g=(/-0.0027,-0.0027,-0.0027,-0.0027,-0.0061,-0.0056,-0.0042,-0.0046,
+     +-0.0030,-0.0028,-0.0029,-0.0028,-0.0021,-0.0029,-0.0032,-0.0033,
+     +-0.0032,-0.0031,-0.0051,-0.0059,-0.0057,-0.0061/)
+	phi=(/0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.06,0.04,0.02,0.02,0.,0.,0.,0./)
 c Thie below sigma from Eq Spectra 2008 may be revised.
       T = max(period(iper),0.05)
       T = min(T,3.0)
@@ -9432,7 +9445,7 @@ c Thie below sigma from Eq Spectra 2008 may be revised.
 c-- 
 c vs30 dependence (linear)
           vscap=min(vs30,1200.)
-      gnd0=a1(iper)+wtrev*j(iper)+ x(iper)*alog(vscap)
+      gnd0=a1(iper)+wtrev*phi(iper)+ x(iper)*alog(vscap)
 c loop on depth to top of rupture.
        do kk=1,ntor
       Z_torsq=dtor(kk)**2
@@ -9494,601 +9507,28 @@ c-------  Distance dependence -------------------------
          xmag=xmag+dmag
          changem=xmag.gt.6.75.and.xmag.lt.6.9
          if(changem)then
-        a1 = (/5.9497,5.9747,6.0497,6.3233,5.3208,4.7279,6.319,6.7018,8.4558,9.0253,9.8038,9.7171,9.9095,9.9059,
-     & 9.0339,7.3956,6.6264,4.1307,1.9629,0.0772,-2.621,-3.9783/)
-        a2 = (/-0.0794,-0.0794,-0.0794,-0.2965,-0.1923,-0.1614,-0.1887,-0.0665,-0.1698,-0.1766,-0.2798,
-     & -0.3048,-0.2911,-0.3097,-0.2565,-0.232,-0.1226,0.1724,0.3001,0.4609,0.6948,0.8393/)
-        a3 = (/0.0589,0.0589,0.0589,0.0265,0.0417,0.0527,0.0442,0.0329,0.0188,0.0095,-0.0039,-0.0133,-0.0224,
-     & -0.0267,-0.0198,-0.0367,-0.0291,-0.0214,-0.024,-0.0202,-0.0219,-0.0035/)
-        b1 = (/2.9827,2.9827,2.9827,2.9239,2.896,2.9223,2.884,2.4516,2.5119,2.3873,2.3727,2.3304,2.3113,2.23,2.1861,
-     & 2.0996,2.0519,1.984,1.8429,1.777,1.6383,1.5727/)
-        b2 = (/-0.2287,-0.2287,-0.2287,-0.239,-0.2319,-0.2326,-0.2211,-0.1676,-0.1685,-0.1531,-0.1595,-0.1594,-0.1584,
-     & -0.1577, -0.1532, -0.147,-0.1439,-0.1278,-0.1326,-0.1291,-0.122,-0.1145/)
-        x = (/-0.36,-0.36,-0.36,-0.2,-0.15,-0.06,-0.23,-0.42,-0.55,-0.65,-0.7,-0.7,-0.77,-0.86,-0.83,
-     & -0.69,-0.76,-0.73,-0.68,-0.62,-0.6,-0.65/)
-        g = (/-0.0025,-0.0025,-0.0025,-0.0040,-0.0038,-0.0030,-0.0026,-0.0038,-0.0027,-0.0027,-0.0029,-0.0032,-0.0032,
-     & -0.0025,-0.0026,-0.0022,-0.0021,-0.0020,-0.0033,-0.0037,-0.0023,-0.0020/)
-        j = (/0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.06,0.04,0.02,0.02,0.,0.,0.,0./)
-      gnd0=a1(iper)+wtrev*j(iper)+ x(iper)*alog(vscap)
+	a1=(/9.0138,9.0408,9.1338,9.2538,7.9837,7.7560,9.4252,9.6242,11.1300,
+     + 11.3629,11.7818,11.6097,11.4484,10.9065,9.8565,8.3363,6.8656,4.1178,1.8102,0.0977,-3.0563,-4.4387/)
+	a2=(/-0.0794,-0.0794,-0.0794,-0.0794,-0.1923,-0.1614,-0.1887,-0.0665,
+     + -0.1698,-0.1766,-0.2798,-0.3048,-0.2911,-0.3097,-0.2565,-0.2320,-0.1226,0.1724,0.3001,0.4609,0.6948,0.8393/)
+	a3=(/0.0589,0.0589,0.0589,0.0589,0.0417,0.0527,0.0442,0.0329,0.0188,
+     + 0.0095,-0.0039,-0.0133,-0.0224,-0.0267,-0.0198,-0.0367,-0.0291,-0.0214,-0.0240,-0.0202,-0.0219,-0.0035/)
+	b1=(/2.9935,2.9935,2.9935,2.9935,2.7995,2.8143,2.8131,2.4091,2.4938,
+     + 2.3773,2.3772,2.3413,2.3477,2.2042,2.1493,2.0408,2.0013,1.9408,1.7763,1.7030,1.5212,1.4195/)
+	b2=(/-0.2287,-0.2287,-0.2287,-0.2287,-0.2319,-0.2326,-0.2211,-0.1676,
+     + -0.1685,-0.1531,-0.1595,-0.1594,-0.1584,-0.1577,-0.1532,-0.1470,-0.1439,-0.1278,-0.1326,-0.1291,-0.1220,-0.1145/)
+	x=(/-0.854,-0.854,-0.854,-0.854,-0.631,-0.591,-0.757,-0.911,-0.998,
+     + -1.042,-1.030,-1.019,-1.023,-1.056,-1.009,-0.898,-0.851,-0.761,-0.675,-0.629,-0.531,-0.586/)
+	g=(/-0.0027,-0.0027,-0.0027,-0.0027,-0.0061,-0.0056,-0.0042,-0.0046,
+     +-0.0030,-0.0028,-0.0029,-0.0028,-0.0021,-0.0029,-0.0032,-0.0033,-0.0032,-0.0031,-0.0051,-0.0059,-0.0057,-0.0061/)
+	phi=(/0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.06,0.04,0.02,0.02,0.,0.,0.,0./)
+      gnd0=a1(iper) +wtrev*phi(iper) + x(iper)*alog(vscap)
       endif
       enddo	!jj or mag loop
       enddo	!kk or depth of source loop
       return
-      end subroutine Idriss2012
+      end subroutine Idriss2013
 
-      subroutine ngaw2_gm_sub4y( ip,ipb, ia,ndist,di,nmag,magmin,dmag,v30,v30ref)
-C     :     per, m, rjb, 
-C     :     r4out,
-C     :     mech, v30, y, expsiglny,
-C     :     e_gmpe, amh_gmpe, c_gmpe, amref_gmpe,
-C     :     rref_gmpe, h_gmpe, 
-C     :     v30ref, 
-C     :     sigt_gmpe,
-C     :     e_pga4nl, amh_pga4nl, c_pga4nl, amref_pga4nl,
-C     :     rref_pga4nl, h_pga4nl,
-C     :     pga4nl, fm_pga4nl, fd_pga4nl, 
-C     :     fs_lin_pga4nl, fs_nonlin_pga4nl,
-C     :     bnl, amp_lin, amp_nl, amp_total,
-C     :     fm_gmpe, fd_gmpe, fs_gmpe,
-C     :     gspread)
-c Modified to build table of exceedances 12/28/2012. SH. 
-!Input arguments:
-c ipb =local index corresponding to period of interest, per_gmpe(ipb)=per
-c ip = global period index
-c ndist number of elements in distance part of array
-c v30= vs30 at the site (m/s)
-!          per, m, rjb, 
-!          mech, v30, 
-!          e_gmpe, amh_gmpe, c_gmpe, amref_gmpe,
-!          rref_gmpe, h_gmpe, 
-!          v30ref, 
-!          sigt_gmpe,
-!          e_pga4nl, amh_pga4nl, c_pga4nl, amref_pga4nl,
-!          rref_pga4nl, h_pga4nl,
-      implicit none
-      real per_a(120), e_a(7,120), amh_a(120), 
-     :     c_a(4,120), amref_a(120), rref_a(120), h_a(120),  sigt_a(120),
-     +     per_pga4nl, e_pga4nl(7), amh_pga4nl, 
-     +     c_pga4nl(4), amref_pga4nl, rref_pga4nl, h_pga4nl 
-       common /boore12/ per_a, e_a, amh_a, c_a, amref_a, rref_a, h_a, sigt_a,
-     +  per_pga4nl, e_pga4nl, amh_pga4nl,c_pga4nl, amref_pga4nl,rref_pga4nl,h_pga4nl
-c end of bssa addtions...
-! Extinct Output arguments:
-
-!          y, expsiglny,
-!          y, expsiglny,
-!          pga4nl, fm_pga4nl, fd_pga4nl, 
-!          fs_lin_pga4nl, fs_nonlin_pga4nl,
-!          bnl, amp_lin, amp_nl, amp_total,
-!          fm_gmpe, fd_gmpe, fs_gmpe,
-!          gspread
-c Output pr() rate of exc. matrix.
-      real sqrt2,wtss,wtrev,wtnm,plim,dp2
-      parameter (sqrt2=1.414213562)
-c lines from hazgrid. table production
-      common/mech/wtss,wtrev,wtnm
-      common/fix_sigma/fix_sigma,sigma_fx
-       common/prob/p,plim,dp2   !table of complementary normal probab
-      common / atten / pr, xlev, nlev, icode, wt, wtdist
-c lines from hazgrid. table production
-      common/depth_rup/ntor,dtor,wtor,wtor65
-      common/epistemic/nfi,e_wind,gnd_ep,mcut,dcut
-      real gnd_ep(3,3,8),mcut(2),dcut(2),gndout(3),gndx
-      real, dimension(25005):: p
-      real, dimension (260,38,20,8,3,3):: pr
-      real, dimension(20,8):: xlev
-      real, dimension(3):: dtor,wtor,wtor65
-      integer nlev(8),icode(8,10),ntor,nmag,ndist
-      real wt(8,10,2),wtdist(8,10),weight,fac,sigmaf,tmp,di,magmin,dmag,sigma_fx
-      logical fix_sigma,e_wind(8)
-      integer ie,ii,jj,kk,ip,ipb,ipr,ia,ide,ime,nfi
-
-! Computes NGAW2 NGA motions for given input variables
-
-      real :: per, m, rjb, r, r4out, 
-     :     v30, y, expsiglny,
-     :     e_gmpe(7), amh_gmpe, c_gmpe(4), amref_gmpe,
-     :     rref_gmpe, h_gmpe, 
-     :     v30ref, 
-     :     sigt_gmpe,
-     :     pga4nl, fm_pga4nl, fd_pga4nl, fs_pga4nl,
-     :     bnl, amp_lin, amp_nl, amp_total,
-     :     fm_gmpe, fd_gmpe, fs_gmpe_xamp,
-     :     y_xamp, va, blin, gspread
-     
-      real :: y_ngaw2_no_site_amps
-
-      integer :: mech, imodel_lin, imodel_nl
-  
-      logical nonlin_corr
-       per = per_a(ipb)
-       e_gmpe(1:7)=e_a(1:7,ipb)
-       h_gmpe = h_a(ipb)
-       amh_gmpe=amh_a(ipb)
-       c_gmpe(1:4) = c_a(1:4,ipb)
-       amref_gmpe=amref_a(ipb)
-       rref_gmpe=rref_a(ipb)
-       if(fix_sigma)then
-       sigmaf=1./sigma_fx/sqrt2
-       else
-       sigt_gmpe=sigt_a(ipb)
-       sigmaf=1./sigt_gmpe/sqrt2      !no dependency on M or Rjb
-       endif      !optional user specified sigma?
-c convert weights of slip models to mech index.
-      if(wtss.eq.1.)then
-      mech=1
-      elseif(wtnm.eq.1.)then
-      mech=2
-      elseif(wtrev.eq.1.)then
-      mech=3
-      else
-      stop'current version of bssa requires pure ss,normal or 
-     * reverse slip'
-      endif
-!GET PGA4NL:
-
-     
-! Coefficients for pga4nl from GMPE:
-c loop on magnitude, distance, gmlevel, depth to top (not an active effect)
-      m=magmin
-      nonlin_corr = .true.
-      imodel_lin = 5
-      imodel_nl = 5
-      do jj=1,nmag
-       if(e_wind(ip))then
-          if(m.lt.mcut(1))then
-          ime=1
-          elseif(m.lt.mcut(2))then
-          ime=2
-          else
-          ime=3
-          endif
-          endif      !e_wind?
-      do ii=1,ndist
-      rjb=0.5+(ii-1)*di
-       weight= wt(ip,ia,1)
-       if(rjb.gt.wtdist(ip,ia)) weight= wt(ip,ia,2)
-      if(e_wind(ip))then
-          if(rjb.lt.dcut(1))then
-          ide=1
-          elseif(rjb.lt.dcut(2))then
-          ide=2
-          else
-          ide=3
-          endif
-          gndx=gnd_ep(ide,ime,ip)
-          endif      !extra epistemic?
-      pga4nl = y_ngaw2_no_site_amps(m, rjb, mech,
-     :           e_pga4nl, amh_pga4nl, c_pga4nl, 
-     :           amref_pga4nl, rref_pga4nl, 
-     :           h_pga4nl,
-     :           r,
-     :           fm_pga4nl, fd_pga4nl, fs_pga4nl,
-     :           gspread)
-
-! The total amp for pga4nl = 1.0 by definition, so do not need
-! to apply an additional amplification.
-
-!GET Y FOR GMPE:
-      y_xamp = y_ngaw2_no_site_amps(m, rjb, mech,
-     :           e_gmpe, amh_gmpe, c_gmpe, 
-     :           amref_gmpe, rref_gmpe, 
-     :           h_gmpe,
-     :           r4out,
-     :           fm_gmpe, fd_gmpe, fs_gmpe_xamp,
-     :           gspread)
-      call site_amp_correction_ss12(
-     :        per, v30, v30ref, 
-     :        blin, va,
-     :        nonlin_corr, pga4nl, 
-     :        bnl, 
-     :        amp_lin, amp_nl, amp_total)
-     
-c      fs_gmpe = alog(amp_total)   ! Natural log!!
-         
-      y = alog (amp_total * y_xamp)
-        gndout(1)=y
-         if(e_wind(ip))then
-         gndout(2)= y+gndx
-         gndout(3)= y-gndx
-         endif
-      do ie=1,nfi
-      do 199 kk = 1,nlev(ip)
-      tmp= (gndout(ie) - xlev(kk,ip))*sigmaf
-        if(tmp.gt.3.3)then
-       ipr=25002
-       elseif(tmp.gt.plim)then
-       ipr= 1+nint(dp2*(tmp-plim))	!3sigma cutoff n'(mu,sig)
-       else
-       goto 102	!transfer out if ln(SA) above mu+3sigma
-       endif
-       fac=weight*p(ipr)
- 199   pr(ii,jj,kk,ip,1:ntor,ie)= pr(ii,jj,kk,ip,1:ntor,ie)+ fac !sum thru ia index
-  102  continue
-        enddo	!ie	extra epistemic.
-         enddo      !ii
-         m=m+dmag
-        enddo      !jj	or mag index
-      return
-      end subroutine ngaw2_gm_sub4y
-! --------------------------------------------------------- ngaw2_gm_sub4y
-
-! ------------------------------------------------  site_amp_correction_ss12
-      subroutine site_amp_correction_ss12(
-     :      per, v30, v30ref,
-     :      bv, va,
-     :      nonlin_corr, pga_4nl,
-     :      bnl, amp_lin, amp_nonlin, amp_total)
-      
-! Input parameters: 
-!    per: period for site amp calculation 
-!    v30: Vs30 for site amp calculation 
-!    v30ref: Vs30 reference value (760 m/s used for BA08)
-!    nonlin_corr = 'Y' for nonlinear site amp calculation
-
-! Output parameters: bv, va, amp_lin
-! Output parameters: bnl, amp_nonlin, amp_total (=amp_lin*amp_nonlin)
-!                    The amps are for Y, not ln Y.
-
-! Use site_amp_from_v30_vs_per.for to compute the site amp for a
-! specified model, pga4nl, and Vs30 vs period.
-
-! Dates: 11/07/12 - Written by D. Boore, based on \forprogs\site_amp_correction
-!        11/11/12 - Change some arguments in site_amp_nonlinear_ss12, 
-!                   deleting V30ref (not used in SS12), and adding phi2, phi3
- 
- 
-      implicit none
-      
-      real :: per, v30, v30ref, bv, va, pga_4nl,
-     :        bnl, amp_lin, amp_nonlin, amp_total,
-     :        phi2, phi3
-     
-      logical nonlin_corr
- 
-      call site_amp_linear_ss12(per, v30, v30ref,
-     :                            bv, va, amp_lin)
-
-      if (nonlin_corr .and. pga_4nl > 0.0) then
-        call site_amp_nonlinear_ss12(
-     :    per, phi2, phi3, 
-     :    v30, pga_4nl,  
-     :    bnl, amp_nonlin)
-      else
-        bnl = 0.0
-        amp_nonlin = 1.0
-      end if
-      
-      amp_total = amp_lin * amp_nonlin
-      
-      return
-      
-      end
-! ------------------------------------------------  site_amp_correction_ss12
-
-!      include 'site_amp_linear_ss12l.for'
-!      include 'site_amp_nonlinear_ss12l.for' 
-  
-      
-       ! ----------------------------------- BEGIN Site_Amp_Linear_SS12 -------------------
-      subroutine Site_Amp_Linear_ss12(per, v30, v30ref,
-     :                            bv, va, amp_lin)
-     
-! Input parameters: per, v30, v30ref, imodel_lin
-! Output parameters: bv (in terms of common log), va, amp_lin
-
-! Returns the linear amplification, following the amp factor
-! of BJF94, but using either the BJF slope (imodel = 1) or the 
-! Choi and Stewart (2005) (imodel = 2) slope.  For BJF94, uses the cubic
-! equations in Table 8 of BJF94 (for 5% damping and random component). 
-! The value for per = 0.1 is used for all smaller periods and the per=2.0, 5.0 value 
-! is used for periods longer than 2.0, 5.0 sec for imodel = 1, 2.  Note that this assumption is
-! conservative; we expect the amplifications to reach unity for long enough
-! periods (at least for Fourier spectra, what about for response spectra?)
-
-! PGA corresponds to PER = 0.0
-
-! PGV: If per < 0.0, use per = 0.5 to evaluate the amplification, following
-! Bommer and Alarcon (Journal of Earthquake Engineering, Vol. 10, No. 1 (2006) 1-31).
-! But I am not convinced that their suggestion is always the best to use.  One way of
-! dealing with this is to add a variable per4pgv to the input parameters.  The
-! other way is to change the programs (and control files) that call this subprogram.  
-! This is probably the best way of dealing with this, as it only requires a change in
-! the calling program (and control files). Adding a variable per4pgv would require
-! changes in this subprogram and in the calling program (and control files).
- 
-! Dates: 11/07/12 - Written by D. Boore, based on \forprogs\site_amp_correction
-  
-      implicit none
-      
-      real per, v30, v30ref, bv, va, amp_lin
-      real ln_per_ss12(21), per_ss12(21), c_ss12(21)
-      real ln_t
-      
-      integer nper_ss12, j
-
-      data per_ss12/0.010,0.020,0.030,0.050,0.075,
-     :              0.100,0.150,0.200,0.250,0.300,
-     :              0.400,0.500,0.750,1.000,1.500,
-     :              2.000,3.000,4.000,5.000,7.500,
-     :              10.000/
-
-
-      data ln_per_ss12/-4.60517,-3.91202,-3.50656,
-     :                 -2.99573,-2.59027,-2.30259,
-     :                 -1.89712,-1.60944,-1.38629,
-     :                 -1.20397,-0.91629,-0.69315,
-     :                 -0.28768, 0.00000, 0.40547, 
-     :                  0.69315, 1.09861, 1.38629,
-     :                  1.60944, 2.01490, 2.30259/
-      
-      data c_ss12/-0.53,-0.52,-0.51,-0.43,-0.38,
-     :              -0.43,-0.51,-0.61,-0.66,-0.73,
-     :              -0.77,-0.81,-0.89,-0.92,-0.91,
-     :              -0.90,-0.89,-0.89,-0.85,-0.75,
-     :              -0.69/
-
-       
-      nper_ss12 = 21
-       
-  
-      if(per == 0.0) then
-        ln_t = alog(0.01)
-      else 
-        if (per < 0.0) then
-          ln_t = alog(0.5)
-        else if (per > 10.0) then
-                                  
-          ln_t = alog(10.0)
-        else
-          ln_t = alog(per)
-        end if          
-      end if
-      
-      call lin_interp(ln_per_ss12, c_ss12, nper_ss12, 
-     :                          j, ln_t, bv)
-     
-      va = v30ref
-      
-      amp_lin  =  (v30/v30ref)**bv
-        
-       
-      return
-      end
-
-! ----------------------------------- END Site_Amp_Linear_SS12 -------------------
-! -------------------------------------- site_amp_nonlinear_ss12 ---------------------
-      subroutine site_amp_nonlinear_ss12(
-     :    per, phi2, phi3,
-     :    v30, pga_g,
-     :    bnl, amp_nl)
-      
-! Input parameters: per, v30, v30ref, pga_g
-! Output parameters: bnl, amp_nl
-
-! Compute the nonlinear site amp for Stewart and Seyhan (Sept., 2012) model.
- 
-! NOTE: pga in g!!!!!
-
-! Dates: 11/07/12 - Written by D. Boore, based on \forprogs\site_amp_nonlinear
-!        11/11/12 - Change some arguments in site_amp_nonlinear_ss12, 
-!                   deleting V30ref (not used in SS12), and adding phi2, phi3
- 
-      implicit none
-      
-      real per, v30, pga_g, bnl, amp_nl
-      
-      real f1, f2, f3
-      
-      real ln_per_ss12(21), per_ss12(21), 
-     :     phi2_ss12(21), phi3_ss12(21)
-      
-      real ln_t, phi2, phi3
-      
-      integer nper_ss12, j
-
-      data per_ss12/0.010,0.020,0.030,0.050,0.075,
-     :              0.100,0.150,0.200,0.250,0.300,
-     :              0.400,0.500,0.750,1.000,1.500,
-     :              2.000,3.000,4.000,5.000,7.500,
-     :              10.000/
-
-
-      data ln_per_ss12/-4.60517,-3.91202,-3.50656,
-     :                 -2.99573,-2.59027,-2.30259,
-     :                 -1.89712,-1.60944,-1.38629,
-     :                 -1.20397,-0.91629,-0.69315,
-     :                 -0.28768, 0.00000, 0.40547, 
-     :                  0.69315, 1.09861, 1.38629,
-     :                  1.60944, 2.01490, 2.30259/
-      
-      data phi2_ss12/-0.130,-0.130,-0.130,-0.130,-0.140,
-     :          -0.150,-0.160,-0.185,-0.187,-0.190,
-     :          -0.185,-0.163,-0.100,-0.070,-0.043,
-     :          -0.030,-0.013,-0.002, 0.000, 0.000,
-     :           0.000/
-
-      data phi3_ss12/-0.0070,-0.0073,-0.0074,-0.0065,-0.0057,
-     :          -0.0056,-0.0058,-0.0061,-0.0064,-0.0067,
-     :          -0.0071,-0.0074,-0.0081,-0.0084,-0.0077,
-     :          -0.0048,-0.0018,-0.0015,-0.0014,-0.0014,
-     :          -0.0014/
-      
-      nper_ss12 = 21
-       
-  
-      if(per == 0.0) then
-        ln_t = alog(0.01)
-      else 
-        if (per < 0.0) then
-          ln_t = alog(0.5)
-        else if (per > 10.0) then
-                                  
-          ln_t = alog(10.0)
-        else
-          ln_t = alog(per)
-        end if          
-      end if
-      
-      call lin_interp(ln_per_ss12, phi2_ss12, nper_ss12, 
-     :                          j, ln_t, phi2)
-     
-      call lin_interp(ln_per_ss12, phi3_ss12, nper_ss12, 
-     :                          j, ln_t, phi3)
-     
-      f1 = 0.0
-      f3 = 0.1
-      
-      f2 = phi2 * (exp(phi3*(amin1(v30,760.0)-360.0)) -
-     :             exp(phi3*(760.0-360.0)           )   )
-      
-      bnl = f2
-      
-      amp_nl = ( (pga_g+f3)/f3 )**bnl
-
-      return
-      
-      end
-! -------------------------------------- site_amp_nonlinear_ss12 ---------------------
-      
-      
-  ! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>      
-      function y_ngaw2_no_site_amps(m, rjb, mech,
-     :                    e, mh, c, mref, rref, 
-     :                    h,
-     :                    r,
-     :                    fm, fd, fs,
-     :                    gspread)
-     
-! NOTE: y in g, unless pgv!!!!  
-
-! ncoeff_s1, ncoeff_s2 are not included as arguments because it is
-! assumed that they are 4 and 7, respectively.
-
-! I should probably generalize thus function subprogram by using 
-! funcs for stages 1 and 2.
-
-! Assume no site amp
-
-! mech = 1, 2, 3 for SS, NS, RS, respectively
-
-! Dates: 12/14/11 - Modified to use calculations from ba08_gm_suby  
-!        12/15/11 - Allow for possibility of M-dependent anelastic attenuation and 
-!                   a quadratic M-dependence for M> Mhinge (the
-!                   coefficients for these options were 0.0 in BA08)
-!                 - Convert to natural logs
-!        12/19/11 - There are now 7, not 8, e coefficients (because
-!                   I no longer include a mechanism unspecified case).
-!        01/06/12 - Added implicit none
-!                 - Add fm, fd, fs to output
-!                 - Remove ansig, sigt from argument list
-!        01/10/12 - Change mech to be 1, 2, 3 for SS, NS, RS (instead of 0, 1, 2)
-!                 - Add "r" to argument list.
-!        01/11/12 - Add "gspread" to argument list.
-!                 - Use "mech" rather than "mechindex"
-!        11/10/12 - Renamed and revised version of y_ba08_no_site_amps
- 
-      IMPLICIT none
-      
-      real :: m, e(*), mh, c(*), mref, rref,
-     :        h, alny, gspread
-     
-      integer :: mech
-      
-      real :: r, rjb, fm_mech, fm_mscale, fm, fd, fs
-      
-      real :: y_ngaw2_no_site_amps
-      
-       
-      if (mech /= 1 .and. mech /= 2 .and. mech /= 3) then
-        print *,' From y_ngaw2_no_site_amps, mech = ', 
-     :             mech,
-     :       ' not a valid value; QUITTING'
-        stop
-      end if
-      
-      if (e(mech) == 0.0) then   ! no coefficient
-        print *,' From y_ngaw2_no_site_amps, '//
-     :           'mech>= 0, but'//
-     :       ' e(mech) == 0.0; QUITTING'
-        stop
-      else
-        fm_mech = e(mech)
-      end if
-        
-
-      if (m < mh ) then      
-        fm_mscale = e(4)*(m-mh)
-     :       + e(5)*(m-mh)**2 
-      else
-        fm_mscale = e(6)*(m-mh)
-     :       + e(7)*(m-mh)**2 
-      end if
- 
-      fm = fm_mech + fm_mscale
- 
-      r = sqrt(rjb**2+h**2)
-      
-      gspread = c(1) + c(2)*(m-mref)
-
-      fd = gspread*alog(r/rref)
-     :   + c(3)*(r-rref)
-     :   + c(4)*(m-mref)*(r-rref)
-
-      fs = 0.0  ! No amps
-         
-      alny = fm + fd + fs 
-      
-      y_ngaw2_no_site_amps = exp(alny)
-      
-      return
-      end
-! ---------------------- BEGIN SKIP -------------------
-      subroutine SKIP(lunit, nlines)
-      character*80 line
-        if (nlines .lt. 1) then
-          return
-        else
-        print *,nlines
-          do i = 1, nlines
-             read(lunit, 5,end=2)line
-             print 5,line
-          end do
-5       format(a)
-2          return
-        end if
-      end subroutine SKIP
-      
-      subroutine skipcmnt(nu, comment, ncomments)
-
-* Skip text comments in the file attached to unit nu, but save skipped 
-* comments in character array comment.  Skip at least one line, and more as 
-* long as the lines are preceded by "|" or "!".
-
-* Dates: 04/16/01 - Written by D. Boore
-*        12/07/01 - Added check for eof
-*        11/04/03 - Use trim_c to trim possible leading blank
-*        02/03/07 - Initialize comments to blank
-      character comment(*)*(*), buf*80
-      ncomments = 0
-100   buf = ' '
-      read (nu,'(a)',end=999) buf
-      call trim_c(buf,nc_buf)
-      if (buf(1:1) .eq.'!' .or. buf(1:1) .eq.'|' .or.
-     :                     ncomments + 1 .eq. 1) then
-        ncomments = ncomments + 1
-        comment(ncomments) = ' '
-        comment(ncomments) = buf(1:nc_buf)
-        goto 100
-       else
-        backspace nu
-       end if
-999    continue
-c   print *,ncomments
-5      format(a)
-c   print 5,(comment(j),j=1,ncomments)
-      return
-      end subroutine skipcmnt
       subroutine lin_interp(x, y, n, j, x_intrp, y_intrp)
       
 * Computes linearly interpolated value of y
@@ -10120,6 +9560,7 @@ c   print 5,(comment(j),j=1,ncomments)
       
       return
       end
+
       subroutine locate(x,n,y,j)
       real x(*)
       jp=2
@@ -10129,79 +9570,6 @@ c   print 5,(comment(j),j=1,ncomments)
       j=jp-1
       return
       end subroutine locate
-      subroutine trim_c(cstr, nchar)
-
-* strips leading and trailing blanks from cstr, returning the
-* result in cstr, which is now nchar characters in length
-
-* Strip off tabs also.
-
-* Here is a sample use in constructing a column header, filled out with 
-* periods:
-
-** Read idtag:
-*        idtag = ' '
-*        read(nu_in, '(1x,a)') idtag
-*        call trim_c(idtag, nc_id)
-** Set up the column headings:
-*        colhead = ' '
-*        colhead = idtag(1:nc_id)//'......' ! nc_id + 6 > length of colhead
-
-* Dates: 12/23/97 - written by D. Boore
-      character cstr*(*)
-
-      if(cstr .eq. ' ') then
-        nchar = 0
-        return
-      end if
-
-      nend = len(cstr)
-
-! Replace tabs with blanks:
-
-      do i = 1, nend
-        if(ichar(cstr(i:i)) .eq. 9) then
-           cstr(i:i) = ' '
-        end if
-      end do
-
-
-
-*      if(nend .eq. 0) then
-*        nchar = 0
-*        return
-*      end if
-
-      do i = nend, 1, -1
-        if (cstr(i:i) .ne. ' ') then
-           nchar2 = i
-           goto 10
-        end if
-      end do
-
-10    continue
-
-      do j = 1, nchar2
-        if (cstr(j:j) .ne. ' ') then
-          nchar1 = j
-          goto 20
-        end if
-      end do
-
-20    continue
-   
-      nchar = nchar2 - nchar1 + 1
-      cstr(1:nchar) = cstr(nchar1: nchar2)
-      if (nchar .lt. nend) then
-        do i = nchar+1, nend
-          cstr(i:i) = ' '
-        end do
-      end if
-
-      return
-      end
-! --------------------------- END TRIM_C -----------------------
-     
 
       real function sdi_ratio(per,M,rhat,sige,sdi)
       real M,rhat,td,dt,sde,sdi
@@ -10838,13 +10206,15 @@ c          The approximate method (Equation 21)
         end subroutine CY2013_NGA
 
       subroutine bssa2013drv( ip,indx_per, ia,ndist,di,nmag,magmin,
-     * dmag,v30)
-      parameter (npermx=23, sqrt2 = 1.414213562)
+     * dmag,v30,z1ref)
+      parameter (npermx=107, sqrt2 = 1.414213562)
       real, dimension(3)::  c,gndout
 c this driver code runs the NGAW BSSA model for PGA and then for period with index indx_per
 c the outputs are lny = logged SA, and sigmaf =1/sigma/sqrt2 
+c currently the California - Global deltac3 is hardwired but the China and Italy-Japan versions are
+c available in coeffs below. SHarmsen.
 c ip is the global period index, used in SDI calcs for example. 
-c indx_per is the local  period index.  
+c indx_per is the local  period index. Apr 11 2013: now 107 periods in latest update. 
 c Inelastic spectral displacement option added. Option if logical varible sdi is "true"
 c The method of Tothong and Cornell is used. See common block /sdi/ where dy_sdi is brought in.
 c v30 = vs30 (m/s) input.
@@ -10852,13 +10222,13 @@ c v30 = vs30 (m/s) input.
       
       real, dimension(npermx):: T,clin, vclin, vref,
      :     c1,c2,c3,phi2, phi3,e0,e1,e2,e3,e4,e5,e6,
-     :     amh,f1, f3, f4,h,Dc3CATW,Dc3China,Dc3Italy,
-     :     lambda1, lambda2,Mref,Rref,delta_c3,
-     :     tau1, tau2
+     :     amh,f1, f3, f4,f5,h,Dc3CATW,Dc3China,Dc3Italy,
+     :     lambda1, lambda2,Mref,Rref,Rjb_bar,delta_c3,
+     :     tau1, tau2,delta_phiR, delta_phiV, Mh
      
       
       real m, logy_pred, rjb, z1
-      real lny, gnd 
+      real lny, gnd,z1ref
       
       integer mech, iregion,ip
  
@@ -10940,96 +10310,380 @@ c add SDI-related common block sdi feb 22 2013
       real wt(8,10,2),wtdist(8,10),fac,tmp,wtss,wtrev,wtnm
       real di,magmin,dmag,sigma_fx
       logical fix_sigma,e_wind(8), sdi
-      T       =(/-1.000000, 0.000000, 0.010000, 0.020000, 0.030000, 0.040000, 0.050000,
-     + 0.075000, 0.100000, 0.150000, 0.200000, 0.250000, 0.300000, 0.400000, 0.500000,
-     + 0.750000, 1.000000, 1.500000, 2.000000, 3.000000, 4.000000, 5.000000,10.000000/)
-      c1      =(/-1.235000,-1.128000,-1.128000,-1.133000,-1.133000,-1.129000,-1.099000,
-     +-1.071000,-1.045000,-1.037000,-1.048000,-1.059000,-1.081000,-1.111000,-1.150000,
-     +-1.176000,-1.197000,-1.205000,-1.225000,-1.196000,-1.210000,-1.222000,-1.328000/)
-      c2      =(/ 0.141900, 0.183200, 0.183000, 0.181300, 0.179800, 0.180400, 0.179000,
-     + 0.174800, 0.163100, 0.141900, 0.135200, 0.133100, 0.128800, 0.116500, 0.117200,
-     + 0.109500, 0.099800, 0.089500, 0.093000, 0.090400, 0.099900, 0.107200, 0.149500/)
-      c3      =(/-0.003440,-0.008088,-0.008088,-0.008074,-0.008336,-0.009030,-0.009819,
-     +-0.010580,-0.010200,-0.008977,-0.007717,-0.006517,-0.005475,-0.004053,-0.003220,
-     +-0.001931,-0.001210,-0.000365, 0.000000, 0.000000,-0.000052, 0.000000, 0.000000/)
-      Mref    =(/ 4.500000, 4.500000, 4.500000, 4.500000, 4.500000, 4.500000, 4.500000,
-     + 4.500000, 4.500000, 4.500000, 4.500000, 4.500000, 4.500000, 4.500000, 4.500000,
-     + 4.500000, 4.500000, 4.500000, 4.500000, 4.500000, 4.500000, 4.500000, 4.500000/)
-      Rref    =(/ 1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000000,
-     + 1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.00000,
-     + 1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000000, 1.000000/)
-      h       =(/ 5.500000, 4.900000, 4.900000, 4.900000, 4.700000, 4.700000, 4.300000,
-     + 4.300000, 4.300000, 4.700000, 4.900000, 4.900000, 5.100000, 5.300000, 5.700000,
-     + 5.700000, 5.900000, 6.300000, 6.900000, 6.700000, 7.500000, 7.700000, 9.500000/)
-      Dc3CATW =(/ 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
-     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
-     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000/)
-      Dc3China=(/ 0.004345, 0.002858, 0.002840, 0.002750, 0.002710, 0.002830, 0.002980,
-     + 0.002940, 0.002900, 0.002760, 0.002730, 0.002440, 0.002150, 0.002060, 0.002300,
-     + 0.002660, 0.002970, 0.003010, 0.003070, 0.002430, 0.002680, 0.002640, 0.003030/)
-      Dc3Italy=(/-0.000330,-0.002550,-0.002550,-0.002210,-0.002160,-0.002030,-0.001950,
-     +-0.002120,-0.002440,-0.002700,-0.002880,-0.003220,-0.003340,-0.003230,-0.002960,
-     +-0.002540,-0.002210,-0.001430,-0.001050,-0.001280,-0.001080,-0.000840, 0.001490/)
-      e0      =(/ 5.059000, 0.466700, 0.472500, 0.497100, 0.560200, 0.673500, 0.722100,
-     + 0.967300, 1.081000, 1.339000, 1.366000, 1.256000, 1.229000, 1.129000, 1.009000,
-     + 0.681800, 0.422800,-0.139200,-0.545000,-1.229000,-1.656000,-1.982000,-3.022000/)
-      e1      =(/ 5.100000, 0.509400, 0.515200, 0.539500, 0.605800, 0.722000, 0.772700,
-     + 1.018000, 1.120000, 1.380000, 1.408000, 1.283000, 1.247000, 1.145000, 1.027000,
-     + 0.709600, 0.446200,-0.112700,-0.508500,-1.188000,-1.587000,-1.904000,-2.901000/)
-      e2      =(/ 4.872000, 0.256000, 0.261600, 0.296700, 0.381600, 0.522200, 0.562500,
-     + 0.768000, 0.832600, 1.073000, 1.165000, 1.071000, 1.027000, 0.929500, 0.808400,
-     + 0.495700, 0.239200,-0.308200,-0.687100,-1.231000,-1.740000,-2.020000,-3.355000/)
-      e3      =(/ 5.053000, 0.468300, 0.474100, 0.495400, 0.543600, 0.640300, 0.688100,
-     + 0.948500, 1.104000, 1.365000, 1.365000, 1.279000, 1.274000, 1.178000, 1.054000,
-     + 0.702400, 0.451000,-0.122800,-0.558500,-1.307000,-1.754000,-2.117000,-3.124000/)
-      e4      =(/ 1.125000, 1.501000, 1.491000, 1.505000, 1.505000, 1.481000, 1.477000,
-     + 1.489000, 1.582000, 1.347000, 1.201000, 1.038000, 0.950800, 1.004000, 1.041000,
-     + 1.300000, 1.495000, 1.749000, 1.883000, 2.181000, 2.155000, 2.238000, 1.774000/)
-      e5      =(/-0.142300, 0.081320, 0.080300, 0.084200, 0.097690, 0.104200, 0.107500,
-     + 0.111900, 0.119400,-0.029000,-0.094740,-0.157900,-0.195400,-0.222300,-0.238700,
-     +-0.215400,-0.196400,-0.160600,-0.134900,-0.035170,-0.037120,-0.002483,-0.210900/)
-      e6      =(/ 0.245600,-0.137900,-0.137300,-0.138400,-0.138000,-0.145400,-0.153400,
-     +-0.171300,-0.152300,-0.145700,-0.137100,-0.102400,-0.096080, 0.002565, 0.050700,
-     + 0.110500, 0.187500, 0.395500, 0.458400, 0.655600, 0.788600, 0.852700, 1.091000/)
-        amh      =(/ 6.200000, 5.500000, 5.500000, 5.500000, 5.500000, 5.500000, 5.500000
-     +, 5.500000, 5.500000, 5.740000, 5.920000, 6.050000, 6.160000, 6.200000, 6.200000
-     +, 6.200000, 6.200000, 6.200000, 6.200000, 6.200000, 6.200000, 6.200000, 6.200000/)
-        clin       =(/-0.805000,-0.515000,-0.515000,-0.547500,-0.550000,-0.524440,-0.4900,
-     +-0.450000,-0.470000,-0.510000,-0.600000,-0.700000,-0.780000,-0.850000,-0.900,
-     +-0.980000,-1.030000,-1.090000,-1.100000,-1.050000,-1.000000,-0.970000,-0.644000/)
-      Vclin =(/   1130.0,    836.7,    836.7,    928.3,    939.6,    923.2,    908.8,
-     +    931.4,   1000.0,   1100.0,   1250.0,   1300.0,   1350.0,   1400.0,   1370.0,
-     +   1250.0,   1170.0,   1100.0,   1000.0,    900.0,    800.0,    750.0,    750.0/)
-      Vref    =(/    760.0,    760.0,    760.0,    760.0,    760.0,    760.0,    760.0,
-     +    760.0,    760.0,    760.0,    760.0,    760.0,    760.0,    760.0,    760.0,
-     +    760.0,    760.0,    760.0,    760.0,    760.0,    760.0,    760.0,    760.0/)
-      phi2    =(/-0.100000,-0.150000,-0.150000,-0.145000,-0.150000,-0.170000,-0.190000,
-     +-0.230000,-0.250000,-0.260000,-0.250000,-0.235000,-0.220000,-0.195000,-0.175000,
-     +-0.140000,-0.110000,-0.065000,-0.035000,-0.012900,-0.001600, 0.000000, 0.000000/)
-      phi3    =(/-0.008440,-0.007010,-0.007010,-0.007280,-0.007350,-0.006980,-0.006470,
-     +-0.005730,-0.005600,-0.005850,-0.006140,-0.006440,-0.006700,-0.007130,-0.007440,
-     +-0.008120,-0.008440,-0.007710,-0.004790,-0.001830,-0.001520,-0.001440,-0.001360/)
-      f1      =(/ 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
-     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
-     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000/)
-      f3      =(/ 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000,
-     + 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000,
-     + 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000/)
-      f4      =(/ 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
-     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
-     + 0.000000, 0.412000, 0.412000, 0.471000, 0.588000, 0.647000, 0.659000, 0.676000/)
-      lambda1 =(/ 0.503500, 0.511000, 0.512000, 0.511600, 0.516800, 0.523000, 0.528800,
-     + 0.546500, 0.567500, 0.580000, 0.570300, 0.571200, 0.569700, 0.550800, 0.570000,
-     + 0.563000, 0.572400, 0.580200, 0.605200, 0.651800, 0.700100, 0.744300, 0.646500/)
-      lambda2 =(/ 0.589700, 0.661000, 0.662000, 0.664200, 0.681300, 0.700700, 0.718800,
-     + 0.726500, 0.712900, 0.703500, 0.698200, 0.681800, 0.667400, 0.649800, 0.638800,
-     + 0.628700, 0.627400, 0.621100, 0.620000, 0.624200, 0.604500, 0.593300, 0.548000/)
-      tau1    =(/ 0.386900, 0.432500, 0.433300, 0.437700, 0.453700, 0.477400, 0.501000,
-     + 0.525100, 0.504700, 0.450500, 0.418800, 0.405100, 0.404400, 0.411600, 0.421700,
-     + 0.465200, 0.512800, 0.549300, 0.563800, 0.552100, 0.519700, 0.513600, 0.514200/)
-      tau2    =(/ 0.371400, 0.435000, 0.295000, 0.298800, 0.309000, 0.328400, 0.349500,
-     + 0.405200, 0.410900, 0.400900, 0.362300, 0.324600, 0.309700, 0.291900, 0.287500,
-     + 0.357800, 0.404900, 0.443400, 0.472200, 0.446200, 0.418700, 0.421800, 0.451900/)
+	T  =(/-1.000000, 0.000000, 0.010000, 0.020000, 0.022000, 0.025000, 0.029000,
+     + 0.030000, 0.032000, 0.035000, 0.036000, 0.040000, 0.042000, 0.044000, 0.045000, 0.046000, 0.048000,
+     + 0.050000, 0.055000, 0.060000, 0.065000, 0.067000, 0.070000, 0.075000, 0.080000, 0.085000, 0.090000,
+     + 0.095000, 0.100000, 0.110000, 0.120000, 0.130000, 0.133000, 0.140000, 0.150000, 0.160000, 0.170000,
+     + 0.180000, 0.190000, 0.200000, 0.220000, 0.240000, 0.250000, 0.260000, 0.280000, 0.290000, 0.300000,
+     + 0.320000, 0.340000, 0.350000, 0.360000, 0.380000, 0.400000, 0.420000, 0.440000, 0.450000, 0.460000,
+     + 0.480000, 0.500000, 0.550000, 0.600000, 0.650000, 0.667000, 0.700000, 0.750000, 0.800000, 0.850000,
+     + 0.900000, 0.950000, 1.000000, 1.100000, 1.200000, 1.300000, 1.400000, 1.500000, 1.600000, 1.700000,
+     + 1.800000, 1.900000, 2.000000, 2.200000, 2.400000, 2.500000, 2.600000, 2.800000, 3.000000, 3.200000,
+     + 3.400000, 3.500000, 3.600000, 3.800000, 4.000000, 4.200000, 4.400000, 4.600000, 4.800000, 5.000000,
+     + 5.500000, 6.000000, 6.500000, 7.000000, 7.500000, 8.000000, 8.500000, 9.000000, 9.500000,10.000000/)
+	e0      =(/ 5.037000, 0.447300, 0.453400, 0.485980, 0.498660, 0.522830, 0.559490,
+     + 0.569160, 0.588020, 0.616360, 0.625540, 0.662810, 0.680870, 0.698820, 0.708220, 0.717790, 0.735740,
+     + 0.754360, 0.799600, 0.843940, 0.886550, 0.902700, 0.926520, 0.964470, 1.000300, 1.034000, 1.066600,
+     + 1.098100, 1.126800, 1.178500, 1.223000, 1.259600, 1.269200, 1.288300, 1.309500, 1.323500, 1.330600,
+     + 1.332700, 1.330700, 1.325500, 1.309100, 1.288100, 1.276600, 1.265100, 1.242900, 1.232400, 1.221700,
+     + 1.200700, 1.179000, 1.167400, 1.155800, 1.130500, 1.104600, 1.078200, 1.051500, 1.037600, 1.023400,
+     + 0.997190, 0.969910, 0.904800, 0.841650, 0.781810, 0.762620, 0.725130, 0.669030, 0.613460, 0.558530,
+     + 0.502960, 0.447010, 0.393200, 0.284840, 0.173400, 0.061520,-0.045750,-0.149540,-0.248600,-0.341450,
+     + -0.429750,-0.512760,-0.586690,-0.721430,-0.848100,-0.909660,-0.968630,-1.081700,-1.189800,-1.291400,
+     + -1.386000,-1.433200,-1.476200,-1.561700,-1.638800,-1.711600,-1.779800,-1.846900,-1.906300,-1.966000,
+     + -2.105100,-2.242100,-2.368600,-2.482700,-2.586500,-2.686100,-2.782000,-2.879200,-2.976900,-3.070200/)
+	e1      =(/ 5.078000, 0.485600, 0.491600, 0.523590, 0.536470, 0.561300, 0.599230,
+     + 0.609200, 0.628750, 0.658180, 0.667720, 0.706040, 0.724430, 0.742770, 0.752320, 0.762020, 0.780150,
+     + 0.799050, 0.844500, 0.888840, 0.931160, 0.947110, 0.970570, 1.007700, 1.042600, 1.075500, 1.107600,
+     + 1.138500, 1.166900, 1.217900, 1.262100, 1.298600, 1.308200, 1.327000, 1.348100, 1.361500, 1.367900,
+     + 1.368900, 1.365600, 1.359000, 1.339400, 1.315000, 1.301700, 1.288600, 1.263500, 1.251700, 1.240100,
+     + 1.217700, 1.195500, 1.183600, 1.172000, 1.146800, 1.121400, 1.095500, 1.069700, 1.056200, 1.042600,
+     + 1.017200, 0.991060, 0.928300, 0.867150, 0.808760, 0.789940, 0.753020, 0.697370, 0.641960, 0.586980,
+     + 0.531360, 0.475410, 0.421800, 0.313740, 0.202590, 0.091060,-0.015700,-0.118660,-0.216720,-0.308400,
+     + -0.395580,-0.477310,-0.550030,-0.682200,-0.806900,-0.867650,-0.925770,-1.036700,-1.142000,-1.240600,
+     + -1.332200,-1.377800,-1.419300,-1.501400,-1.574800,-1.643900,-1.708900,-1.773100,-1.830300,-1.888200,
+     + -2.023200,-2.156300,-2.278500,-2.388100,-2.487400,-2.582900,-2.675200,-2.768700,-2.863400,-2.953700/)
+	e2      =(/ 4.849000, 0.245900, 0.251900, 0.297070, 0.313470, 0.344260, 0.391460,
+     + 0.403910, 0.427880, 0.462520, 0.473380, 0.515320, 0.534450, 0.552820, 0.562220, 0.571660, 0.588880,
+     + 0.606520, 0.647700, 0.685620, 0.719410, 0.731710, 0.749400, 0.776780, 0.801610, 0.824230, 0.845910,
+     + 0.867030, 0.887100, 0.927020, 0.966160, 1.003100, 1.013500, 1.036000, 1.064800, 1.087600, 1.104000,
+     + 1.114900, 1.120800, 1.122000, 1.113300, 1.094500, 1.082800, 1.071000, 1.047600, 1.036300, 1.024600,
+     + 1.001100, 0.976770, 0.963800, 0.951200, 0.924400, 0.897650, 0.870670, 0.843550, 0.829410, 0.815090,
+     + 0.788600, 0.761500, 0.698400, 0.638750, 0.582310, 0.564220, 0.528780, 0.475230, 0.421730, 0.368130,
+     + 0.313760, 0.259190, 0.207000, 0.101820,-0.006200,-0.113450,-0.215500,-0.313800,-0.406820,-0.492950,
+     + -0.573880,-0.648990,-0.714660,-0.830030,-0.932600,-0.982280,-1.031300,-1.130100,-1.230000,-1.325500,
+     + -1.415000,-1.459900,-1.501400,-1.586500,-1.667300,-1.745100,-1.819200,-1.892300,-1.957300,-2.024500,
+     + -2.190800,-2.365900,-2.532200,-2.681800,-2.817600,-2.943800,-3.059700,-3.171300,-3.278500,-3.377600/)
+	e3      =(/ 5.033000, 0.453900, 0.459900, 0.488750, 0.499730, 0.519990, 0.549950,
+     + 0.557830, 0.573300, 0.597040, 0.604960, 0.638280, 0.655050, 0.672250, 0.681390, 0.690760, 0.708540,
+     + 0.727260, 0.773700, 0.820670, 0.867240, 0.885260, 0.912270, 0.956300, 0.998180, 1.037900, 1.076200,
+     + 1.112700, 1.145400, 1.203000, 1.250200, 1.286900, 1.296100, 1.313700, 1.332400, 1.343700, 1.348700,
+     + 1.349200, 1.346300, 1.341400, 1.328100, 1.313200, 1.305200, 1.297200, 1.281500, 1.273600, 1.265300,
+     + 1.247900, 1.228600, 1.217700, 1.206600, 1.181600, 1.155200, 1.127600, 1.099500, 1.084700, 1.069600,
+     + 1.041500, 1.012000, 0.941700, 0.873510, 0.809480, 0.789160, 0.749850, 0.691730, 0.635190, 0.579690,
+     + 0.523610, 0.467060, 0.412400, 0.302090, 0.188660, 0.074330,-0.036070,-0.143700,-0.247080,-0.344650,
+     + -0.438180,-0.526820,-0.606580,-0.754020,-0.894100,-0.961870,-1.026600,-1.149500,-1.266400,-1.376000,
+     + -1.478600,-1.529700,-1.576400,-1.668500,-1.751600,-1.829000,-1.901100,-1.971200,-2.032600,-2.092800,
+     + -2.228800,-2.357900,-2.477000,-2.585400,-2.685400,-2.782300,-2.877600,-2.975900,-3.076000,-3.172600/)
+	e4      =(/ 1.073000, 1.431000, 1.421000, 1.433100, 1.433600, 1.432800, 1.427900,
+     + 1.426100, 1.422700, 1.417400, 1.415800, 1.409000, 1.405900, 1.403300, 1.402100, 1.400900, 1.399100,
+     + 1.397400, 1.394700, 1.395400, 1.400400, 1.403200, 1.408200, 1.417400, 1.426100, 1.432200, 1.435000,
+     + 1.433900, 1.429300, 1.411000, 1.383100, 1.349700, 1.339500, 1.316200, 1.284400, 1.254100, 1.224400,
+     + 1.194100, 1.163500, 1.134900, 1.082300, 1.036600, 1.016600, 0.999320, 0.972820, 0.963480, 0.956760,
+     + 0.950040, 0.949560, 0.950770, 0.952780, 0.958990, 0.967660, 0.978620, 0.991440, 0.998760, 1.006400,
+     + 1.021500, 1.038400, 1.083300, 1.133600, 1.186100, 1.203500, 1.237500, 1.287100, 1.334100, 1.378000,
+     + 1.420800, 1.462300, 1.500400, 1.569000, 1.628200, 1.679400, 1.723900, 1.762200, 1.795500, 1.825900,
+     + 1.856400, 1.886800, 1.915200, 1.968100, 2.017000, 2.040600, 2.062800, 2.101400, 2.132300, 2.154500,
+     + 2.170400, 2.177500, 2.183400, 2.193800, 2.204000, 2.212300, 2.218100, 2.223000, 2.226800, 2.229900,
+     + 2.238900, 2.237700, 2.215000, 2.172000, 2.118700, 2.061300, 2.008400, 1.960500, 1.918900, 1.883700/)
+	e5      =(/-0.153600, 0.050530, 0.049320, 0.053388, 0.054888, 0.057529, 0.060,732
+     + 0.061444, 0.062806, 0.064559, 0.065028, 0.066183, 0.066438, 0.066663, 0.066774, 0.066891, 0.0,67127
+     + 0.067357, 0.067797, 0.068591, 0.070127, 0.070895, 0.072075, 0.073549, 0.073735, 0.071940, 0.068097,
+     + 0.062327, 0.055231, 0.037389, 0.016373,-0.005158,-0.011354,-0.024711,-0.042065,-0.057593,-0.071861,
+     + -0.085640,-0.098884,-0.110960,-0.133000,-0.152990,-0.162130,-0.170410,-0.184630,-0.190570,-0.195900,
+     + -0.204540,-0.211340,-0.214460,-0.217160,-0.222140,-0.226080,-0.229240,-0.231660,-0.232630,-0.233500,
+     + -0.234640,-0.235220,-0.234490,-0.231280,-0.226660,-0.224970,-0.221430,-0.215910,-0.210470,-0.205280,
+     + -0.200110,-0.194900,-0.189830,-0.180010,-0.170900,-0.162330,-0.154130,-0.146700,-0.139970,-0.133610,
+     + -0.126860,-0.119590,-0.112370,-0.098017,-0.083765,-0.076308,-0.068925,-0.055229,-0.043320,-0.034440,
+     + -0.027889,-0.024997,-0.022575,-0.018362,-0.014642,-0.012248,-0.011459,-0.011760,-0.012879,-0.014855,
+     + -0.019502,-0.026383,-0.039505,-0.059140,-0.081606,-0.103820,-0.121140,-0.134070,-0.143640,-0.150960/)
+	e6      =(/ 0.225200,-0.166200,-0.165900,-0.165610,-0.165200,-0.164990,-0.166320,
+     + -0.166900,-0.168130,-0.170150,-0.170830,-0.173570,-0.174850,-0.176190,-0.176930,-0.177690,-0.179200,
+     + -0.180820,-0.184800,-0.188580,-0.191760,-0.192910,-0.194510,-0.196650,-0.198160,-0.199020,-0.199290,
+     + -0.199000,-0.198380,-0.196010,-0.192650,-0.188980,-0.187920,-0.185660,-0.182340,-0.178530,-0.174210,
+     + -0.169390,-0.164040,-0.158520,-0.147040,-0.134450,-0.127840,-0.121150,-0.107140,-0.100110,-0.092860,
+     + -0.078920,-0.065130,-0.057920,-0.051040,-0.036760,-0.023190,-0.010420, 0.001170, 0.006590, 0.011870,
+     + 0.020770, 0.029120, 0.046930, 0.062670, 0.078000, 0.083060, 0.093190, 0.108290, 0.122560, 0.136080,
+     + 0.149830, 0.164320, 0.178950, 0.210420, 0.244100, 0.277990, 0.309560, 0.338960, 0.366160, 0.390650,
+     + 0.412440, 0.431510, 0.447880, 0.480240, 0.518730, 0.538830, 0.558100, 0.593940, 0.626940, 0.658110,
+     + 0.687550, 0.702160, 0.715230, 0.740280, 0.763030, 0.785520, 0.807920, 0.831260, 0.852400, 0.873140,
+     + 0.914660, 0.948700, 0.976430, 0.997570, 1.012100, 1.023200, 1.033500, 1.045300, 1.056700, 1.065100/)
+	Mh      =(/   6.2,   5.5,   5.5,   5.5,   5.5,   5.5,   5.5,
+     +   5.5,   5.5,   5.5,   5.5,   5.5,   5.5,   5.5,   5.5,   5.5,   5.5,
+     +   5.5,   5.5,   5.5,   5.5,   5.5,   5.5,   5.5,   5.5,   5.5,   5.5,
+     +   5.5,   5.5,   5.6,   5.6,   5.7,   5.7,   5.7,   5.7,   5.8,   5.8,
+     +   5.8,   5.9,   5.9,   6.0,   6.0,   6.1,   6.1,   6.1,   6.1,   6.1,
+     +   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,
+     +   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,
+     +   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,
+     +   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,
+     +   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,
+     +   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2,   6.2/)
+	c1      =(/-1.243000,-1.134000,-1.134000,-1.139400,-1.140500,-1.141900,-1.142300,
+     + -1.142100,-1.141200,-1.138800,-1.137800,-1.132400,-1.129200,-1.125900,-1.124200,-1.122400,-1.119200,
+     + -1.115900,-1.108200,-1.100900,-1.094200,-1.091800,-1.088400,-1.083100,-1.078500,-1.074500,-1.070900,
+     + -1.067800,-1.065200,-1.060700,-1.057200,-1.054900,-1.054500,-1.053700,-1.053200,-1.053300,-1.054100,
+     + -1.055600,-1.057900,-1.060700,-1.067000,-1.073700,-1.077300,-1.080800,-1.087900,-1.091300,-1.094800,
+     + -1.101300,-1.107400,-1.110500,-1.113300,-1.119000,-1.124300,-1.129100,-1.133700,-1.135900,-1.138100,
+     + -1.142000,-1.145900,-1.154300,-1.161500,-1.167600,-1.169400,-1.172800,-1.177700,-1.181900,-1.185400,
+     + -1.188400,-1.190900,-1.193000,-1.196600,-1.199600,-1.201800,-1.203900,-1.206300,-1.208600,-1.210600,
+     + -1.212300,-1.214100,-1.215900,-1.219000,-1.220200,-1.220100,-1.219800,-1.218900,-1.217900,-1.216900,
+     + -1.216000,-1.215600,-1.215600,-1.215800,-1.216200,-1.216500,-1.216900,-1.217500,-1.218200,-1.218900,
+     + -1.220400,-1.223200,-1.229900,-1.240800,-1.254300,-1.268800,-1.283900,-1.298900,-1.313000,-1.325300/)
+	c2      =(/ 0.148900, 0.191700, 0.191600, 0.189620, 0.189240, 0.188750, 0.188440,
+     + 0.188420, 0.188400, 0.188390, 0.188370, 0.188160, 0.187970, 0.187750, 0.187640, 0.187520, 0.187300,
+     + 0.187090, 0.186550, 0.185820, 0.184850, 0.184420, 0.183690, 0.182250, 0.180520, 0.178560, 0.176430,
+     + 0.174200, 0.172030, 0.167700, 0.163520, 0.159820, 0.158820, 0.156720, 0.154010, 0.151580, 0.149480,
+     + 0.147680, 0.146160, 0.144890, 0.142630, 0.140350, 0.139250, 0.138180, 0.136040, 0.134990, 0.133880,
+     + 0.131790, 0.129840, 0.128900, 0.128060, 0.126470, 0.125120, 0.123890, 0.122780, 0.122270, 0.121770,
+     + 0.120930, 0.120150, 0.118470, 0.116710, 0.114650, 0.113940, 0.112530, 0.110540, 0.108730, 0.107090,
+     + 0.105480, 0.103890, 0.102480, 0.100160, 0.098480, 0.097380, 0.096740, 0.096450, 0.096340, 0.096250,
+     + 0.096210, 0.096260, 0.096360, 0.096500, 0.096200, 0.096110, 0.096140, 0.096670, 0.097640, 0.098650,
+     + 0.099550, 0.099990, 0.100430, 0.101420, 0.102180, 0.102690, 0.103040, 0.103240, 0.103370, 0.103530,
+     + 0.104600, 0.107500, 0.112310, 0.118530, 0.125070, 0.131460, 0.137420, 0.142940, 0.147810, 0.151830/)
+	c3      =(/-0.003440,-0.008088,-0.008088,-0.008074,-0.008095,-0.008153,-0.008290,
+     + -0.008336,-0.008445,-0.008642,-0.008715,-0.009030,-0.009195,-0.009360,-0.009441,-0.009521,-0.009676,
+     + -0.009819,-0.010120,-0.010330,-0.010480,-0.010520,-0.010560,-0.010580,-0.010560,-0.010510,-0.010420,
+     + -0.010320,-0.010200,-0.009964,-0.009722,-0.009476,-0.009402,-0.009228,-0.008977,-0.008725,-0.00,8472
+     + -0.008219,-0.007967,-0.007717,-0.007224,-0.006747,-0.006517,-0.006293,-0.005866,-0.005666,-0.00,5475
+     + -0.005122,-0.004808,-0.004663,-0.004527,-0.004276,-0.004053,-0.003853,-0.003673,-0.003590,-0.003510,
+     + -0.003360,-0.003220,-0.002897,-0.002610,-0.002356,-0.002276,-0.002131,-0.001931,-0.001754,-0.00,1597
+     + -0.001456,-0.001328,-0.001210,-0.000994,-0.000803,-0.000635,-0.000490,-0.000365,-0.000259,-0.000,171
+     + -0.000099,-0.000042, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,-0.0000,23
+     + -0.000040,-0.000045,-0.000049,-0.000053,-0.000052,-0.000047,-0.000039,-0.000027,-0.000014, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000/)
+	Mref    =(/   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,
+     +   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,
+     +   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,
+     +   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,
+     +   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,
+     +   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,
+     +   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,
+     +   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,
+     +   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,
+     +   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,
+     +   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5/)
+	Rref    =(/   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,
+     +   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,
+     +   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,
+     +   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,
+     +   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,
+     +   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,
+     +   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,
+     +   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,
+     +   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,
+     +   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,
+     +   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0/)
+	h       =(/ 5.300000, 4.500000, 4.500000, 4.500000, 4.500000, 4.500000, 4.500000,
+     + 4.490000, 4.450000, 4.400000, 4.380000, 4.320000, 4.290000, 4.270000, 4.250000, 4.240000, 4.220000,
+     + 4.200000, 4.150000, 4.110000, 4.080000, 4.070000, 4.060000, 4.040000, 4.020000, 4.030000, 4.070000,
+     + 4.100000, 4.130000, 4.190000, 4.240000, 4.290000, 4.300000, 4.340000, 4.390000, 4.440000, 4.490000,
+     + 4.530000, 4.570000, 4.610000, 4.680000, 4.750000, 4.780000, 4.820000, 4.880000, 4.900000, 4.930000,
+     + 4.980000, 5.030000, 5.060000, 5.080000, 5.120000, 5.160000, 5.200000, 5.240000, 5.250000, 5.270000,
+     + 5.300000, 5.340000, 5.410000, 5.480000, 5.530000, 5.540000, 5.560000, 5.600000, 5.630000, 5.660000,
+     + 5.690000, 5.720000, 5.740000, 5.820000, 5.920000, 6.010000, 6.100000, 6.180000, 6.260000, 6.330000,
+     + 6.400000, 6.480000, 6.540000, 6.660000, 6.730000, 6.770000, 6.810000, 6.870000, 6.930000, 6.990000,
+     + 7.080000, 7.120000, 7.160000, 7.240000, 7.320000, 7.390000, 7.460000, 7.520000, 7.640000, 7.780000,
+     + 8.070000, 8.480000, 8.900000, 9.200000, 9.480000, 9.570000, 9.620000, 9.660000, 9.660000, 9.660000/)
+	Dc3CATW  =(/ 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000/)
+	Dc3China =(/ 0.004345, 0.002858, 0.002816, 0.002780, 0.002760, 0.002754, 0.00,2762
+     + 0.002765, 0.002769, 0.002784, 0.002801, 0.002822, 0.002846, 0.002874, 0.002900, 0.002923, 0.002944,
+     + 0.002957, 0.002964, 0.002968, 0.002968, 0.002968, 0.002964, 0.002957, 0.002945, 0.002930, 0.002914,
+     + 0.002897, 0.002879, 0.002863, 0.002846, 0.002831, 0.002816, 0.002802, 0.002786, 0.002765, 0.002734,
+     + 0.002699, 0.002660, 0.002612, 0.002560, 0.002505, 0.002444, 0.002380, 0.002314, 0.002250, 0.002196,
+     + 0.002155, 0.002124, 0.002104, 0.002097, 0.002098, 0.002107, 0.002127, 0.002160, 0.002202, 0.002250,
+     + 0.002298, 0.002348, 0.002399, 0.002452, 0.002508, 0.002568, 0.002629, 0.002690, 0.002746, 0.002797,
+     + 0.002843, 0.002885, 0.002921, 0.002954, 0.002982, 0.003007, 0.003026, 0.003039, 0.003041, 0.003026,
+     + 0.003000, 0.002968, 0.002923, 0.002870, 0.002815, 0.002761, 0.002708, 0.002658, 0.002616, 0.002588,
+     + 0.002575, 0.002572, 0.002573, 0.002586, 0.002605, 0.002619, 0.002624, 0.002622, 0.002615, 0.002604,
+     + 0.002591, 0.002583, 0.002586, 0.002603, 0.002600, 0.002630, 0.002670, 0.002760, 0.002890, 0.003030/)
+	Dc3Italy =(/-0.000330,-0.002550,-0.002437,-0.002340,-0.002289,-0.002250,-0.00,2215
+     + -0.002168,-0.002117,-0.002096,-0.002075,-0.002054,-0.002035,-0.002016,-0.002001,-0.001993,-0.001988,
+     + -0.001991,-0.002001,-0.002019,-0.002045,-0.002077,-0.002115,-0.002159,-0.002212,-0.002270,-0.002327,
+     + -0.002383,-0.002439,-0.002492,-0.002540,-0.002584,-0.002626,-0.002666,-0.002706,-0.002751,-0.002802,
+     + -0.002855,-0.002911,-0.002970,-0.003028,-0.003085,-0.003140,-0.003190,-0.003235,-0.003274,-0.003297,
+     + -0.003303,-0.003300,-0.003287,-0.003267,-0.003242,-0.003212,-0.003177,-0.003132,-0.003079,-0.003021,
+     + -0.002964,-0.002907,-0.002848,-0.002789,-0.002727,-0.002662,-0.002595,-0.002527,-0.002456,-0.002379,
+     + -0.002293,-0.002196,-0.002089,-0.001977,-0.001862,-0.001745,-0.001630,-0.001518,-0.001411,-0.001323,
+     + -0.001253,-0.001201,-0.001170,-0.001157,-0.001155,-0.001159,-0.001168,-0.001180,-0.001188,-0.001192,
+     + -0.001187,-0.001174,-0.001154,-0.001123,-0.001083,-0.001025,-0.000946,-0.000844,-0.000718,-0.000571,
+     + -0.000408,-0.000228,-0.000036, 0.000168, 0.000385, 0.000720, 0.000940, 0.001130, 0.001310, 0.001490/)
+	clin    =(/-0.805000,-0.515000,-0.525667,-0.536200,-0.540286,-0.541000,-0.539091,
+     + -0.539903,-0.539448,-0.535808,-0.531531,-0.526435,-0.520884,-0.514150,-0.506688,-0.499135,-0.491582,
+     + -0.485030,-0.478842,-0.473473,-0.468650,-0.464555,-0.461643,-0.459823,-0.460096,-0.462007,-0.465192,
+     + -0.468832,-0.473200,-0.478660,-0.485303,-0.493129,-0.502229,-0.512603,-0.524433,-0.539175,-0.556920,
+     + -0.575848,-0.596232,-0.619164,-0.642551,-0.665847,-0.689689,-0.713258,-0.735644,-0.756665,-0.774865,
+     + -0.790244,-0.804804,-0.818636,-0.829829,-0.840112,-0.850122,-0.859040,-0.868504,-0.878969,-0.890253,
+     + -0.901082,-0.911820,-0.922740,-0.933751,-0.945308,-0.957320,-0.969241,-0.981071,-0.992355,-1.003275,
+     + -1.013922,-1.025024,-1.036126,-1.046682,-1.056510,-1.065519,-1.073618,-1.080807,-1.086722,-1.090362,
+     + -1.092273,-1.092546,-1.090817,-1.087177,-1.081899,-1.075347,-1.068158,-1.060514,-1.052142,-1.043497,
+     + -1.035034,-1.026480,-1.018017,-1.010100,-1.002820,-0.994903,-0.985894,-0.974792,-0.961324,-0.945581,
+     + -0.927290,-0.906269,-0.882245,-0.855127,-0.824915,-0.799000,-0.762000,-0.723000,-0.684000,-0.644000/)
+	Vclin      =(/1130.0, 836.7, 867.2, 896.1, 908.7, 914.4, 916.7,
+     + 925.1, 932.4, 931.1, 929.0, 926.2, 923.3, 920.3, 917.7, 915.9, 914.6,
+     + 914.4, 915.5, 918.0, 921.9, 927.2, 934.1, 942.4, 952.8, 964.9, 978.1,
+     + 991.6,1005.8,1021.1,1037.9,1056.4,1076.6,1098.2,1121.0,1144.6,1167.6,
+     +1189.6,1211.8,1234.7,1256.5,1276.6,1295.5,1312.6,1327.4,1340.4,1351.1,
+     +1360.8,1369.7,1377.6,1383.3,1387.6,1390.3,1390.5,1387.2,1381.1,1372.4,
+     +1362.4,1350.8,1337.3,1322.3,1306.0,1288.6,1270.6,1252.4,1234.7,1217.9,
+     +1202.3,1186.5,1170.8,1155.6,1140.3,1124.8,1108.8,1092.2,1073.9,1055.3,
+     +1037.1,1019.3,1001.2, 983.0, 964.7, 946.4, 929.0, 912.6, 896.0, 880.7,
+     + 866.1, 851.2, 836.1, 821.7, 808.1, 794.7, 781.9, 769.1, 756.7, 745.9,
+     + 737.0, 730.3, 725.6, 723.0, 722.4, 715.0, 712.0, 721.9, 735.4, 750.0/)
+	Vref    =(/ 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0,
+     + 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0,
+     + 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0,
+     + 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0,
+     + 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0,
+     + 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0,
+     + 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0,
+     + 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0,
+     + 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0,
+     + 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0,
+     + 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0, 760.0/)
+	phi2      =(/-0.100000,-0.150000,-0.148330,-0.147100,-0.147740,-0.149590,-0.152490,
+     + -0.154850,-0.157440,-0.160660,-0.164070,-0.167770,-0.171530,-0.176000,-0.180990,-0.186190,-0.191460,
+     + -0.196330,-0.201400,-0.206600,-0.212040,-0.217640,-0.223200,-0.228660,-0.233690,-0.238200,-0.242130,
+     + -0.245830,-0.249160,-0.251890,-0.254040,-0.255600,-0.256630,-0.257130,-0.257130,-0.256200,-0.254440,
+     + -0.252220,-0.249690,-0.246580,-0.243210,-0.239650,-0.235740,-0.231550,-0.227350,-0.223190,-0.219120,
+     + -0.215200,-0.211170,-0.207030,-0.203270,-0.199590,-0.195820,-0.192230,-0.188360,-0.184040,-0.179330,
+     + -0.174860,-0.170410,-0.165790,-0.161010,-0.155840,-0.150300,-0.144570,-0.138660,-0.132520,-0.126190,
+     + -0.119670,-0.112590,-0.105210,-0.097740,-0.090230,-0.082730,-0.075280,-0.067940,-0.060420,-0.053390,
+     + -0.047050,-0.041350,-0.036140,-0.031400,-0.027070,-0.023110,-0.019590,-0.016460,-0.013580,-0.011230,
+     + -0.009270,-0.007460,-0.005790,-0.004390,-0.003210,-0.002290,-0.001610,-0.001040,-0.000560,-0.000250,
+     + -0.000100,-0.000050,-0.000040,-0.000050,-0.000050, 0.000100, 0.000100, 0.000100, 0.000100, 0.000000/)
+	phi3      =(/-0.008440,-0.007010,-0.007010,-0.007280,-0.007320,-0.007360,-0.007370,
+     + -0.007350,-0.007310,-0.007210,-0.007170,-0.006980,-0.006870,-0.006770,-0.006720,-0.006670,-0.006560,
+     + -0.006470,-0.006250,-0.006070,-0.005930,-0.005880,-0.005820,-0.005730,-0.005670,-0.005630,-0.005610,
+     + -0.005600,-0.005600,-0.005620,-0.005670,-0.005720,-0.005740,-0.005780,-0.005850,-0.005910,-0.005970,
+     + -0.006020,-0.006080,-0.006140,-0.006260,-0.006380,-0.006440,-0.006500,-0.006600,-0.006650,-0.006700,
+     + -0.006800,-0.006890,-0.006930,-0.006970,-0.007050,-0.007130,-0.007190,-0.007260,-0.007290,-0.007320,
+     + -0.007380,-0.007440,-0.007580,-0.007730,-0.007870,-0.007920,-0.008000,-0.008120,-0.008220,-0.008300,
+     + -0.008360,-0.008410,-0.008440,-0.008470,-0.008420,-0.008290,-0.008060,-0.007710,-0.007230,-0.006660,
+     + -0.006030,-0.005400,-0.004790,-0.003780,-0.003020,-0.002720,-0.002460,-0.002080,-0.001830,-0.001670,
+     + -0.001580,-0.001550,-0.001540,-0.001520,-0.001520,-0.001520,-0.001500,-0.001480,-0.001460,-0.001440,
+     + -0.001400,-0.001380,-0.001370,-0.001370,-0.001370,-0.001370,-0.001370,-0.001370,-0.001360,-0.001360/)
+	f1      =(/ 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000/)
+	f3      =(/ 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000,
+     + 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000,
+     + 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000,
+     + 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000,
+     + 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000,
+     + 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000,
+     + 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000,
+     + 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000,
+     + 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000,
+     + 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000,
+     + 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000, 0.100000/)
+	f4      =(/ 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,-0.000100,-0.000200,-0.000200,
+     + -0.000200,-0.000100, 0.000100, 0.000200, 0.000500, 0.000600, 0.000600,-0.000400,-0.002700,-0.005800,
+     + -0.008900,-0.011500,-0.011600,-0.006500, 0.005800, 0.026400, 0.055500, 0.092300, 0.140400, 0.195000,
+     + 0.252000, 0.309400, 0.367000, 0.424500, 0.481200, 0.536000, 0.588300, 0.637900, 0.688900, 0.735800,
+     + 0.779900, 0.824300, 0.871400, 0.920300, 0.969300, 1.016700, 1.060100, 1.099000, 1.134800, 1.163800,
+     + 1.188200, 1.211400, 1.233600, 1.253400, 1.271100, 1.287000, 1.300400, 1.312500, 1.322500, 1.328900,
+     + 1.345000, 1.349600, 1.348900, 1.342200, 1.328800, 1.308400, 1.282200, 1.251500, 1.217900, 1.182900/)
+	f5      =(/ 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+     + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,-0.000100,-0.000100,-0.000100,
+     + -0.000100,-0.000100, 0.000000, 0.000200, 0.000300, 0.000400, 0.000400,-0.000200,-0.001700,-0.003800,
+     + -0.005800,-0.007600,-0.007600,-0.004300, 0.003800, 0.017100, 0.035700, 0.059000, 0.088500, 0.120300,
+     + 0.151600, 0.180800, 0.207900, 0.233100, 0.256100, 0.276500, 0.294200, 0.309400, 0.324500, 0.337200,
+     + 0.349600, 0.364100, 0.382500, 0.404000, 0.427400, 0.451400, 0.474200, 0.495400, 0.515900, 0.534100,
+     + 0.551400, 0.569800, 0.589300, 0.609200, 0.629400, 0.651600, 0.674200, 0.697000, 0.718900, 0.738100,
+     + 0.777900, 0.802800, 0.814800, 0.816100, 0.809000, 0.795400, 0.776700, 0.754200, 0.729300, 0.703000/)
+	Rjb_bar  =(/ 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5,
+     + 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5,
+     + 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5,
+     + 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5,
+     + 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5,
+     + 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5, 159.5,
+     + 159.5, 159.5, 159.6, 159.6, 159.7, 159.7, 159.7, 159.8, 159.8, 159.9,
+     + 160.0, 160.0, 160.1, 160.4, 160.7, 161.0, 161.4, 161.8, 162.2, 162.6,
+     + 163.0, 163.4, 163.9, 164.9, 165.9, 166.4, 167.0, 168.0, 168.9, 169.7,
+     + 170.4, 170.7, 170.9, 171.5, 171.9, 172.3, 172.7, 173.1, 173.4, 173.7,
+     + 174.3, 174.8, 175.2, 175.6, 175.9, 176.2, 176.4, 176.7, 177.0, 177.2/)
+	delta_phiR =(/ 0.081800, 0.088800, 0.082600, 0.079800, 0.077500, 0.075500, 0.073800,
+     + 0.071900, 0.070900, 0.069900, 0.069200, 0.068800, 0.068400, 0.068200, 0.068300, 0.068700, 0.069200,
+     + 0.069600, 0.070100, 0.070800, 0.071800, 0.073200, 0.075000, 0.077400, 0.080600, 0.084500, 0.088500,
+     + 0.092900, 0.097700, 0.102700, 0.107700, 0.112500, 0.117200, 0.121600, 0.125800, 0.129400, 0.132000,
+     + 0.134000, 0.135100, 0.135200, 0.134700, 0.133400, 0.131500, 0.129200, 0.126500, 0.123400, 0.119700,
+     + 0.115900, 0.112000, 0.108600, 0.105400, 0.102200, 0.099200, 0.095900, 0.092600, 0.089800, 0.087700,
+     + 0.085900, 0.084600, 0.084000, 0.083700, 0.083500, 0.083700, 0.084100, 0.085100, 0.086300, 0.087400,
+     + 0.088100, 0.088900, 0.089600, 0.089900, 0.089900, 0.089900, 0.089700, 0.089200, 0.088300, 0.086700,
+     + 0.084500, 0.081800, 0.078500, 0.074700, 0.070900, 0.066900, 0.063200, 0.060000, 0.057200, 0.055000,
+     + 0.053300, 0.051700, 0.050200, 0.049100, 0.047000, 0.045000, 0.044000, 0.043000, 0.041000, 0.040000,
+     + 0.037000, 0.037800, 0.041300, 0.046700, 0.052900, 0.058900, 0.064300, 0.069200, 0.073700, 0.072100/)
+	delta_phiV =(/ 0.068300, 0.083500, 0.076900, 0.077700, 0.078700, 0.079900, 0.081100,
+     + 0.082400, 0.082500, 0.083500, 0.084400, 0.084800, 0.085200, 0.085100, 0.084300, 0.083200, 0.081500,
+     + 0.079500, 0.077000, 0.074000, 0.070700, 0.067100, 0.063400, 0.059600, 0.056400, 0.054100, 0.052600,
+     + 0.051600, 0.051800, 0.053300, 0.056000, 0.059800, 0.064300, 0.069300, 0.074300, 0.078500, 0.081600,
+     + 0.084100, 0.086000, 0.087700, 0.088800, 0.089400, 0.089800, 0.090000, 0.090100, 0.090400, 0.091500,
+     + 0.093100, 0.094700, 0.096200, 0.097100, 0.097600, 0.097500, 0.096600, 0.094700, 0.092600, 0.090500,
+     + 0.088300, 0.086400, 0.084900, 0.083800, 0.082700, 0.081500, 0.080300, 0.079300, 0.078500, 0.077800,
+     + 0.077400, 0.077300, 0.077400, 0.077500, 0.077500, 0.077500, 0.077500, 0.077400, 0.076600, 0.075800,
+     + 0.074800, 0.073000, 0.070600, 0.067600, 0.064400, 0.061000, 0.057700, 0.054700, 0.051900, 0.049500,
+     + 0.047100, 0.044600, 0.042100, 0.039700, 0.038600, 0.034300, 0.030300, 0.027100, 0.024800, 0.022700,
+     + 0.026500, 0.031400, 0.035700, 0.037800, 0.036900, 0.034500, 0.031300, 0.027900, 0.024700, 0.026100/)
+	lambda1 =(/ 0.644000, 0.695100, 0.698000, 0.701800, 0.706500, 0.711200, 0.716000,
+     + 0.721200, 0.725900, 0.730200, 0.734300, 0.738200, 0.741600, 0.745000, 0.748000, 0.750200, 0.752100,
+     + 0.753100, 0.753300, 0.752800, 0.751700, 0.750000, 0.747600, 0.744700, 0.741100, 0.737400, 0.734000,
+     + 0.730800, 0.727900, 0.725600, 0.723900, 0.722600, 0.721600, 0.720900, 0.720300, 0.719600, 0.718300,
+     + 0.716600, 0.714400, 0.711300, 0.707500, 0.703300, 0.698400, 0.692800, 0.687100, 0.681300, 0.675400,
+     + 0.669700, 0.663800, 0.657900, 0.652700, 0.647700, 0.642800, 0.638400, 0.634100, 0.629400, 0.624200,
+     + 0.619400, 0.614700, 0.609800, 0.604600, 0.599100, 0.593300, 0.587400, 0.581500, 0.575500, 0.569700,
+     + 0.564200, 0.558400, 0.552700, 0.547500, 0.542900, 0.538700, 0.534900, 0.531700, 0.529000, 0.527300,
+     + 0.526300, 0.526000, 0.526300, 0.527200, 0.528300, 0.529700, 0.531000, 0.532300, 0.533500, 0.534500,
+     + 0.535200, 0.535700, 0.536100, 0.536200, 0.536000, 0.535300, 0.534200, 0.532700, 0.530700, 0.528500,
+     + 0.526100, 0.523600, 0.519600, 0.515200, 0.511700, 0.509600, 0.508700, 0.508700, 0.509400, 0.510300/)
+	lambda2 =(/ 0.551800, 0.495100, 0.499200, 0.502300, 0.505000, 0.507700, 0.510400,
+     + 0.513600, 0.515800, 0.517900, 0.519800, 0.521400, 0.523100, 0.525000, 0.526800, 0.528700, 0.530400,
+     + 0.532300, 0.534200, 0.536200, 0.538000, 0.539800, 0.541300, 0.542300, 0.542700, 0.542600, 0.542300,
+     + 0.541600, 0.540700, 0.539700, 0.538800, 0.538100, 0.537600, 0.537200, 0.536800, 0.536200, 0.535900,
+     + 0.535900, 0.537000, 0.538800, 0.541000, 0.543900, 0.547100, 0.550300, 0.553600, 0.557300, 0.561400,
+     + 0.565600, 0.569800, 0.573000, 0.575800, 0.578400, 0.580400, 0.582600, 0.585300, 0.588500, 0.591800,
+     + 0.595200, 0.599000, 0.602800, 0.606900, 0.611000, 0.615000, 0.618800, 0.621800, 0.623900, 0.625100,
+     + 0.625700, 0.625600, 0.625000, 0.624000, 0.622800, 0.621600, 0.620300, 0.619200, 0.618300, 0.617700,
+     + 0.617600, 0.617800, 0.618200, 0.618800, 0.619200, 0.619500, 0.619600, 0.619400, 0.619000, 0.618300,
+     + 0.617600, 0.616900, 0.616200, 0.615700, 0.615600, 0.616100, 0.617100, 0.618700, 0.620600, 0.622300,
+     + 0.623800, 0.624600, 0.633500, 0.635800, 0.634400, 0.629600, 0.622300, 0.613400, 0.603600, 0.603600/)
+	tau1    =(/ 0.400800, 0.398200, 0.401900, 0.408700, 0.418200, 0.427200, 0.436100,
+     + 0.444900, 0.453800, 0.462100, 0.470200, 0.477700, 0.484100, 0.490500, 0.495700, 0.499200, 0.502000,
+     + 0.502700, 0.501700, 0.499000, 0.494900, 0.489500, 0.482600, 0.474400, 0.464100, 0.452400, 0.440100,
+     + 0.427800, 0.415300, 0.403200, 0.391500, 0.380700, 0.370700, 0.361900, 0.354100, 0.348700, 0.345500,
+     + 0.344100, 0.343200, 0.343600, 0.345000, 0.347100, 0.350000, 0.353300, 0.356700, 0.360100, 0.363400,
+     + 0.366300, 0.369200, 0.372300, 0.375100, 0.377900, 0.381000, 0.384200, 0.388100, 0.392900, 0.398500,
+     + 0.404100, 0.410100, 0.416700, 0.423700, 0.431400, 0.439700, 0.448300, 0.457200, 0.466000, 0.474500,
+     + 0.482600, 0.490600, 0.498300, 0.505100, 0.511200, 0.516500, 0.521000, 0.524800, 0.528000, 0.530000,
+     + 0.531300, 0.532100, 0.532500, 0.532800, 0.533300, 0.533900, 0.534700, 0.535700, 0.536900, 0.538300,
+     + 0.539700, 0.541000, 0.542000, 0.542600, 0.542700, 0.541800, 0.540100, 0.537900, 0.535200, 0.532000,
+     + 0.528300, 0.524200, 0.517000, 0.514000, 0.511000, 0.507200, 0.502800, 0.497800, 0.492500, 0.486900/)
+	tau2   =(/ 0.346000, 0.348000, 0.344600, 0.346400, 0.349400, 0.353700, 0.359500,
+     + 0.364000, 0.368800, 0.373800, 0.379100, 0.384300, 0.390400, 0.397300, 0.404600, 0.412100, 0.419000,
+     + 0.426300, 0.433600, 0.441100, 0.448400, 0.455300, 0.461500, 0.465800, 0.467900, 0.467600, 0.466400,
+     + 0.463600, 0.458300, 0.450700, 0.441200, 0.429900, 0.417100, 0.403200, 0.387900, 0.372100, 0.356700,
+     + 0.340900, 0.324300, 0.308500, 0.293700, 0.279500, 0.266400, 0.254700, 0.244200, 0.235700, 0.229000,
+     + 0.223100, 0.218000, 0.214800, 0.212300, 0.210500, 0.209700, 0.209800, 0.210800, 0.213000, 0.215600,
+     + 0.219000, 0.223500, 0.229100, 0.235500, 0.242500, 0.250200, 0.258200, 0.266400, 0.274100, 0.281000,
+     + 0.287600, 0.293500, 0.298400, 0.302500, 0.306000, 0.309200, 0.312100, 0.315100, 0.317900, 0.320600,
+     + 0.323300, 0.326100, 0.329100, 0.332000, 0.334900, 0.337500, 0.339900, 0.342000, 0.343800, 0.345100,
+     + 0.346300, 0.347500, 0.348400, 0.349000, 0.349200, 0.348700, 0.347200, 0.344500, 0.340600, 0.335400,
+     + 0.329000, 0.321300, 0.312300, 0.302100, 0.269900, 0.277900, 0.264900, 0.252000, 0.239200, 0.239200/)
 
 c      pi = 4.0*atan(1.0)
 c      twopi = 2.0 * pi
@@ -11086,7 +10740,7 @@ c       delta_c3 = dc3CATW      !Use CA-Taiwan version for now. Can add options 
         call y_bssa13_no_site_amps( m, r_pga4nl, mech,  c, Mref(indx_pga), 
      :           Rref(indx_pga), dc3CATW(indx_pga),
      :           e, amh(indx_pga), pga4nl) 
-c       if(abs(m-7.).lt.0.05.and.ip.eq.2)print *,rjb,pga4nl,r_pga4nl/Rref(indx_pga),m,amh(indx_pga),' pga4nl'    
+       if(abs(m-7.).lt.0.05.and.rjb.lt.10.)print *,rjb,pga4nl,m,' pga4nl',ip    
 c   pga4nl is logged in this code.
             r = sqrt(rjb**2+h(indx_per)**2)
         c(1)=c1(indx_per)
@@ -11099,17 +10753,22 @@ c   pga4nl is logged in this code.
         e(4)=e4(indx_per)
         e(5)=e5(indx_per)
         e(6)=e6(indx_per)
-     
-            call bssa13_gm_sub4y(m, r, v30, mech,  z1, pga4nl,c, Mref(indx_per), 
+        v1 = 225.
+        v2 = 300.	!from bssa13_gm_tmr.for
+c v1 and v2 are new control velocities. 4/11/2013. 
+c Set v1, v2 to values in text below equation (4.13) ("pending further study")
+c     
+            call bssa13_gm_sub4y(m, rjb, r, v30, mech,  z1, pga4nl,c, Mref(indx_per), 
      :        Rref(indx_per), dc3CATW(indx_per),
-     :        e, amh(indx_per),
-     :        clin(indx_per), vclin(indx_per), vref(indx_per),
+     :        e, amh(indx_per),clin(indx_per), vclin(indx_per), vref(indx_per),
      :        phi2(indx_per), phi3(indx_per),   
-     :        f1(indx_per), f3(indx_per), f4(indx_per),
+     :        f1(indx_per), f3(indx_per), f4(indx_per),f5(indx_per),
+     :        rjb_bar(indx_per), delta_phiR(indx_per), 
+     :        v1, v2, delta_phiV(indx_per),
      :        lambda1(indx_per), lambda2(indx_per), 
      :        tau1(indx_per), tau2(indx_per),
      :        lny, sigmaf)  
-c       if(abs(m-7.).lt.0.05.and.ip.eq.1)print *,rjb,exp(lny),r,' pgaw'   
+       if(abs(m-7.).lt.0.05.and.rjb.lt.10.)print *,rjb,exp(lny),ip,1./sigmaf/sqrt2,m   
        gndout(1)=lny
        if(sdi)then
        sigma=1./sigmaf/sqrt2
@@ -11147,8 +10806,18 @@ c         if(ii.eq.1)print *,m,gndout(1),gndout(2),gndout(3),lny
         return
         end subroutine bssa2013drv
 
-       subroutine y_bssa13_no_site_amps(m, r, mech, c, mref, rref, delta_c3,e, mh, y)     
+! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>      
+      subroutine y_bssa13_no_site_amps(m, r, mech, c, mref, rref, delta_c3,
+     :           e, mh, y)
+c        call y_bssa13_no_site_amps( m, r_pga4nl, mech,  c, Mref(indx_pga), 
+c     :           Rref(indx_pga), dc3CATW(indx_pga),
+c     :           e, amh(indx_pga), pga4nl) 
+c      call y_bssa13_no_site_amps( m, r, mech, 
+c     :           c, amref, rref, delta_c3, e, amh,y_xamp)     
+c avoid passing fe etc back and forth. New version of Apr 8 2013.
      
+! Use this version with coefficients in PEER report format
+
 ! NOTE: y in g, unless pgv!!!!  
 
 ! ncoeff_s1, ncoeff_s2 are not included as arguments because it is
@@ -11161,15 +10830,15 @@ c         if(ii.eq.1)print *,m,gndout(1),gndout(2),gndout(3),lny
 ! Dates: 02/27/13 - Modified from y_ngaw2_no_site_amps
  
       IMPLICIT none
-       real, dimension(3):: c     
-      real :: m, r, mref, rref, delta_c3, 
+      
+      real :: m, r, 
+     :        c(1:3), mref, rref, delta_c3, 
      :        e(0:6), mh, 
      :        alny, y, fpb, fp, fe, fs, fault_type_term, gspread     
      
       integer :: mech, iregion
-      
+      iregion=1
         fault_type_term = e(mech)
-         
 
       if (m < mh ) then      
         fe = e(4)*(m-mh)
@@ -11189,30 +10858,27 @@ c         if(ii.eq.1)print *,m,gndout(1),gndout(2),gndout(3),lny
       
       fs = 0.0  ! No amps
          
-      y = exp(fe + fp + fs) 
+      alny = fe + fp + fs 
+      
+      y = exp(alny)
+      
       return
       end subroutine y_bssa13_no_site_amps
 ! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>      
 
 
 ! --------------------------------------------------------- bssa13_gm_sub4y
-      subroutine bssa13_gm_sub4y( m, r, v30, mech,  z1,  pga4nl,c, amref, 
-     :        rref, delta_c3,
-     :        e, amh,
-     :        clin, vclin, vref,
-     :        phi2, phi3,   
-     :        f1, f3, f4,
-     :        lambda1, lambda2, 
-     :        tau1, tau2,
-     :        alny, sigmaf)     
-c Note output log(SA) not SA in this version. No need for SA in downstream calcs. 
-c removed iregion: taken care of before arriving here.    
-c z1 is depth to 1 km/s Vs. Units km (?). Meters doesn't work. 
+      subroutine bssa13_gm_sub4y(
+     :        m, rjb, r, v30, mech, z1, pga4nl,c, amref, rref, delta_c3,e, amh,
+     :        clin, vclin, vref,phi2, phi3, f1, f3, f4, f5,rjb_bar, delta_phiR, 
+     :        v1, v2, delta_phiV,lambda1, lambda2, tau1, tau2,lny, sigmaf)
+c version of April 9 2013     
+ 
 !Input arguments:
 
 !          per, m, rjb, 
 !          mech, v30, 
-!          e, amh_gmpe, c_gmpe, amref_gmpe,
+!          e_gmpe, amh_gmpe, c_gmpe, amref_gmpe,
 !          rref_gmpe, h_gmpe, 
 !          v30ref, 
 !          sigt_gmpe,
@@ -11222,8 +10888,12 @@ c z1 is depth to 1 km/s Vs. Units km (?). Meters doesn't work.
 
 !Output arguments:
 
-!          alny, sigmaf,
-!          
+!          lny, sigmaf (for use in PSHA)
+!          pga4nl, fm_pga4nl, fd_pga4nl, 
+!          fs_lin_pga4nl, fs_nonlin_pga4nl,
+!          bnl, amp_lin, amp_nl, amp_total,
+!          fm_gmpe, fd_gmpe, fs_gmpe,
+!          gspread
 
 
 ! Computes NGAW2 NGA motions for given input variables
@@ -11233,32 +10903,45 @@ c z1 is depth to 1 km/s Vs. Units km (?). Meters doesn't work.
 
  
 ! Dates: 02/27/13 - Written by D.M. Boore, based on ngaw2_gm_sub4y
+!        04/09/13 - Revise in light of the new report and coefficient table.
+!                 - Sediment depth term in terms of delta_z1, which requires the relation
+!                   between z1 and Vs30.  There are two relations in the report
+!                   (equations (4.9a) and (4.9b)), one for Japan and one for California.
+!                   I need to add an input argument to specify which relation to use, but for
+!                   now, just skip the sediment term altogether (even if it is included, specifying
+!                   Z1<0 will turn it off).
+!                 - Return a large value of phi if Rjb> 300
 
       implicit none
+      
       real sqrt2
       parameter (sqrt2=1.414213562)
-      real, dimension(3) :: c
-      real m, r, v30, z1, pga4nl, amref, rref, delta_c3,e(0:6), amh,
-     :        clin, vclin, vref,phi2, phi3,  f1, f2, f3, f4,lambda1, lambda2, 
+      real m, rjb, r, v30, z1,      
+     :        pga4nl,
+     :        c(1:3), amref, 
+     :        rref, delta_c3,
+     :        e(0:6), amh,
+     :        clin, vclin, vref,
+     :        phi2, phi3,   
+     :        f1, f2, f3, f4, f5,
+     :        rjb_bar, delta_phiR, 
+     :        delta_phiV, v1, v2,
+     :        lambda1, lambda2, 
      :        tau1, tau2,
-     :        alny, fsb, fs, 
-     :        phi, tau, sigmaf,    
+     :        y, fe, fpb, fp, fsb, fs, 
+     :        phiM, phiMR, phi, tau, sigma, 
+     :        gspread,     
      :        amp_lin, amp_nl, amp_total, bnl,
-     :        fz1
+     :        delta_z1, f_delta_z1
      
-      real y_xamp
+      real y_xamp, sigmaf,lny
      
       integer :: mech, iregion
 
-        
-
 !GET Y FOR GMPE, WITHOUT SITE AMPS:
 
-      call y_bssa13_no_site_amps(
-     :           m, r, mech, c, amref, 
-     :           rref, delta_c3,
-     :           e, amh,
-     :           y_xamp)     
+      call y_bssa13_no_site_amps( m, r, mech, 
+     :           c, amref, rref, delta_c3, e, amh,y_xamp)     
       
 !Compute site amps
 
@@ -11277,41 +10960,64 @@ c z1 is depth to 1 km/s Vs. Units km (?). Meters doesn't work.
 
       amp_total = amp_lin * amp_nl
       
-      fsb  = alog(amp_total)   !
+      fsb  = alog(amp_total)   ! Natural log!!
       
-      if (z1 <= 0.3) then
-        fz1 = 0.0
-      else if (z1>= 2.0) then
-        fz1 = 1.7*f4
+! reset z1 to -9.9 and hardwire delta_z1 = 0.0 in this version:
+      z1 = -9.9
+      delta_z1 = 0.0
+      if (delta_z1 <= 0.0) then
+        f_delta_z1 = 0.0
+      else if (delta_z1<= f5/f4) then
+        f_delta_z1 = f4*delta_z1
       else
-        fz1 = f4*(z1-0.3)
+        f_delta_z1 = f5
       end if
       
-      fs = fsb + fz1
-      
+      fs = fsb + f_delta_z1
+c working in log(y) space. difference from BSSA source code.      
+       lny =fs + alog(y_xamp)
+       
 !Compute phi, tau, and sigma   
 
-      if (m <= 5.0) then
+      if (m <= 4.5) then
         tau = tau1
-      else if (m >= 6.0) then
+      else if (m >= 5.5) then
         tau = tau2
       else 
-        tau = tau1+(tau2-tau1)*(m-5.0)
-      end if
-c alny=the fundamental output (logged Mar 11 2013. SH).     
-      alny = fs + alog(y_xamp)
-       
-      if (v30 <= 250.0) then
-        phi = lambda1
-      else if (v30 >= 400.0) then
-        phi = lambda2
-      else
-        phi = lambda1 +(lambda2-lambda1)*alog(v30/250.0)/0.47
+        tau = tau1+(tau2-tau1)*(m-4.5)
       end if
       
-      sigmaf = 1./sqrt2/sqrt(phi**2 + tau**2)         
-       return
+      if (m <= 4.5) then
+        phiM = lambda1
+      else if (m >= 5.5) then
+        phiM = lambda2
+      else 
+        phiM = lambda1+(lambda2-lambda1)*(m-4.5)
+      end if
+      
+      if (Rjb <= 80.0) then
+        phiMR = phiM
+      else if (Rjb <= 300.0) then
+        phiMR = phiM+delta_phiR*(Rjb-80.0)/(Rjb_bar-80.0)
+      else
+        phiMR=9.99 ! invalid value of Rjb
+      end if
+
+      if (v30 <= v1) then
+        phi = phiMR - delta_phiV
+      else if (v30 >= v2) then
+        phi = phiMR
+      else
+        phi = phiMR - delta_phiV*(v2-v30)/(v2-v1)
+      end if
+      
+      sigma = sqrt(phi**2 + tau**2)
+      sigmaf = 1./sigma/sqrt2	!needed in Pex computations.
+         
+  
+      return
       end subroutine bssa13_gm_sub4y
+! --------------------------------------------------------- bssa13_gm_sub4y
 ! --------------------------------------------------------- bssa13_gm_sub4y
         
 c ----------------------------------------------------------------------
