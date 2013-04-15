@@ -1,4 +1,5 @@
-c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  04.12. 2013. Long header version.
+c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  04.15. 2013. Long header version.
+c 4/15/2013: BSSA13 partially running. Warning: some spectral periods do not work (e.g., 0.9 s)
 c 4/12/2013: CY2013 updated. Corrected a line about HW_taper3 in AS-2013 routine (their only update). 
 c 4/11/2013: Update Idriss NGA-W GMPE coeffs to latest available (emailed 4/10)
 c 4/10/2013: correct logic for fixed-strike source and agrid with header (iflt=20)
@@ -10227,7 +10228,7 @@ c v30 = vs30 (m/s) input.
       
       real, dimension(npermx):: T,clin, vclin, vref,
      :     c1,c2,c3,phi2, phi3,e0,e1,e2,e3,e4,e5,e6,
-     :     amh,f1, f3, f4,f5,h,Dc3CATW,Dc3China,Dc3Italy,
+     :     f1, f3, f4, f5, h, Dc3CATW,Dc3China,Dc3Italy,
      :     lambda1, lambda2,Mref,Rref,Rjb_bar,delta_c3,
      :     tau1, tau2,delta_phiR, delta_phiV, Mh
      
@@ -10746,7 +10747,7 @@ c       delta_c3 = dc3CATW      !Use CA-Taiwan version for now. Can add options 
             r_pga4nl = sqrt(rjb**2+h(indx_pga)**2)
         call y_bssa13_no_site_amps( m, r_pga4nl, mech,  c, Mref(indx_pga), 
      :           Rref(indx_pga), dc3CATW(indx_pga),
-     :           e, amh(indx_pga), pga4nl) 
+     :           e, Mh(indx_pga), pga4nl) 
        if(abs(m-7.).lt.0.05.and.rjb.lt.10.)print *,rjb,pga4nl,m,' pga4nl',ip    
 c   pga4nl is not logged in this code.
             r = sqrt(rjb**2+h(indx_per)**2)
@@ -10767,7 +10768,7 @@ c Set v1, v2 to values in text below equation (4.13) ("pending further study")
 c     
             call bssa13_gm_sub4y(m, rjb, r, v30, mech,  z1, pga4nl,c, Mref(indx_per), 
      :        Rref(indx_per), dc3CATW(indx_per),
-     :        e, amh(indx_per),clin(indx_per), vclin(indx_per), vref(indx_per),
+     :        e, Mh(indx_per),clin(indx_per), vclin(indx_per), vref(indx_per),
      :        phi2(indx_per), phi3(indx_per),   
      :        f1(indx_per), f3(indx_per), f4(indx_per),f5(indx_per),
      :        rjb_bar(indx_per), delta_phiR(indx_per), 
