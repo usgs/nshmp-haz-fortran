@@ -10973,8 +10973,8 @@ c version of April 9 2013
       
       fsb  = alog(amp_total)   ! Natural log!!
       
-! reset z1 to -9.9 and hardwire delta_z1 = 0.0 in this version:
-      z1 = -9.9
+! dont reset z1 to -9.9 Do hardwire delta_z1 = 0.0 in this version:
+c      z1 = -9.9
       delta_z1 = 0.0
       if (delta_z1 <= 0.0) then
         f_delta_z1 = 0.0
