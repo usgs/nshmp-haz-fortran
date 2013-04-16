@@ -1,5 +1,5 @@
-c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  04.15. 2013. Long header version.
-c 4/15/2013: BSSA13 partially running. Warning: some spectral periods do not work (e.g., 0.9 s)
+c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  04.16. 2013. Long header version.
+c 4/16/2013: BSSA13 running for all 107 periods incl PGV (index 1). 
 c 4/12/2013: CY2013 updated. Corrected a line about HW_taper3 in AS-2013 routine (their only update). 
 c 4/11/2013: Update Idriss NGA-W GMPE coeffs to latest available (emailed 4/10)
 c 4/10/2013: correct logic for fixed-strike source and agrid with header (iflt=20)
@@ -264,7 +264,7 @@ c - - -  iatten = 27 Zhao et al for deep inslab. Can use for LP. Nov 20 2008.
 c - - -  iatten = 28 Zhao et al for deep interface. Can use for LP to 5 sc Tmax. 
 c GMPE index 28 became active July 12 2010. Zhao interface (may be used for
 c America Samoa Oceanic Sources NSHMP PSHA work. To be determined later).
-c --- index 29 BSSA 12.
+c --- index 29 BSSA 2013 April.
 c - - -  iatten = 41 Motazettian and Atkinson (changed from index 14 Jul 2010)
 c - -  -      	Motazettian and Atkinson has siteamp from BJF97
 c - - - iatten = 31 BCHydro for inslab. added Nov 2012. This one has nonln siteamp.
@@ -274,7 +274,7 @@ c ----- iatten= 34  AS13 march
 c --- iatten=35 A08'
 c --- iatten=36 AB06'
 c --- iatten=37 Pez11
-c --- iatten=38 Idriss Dec 2012 (this one has not yet been updated).
+c --- iatten=38 Idriss Apr 2013 (this one has  been updated- STD. Deviation, however, has not).
 c --- iatten=39      GK12 with continuous basin response.
 c ---
 c --- SOme New Features (compared to 2002 update versions):
@@ -802,12 +802,17 @@ c *** NEW 11/05 **** Enter soil Vs30 condition  ******NEW*******
       read(1,*)vs30,dbasin
       if(override_vs)vs30=vs30d
 c use Chiou-Youngs 10-2007 default depth to 1 km/s rock. Z1 Units: m.
-        Z1cal = exp(-7.15/4 * log((VS30**4 + 570.94**4)/(1360.**4 + 570.94**4)))
+        Z1cal = exp(-7.15/4 * log(((VS30/1000.)**4 + .57094**4)/(1.360**4 + .57094**4)))
 c     Norm Abrahamson's CA z1 reference (eq 18)
        z1_ref = exp ( -7.67/4. * alog( (Vs30**4 + 610.**4)/(1360.**4+610.**4) ) ) / 1000.
+c      deltaZ1=0.0	!dont know use 0. from guidance in CY doc.
       z1=z1cal	!CY2013 function used until we know better for wus...
       z1km=Z1*0.001	!for AS need units km
-      write(6,*)' Vs30 (m/s), Z1 (m) and depth of basin (km): ',vs30,Z1,dbasin
+c from B Chiou email of Apr 15 2013.
+        deltaZ1 = Z1cal -
+     1  exp(-7.15/4 *
+     1      log(((VS30/1000.)**4 + .57094**4)/(1.360**4 + .57094**4)))
+      write(6,*)' Vs30 (m/s), Z1 (m) and depth of basin (km): ',vs30,Z1,dbasin,deltaZ1
         if(vs30.lt.90..and.vs30.gt.0.)then
       write(6,*)'Vs30 = ',vs30,'. This looks unreasonable.'
       stop'hazgridXnga13l: Please check input file just before distance incr,dmax'
@@ -1361,7 +1366,7 @@ c      ipbssa(1)=indx_pga
       dowhile(Perbssa13(k).ne.per.and.k.lt.107)
       k=k+1
       enddo
-      if(k.eq.107.and.per.ne.10.)stop' Period not found for BSSA relation.'
+      if(k.eq.107.and.per.ne.10.)stop' Period not found for BSSA2013 relation.'
 c      if(fix_sigma)sigt_gmpe=sigma_fx      !override table with fixed sigma jan 7 2012.
        nper_gmpe = 107
 c      print *,nper_gmpe,' number of periods having coeffs BSSA'
@@ -1863,7 +1868,6 @@ c CY2013 index is 33.
          rxfac=1.0
          endif
          DIP=dipbck(icode(ip,ia))
-      deltaZ1=0.0	!dont know use 0. from guidance in CY doc.
 c      if(per.eq.-1.)then
 c       iper(ip)=1
 c       k=1
@@ -10442,12 +10446,12 @@ c add SDI-related common block sdi feb 22 2013
 	c3      =(/-0.003440,-0.008088,-0.008088,-0.008074,-0.008095,-0.008153,-0.008290,
      + -0.008336,-0.008445,-0.008642,-0.008715,-0.009030,-0.009195,-0.009360,-0.009441,-0.009521,-0.009676,
      + -0.009819,-0.010120,-0.010330,-0.010480,-0.010520,-0.010560,-0.010580,-0.010560,-0.010510,-0.010420,
-     + -0.010320,-0.010200,-0.009964,-0.009722,-0.009476,-0.009402,-0.009228,-0.008977,-0.008725,-0.00,8472
-     + -0.008219,-0.007967,-0.007717,-0.007224,-0.006747,-0.006517,-0.006293,-0.005866,-0.005666,-0.00,5475
+     + -0.010320,-0.010200,-0.009964,-0.009722,-0.009476,-0.009402,-0.009228,-0.008977,-0.008725,-0.008472,
+     + -0.008219,-0.007967,-0.007717,-0.007224,-0.006747,-0.006517,-0.006293,-0.005866,-0.005666,-0.005475,
      + -0.005122,-0.004808,-0.004663,-0.004527,-0.004276,-0.004053,-0.003853,-0.003673,-0.003590,-0.003510,
-     + -0.003360,-0.003220,-0.002897,-0.002610,-0.002356,-0.002276,-0.002131,-0.001931,-0.001754,-0.00,1597
-     + -0.001456,-0.001328,-0.001210,-0.000994,-0.000803,-0.000635,-0.000490,-0.000365,-0.000259,-0.000,171
-     + -0.000099,-0.000042, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,-0.0000,23
+     + -0.003360,-0.003220,-0.002897,-0.002610,-0.002356,-0.002276,-0.002131,-0.001931,-0.001754,-0.001597,
+     + -0.001456,-0.001328,-0.001210,-0.000994,-0.000803,-0.000635,-0.000490,-0.000365,-0.000259,-0.000171,
+     + -0.000099,-0.000042, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,-0.000023,
      + -0.000040,-0.000045,-0.000049,-0.000053,-0.000052,-0.000047,-0.000039,-0.000027,-0.000014, 0.000000,
      + 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000/)
 	Mref    =(/   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,   4.5,
