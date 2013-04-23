@@ -1,5 +1,19 @@
-c--- program hazSUBXnga.test.f 
-c last mod Mar 16 2010: 
+c--- program hazSUBXnga.test.f : long header version
+c April 23, 2013: remove dependency on input file name for logic flow. Previously, 'cascadia' in file
+c name made anything >M8.7 a characteristic or space-filling rupture. Now, if you want a space filling
+c rupture, make the itype a 1 (not a 2). 1 means characteristic in hazFX and also in hazSUBX. Also,
+c remove all references to cascadia backarc region. This is not used ever in WUS hazard.
+c 
+c Mar 19 2013: add sdi option for BCHydro model. This option is invoked by
+c  adding arg(2)='dy' and arg3 = xx.yy = dy in cm
+c Mar 20 2013: add sdi option to AtkinsonMacias, Gregor06, Geomatrix, and Zhao subr.
+c
+c LMod Dec 17: no backarc term for any GMPE for PacNW runs. Workshop suggestion.
+c last mod Nov 9 2012: 
+c Nov 7 2012: add Atkinson Macias subduction GMPE for BC rock or soil. Index=21. 
+c
+c Nov 5 2012:Include Abrahamson 2010 BCHydro Subduction model. Index=20.
+c mar 1 2011: correct ss term in zhao.
 c Add Petersen-Hartzell diminution term for R>200 km to Geomatrix relation.
 c		This correction is used if iatten is specified as -2 (instead of 2).
 c The GDSN data analysis was rerun for both Geom. and AB03 for 5 periods and the
@@ -17,8 +31,6 @@ c where a is the interval rate of M0+-0.05 events and b is slope parameter:
 c             rate(M)=10**(a-bM),
 c as well as the magnitude interval over which this is valid [Mmin, Mmax].
 c The code will consider M from Mmin to Mmax (no shifting of M to interior).
-c  If "cascadia" is in the input file name, M8.8 and up are slab filling even though they may
-c enter as itype 2 (GR or floating ruptures). This is a 2007 special feature.
 c
 c  Mar 4 2009 Crouse91 atten for soil. 
 c 11/18/2008: add 0.75 s to Zhao et al. This is not tough, because they already
@@ -139,11 +151,12 @@ c    Ground motions are damped response spectra (5%) and PGA. PGV, PGD n/a.
 c--- ground motion levels should be in units of g
 c--- period=0 indicates PGA
       parameter (npmx=8)
-      parameter ( pi=3.14159265,tiny=1.e-16)
+      parameter ( pi=3.14159265,fourpisq=39.4784175,tiny=1.e-16)
       dimension dmin2(50,800,6)
       real, dimension(2,npmx) :: sumwt
       real, dimension (0:37) :: perka
-      integer, dimension(10):: iperg,iperk,ipers,iperab,ipzh,ipercbc
+      real, dimension(22):: NAAper
+      integer, dimension(10):: iperg,iperk,ipers,iperab,ipzh,ipercbc,ipernaa,ipergail
 c type replaces structure & requires gfortran or f95 to compile. It is included
 c so that this code has compatibility with Linux cluster computer compilers.
 c Also compatible with Windows computers and gfortran compiler.
@@ -155,7 +168,7 @@ c Also compatible with Windows computers and gfortran compiler.
         real*4 :: extra(10)
       end type header_type
       type(header_type) :: headr,hdv30
-      logical verbose, on_top_of_rup,petersen_corr,pcorab
+      logical lxyin, verbose, on_top_of_rup,petersen_corr,pcorab,go_norm/.false./,sdi
       real, dimension(500):: magmin,magmax,ar
       real magminn
 c  ar=aspect ratio for floating ruptures.
@@ -163,14 +176,14 @@ c  ar=aspect ratio for floating ruptures.
       character*4 sname(33),date*8,time*10,zone*5
       real*8 dp,pr0,emax/3.0/, sqrt2/1.4142135623/
       real vs30,pr00,prl,prlr,prr,rtot,eps
-      integer readn,nrec,i,ival(8),ivs,immax/1/,npd,nper
+      integer readn,nrec,i,ival(8),ivs,immax/1/,npd,nper,delCi,backarc
 c ivs indicator variable for NEHRP class, using Zhao subroutine, added May 21 2007
       character nameout*78,name*80,adum*80
       common/mech/ss,rev,normal,obl
       common/ipindx/iperba(10),ipgeom(10)
       dimension p(25010),v30(128000),perg(25)
 c new v30 array: can have different vs30 at each grid point. Or fixed vs30       
-      logical ss,rev,normal,obl,pgacalc,determ
+      logical ss,rev,normal,obl,pgacalc,determ,go_gail
       logical norpt(8,8),isbig,isclose,deagg/.false./
 c determ = .true. if deterministic output desired. To get this, make nrec < 0. -2 = 2 sta,
 c         nrec = -100 = grid of stations with deterministic output. added aug 7.
@@ -180,16 +193,23 @@ c These are relative words, and have the right meaning in below context.
 c iconv() is not used in this code. However, it is read in.
       dimension prob(250,20,npmx),xlev(20,npmx),out(800000), nlev(npmx),
      + iatten(npmx,5),iconv(npmx,5)
-      dimension period(npmx),perx(8),perz(22),safix(npmx)
+      real, dimension (npmx) :: period,perx,safix
       integer, dimension(npmx) :: nattn,ifp
+      real, dimension(8):: fac_sde
       real,dimension(12):: a,b,dmag,cmag,crate,wtm
+      real,dimension(22):: perz
 c new variable wtm stores the branch weight for the a,b,dmag or cmag,crate model.
+c contour region to associate with backarc stations set up for Cascadia only. File
+c name must include 'cascadia' for these arrays to be filled.
+	real, dimension(350) :: baclat,baclon
       integer, dimension(12):: nmag0
       integer itype,iftype
       dimension npts(5)
+      real, dimension(2):: ztop
       real, dimension (10):: perab,percbc
       real,dimension(6):: ptail
       real, dimension(13):: pergeo
+      real, dimension(15):: pdAM	!Atkinson Macias
       real, dimension(23) :: perba
       dimension rate(50,12),ratem(50)
       dimension nrup(50,12)
@@ -205,6 +225,7 @@ c from ba_02apr07_usnr.xls coef file. use for nonlinear site response, getgeom
      + 1.500, 2.000, 3.000, 4.000, 5.000, 7.500,10.0/)
 C extend getgeom to long periods.
 c coeffs from Bob Youngs' spreadsheet in email of Nov 17 2008.
+      pdAM = (/0.0,0.05,0.1,0.2,0.3,0.4,0.5,1.,2.,2.5,3.,4.,5.,7.7,10./)
       pergeo= (/0.,0.2,1.0,0.1,0.3,0.5,2.0,0.4,0.75,1.5,3.,4.,5./)      
       perab= (/0.,0.2,1.0,0.1,0.3,0.4,0.5,0.75,2.0,3.0/)      
 c percbc is spectral period set for Crouse91.
@@ -222,8 +243,12 @@ c perka = period set for Kanno et al., BSSA 2006. 0 = pga.
 c zhao period set, perz. Added 0.75s Nov 2008.
       perz = (/0.0,0.05,0.10,0.15,0.20,0.25,0.30,0.40,
      &     0.50,0.60,0.70,0.75,0.80,0.90,1.0,1.25,1.5,2.0,2.5,3.0,4.0,5.0/)
+c NAAper = period set for Norm's BC Hydro subduction model. 0.00 for 0 s (PGA) to 0.02 s SA
+	NAAper =(/0.00, 0.050, 0.075,0.100, 0.150,0.200,0.250,0.300,0.400,
+     + 0.500, 0.600, 0.750, 1.000, 1.500, 2.000, 2.500, 3.000, 4.000, 5.000, 6.0, 7.500, 10.0/)
        ptail = (/0.9772499,.8413447,0.5,.1586553,.022750139,
      + 0.0013499/)
+       ztop = (/20.,50./)
 c On solaris systems, at least, software can keep tract of user
       call getlog(adum)
       headr%name(5)='Run by '//adum(1:24)
@@ -240,11 +265,17 @@ c On solaris systems, at least, software can keep tract of user
       petersen_corr=.false.
       pcorab = .false.
       if(iargc().gt.2)then
-c deaggregation information
-      deagg=.true.
+      call getarg (2,adum)
+      if (adum.eq.'dy'.or.adum.eq.'DY')then
+c New Mar 19 2013: option to compute inelastic response spectrum (instead of SA)
+      sdi=.true.; deagg=.false.
+      call getarg (3,adum)
+      read(adum,'(F8.4)')dy_sdi
+      else
+c deaggregation information or sdi
+      deagg=.true.;sdi=.false.
       safix=0.1
-      call getarg(2,adum)
-      read(adum,'(f7.4)')rlatd
+       read(adum,'(f7.4)')rlatd
       call getarg(3,adum)
       read(adum,'(f9.4)')rlond
 c rlatd rlond are the coordinates of the deagg site. These override the stuff
@@ -256,7 +287,8 @@ c in the input file.
       read(adum,'(f6.4)')safix(i-4)
       write(6,*)'#command line sa ',safix(i-4)
       enddo
-      endif
+      endif	!sdi or deagg?
+      endif	!iargc().gt.2
         call date_and_time(date,time,zone,ival)
       call getarg(1,name)
 c if running on PC, may need the following call, commented out on Solaris
@@ -269,15 +301,30 @@ c      call initialize()
       ebar=0.
       mbar=0.
       prob5=0.
+      iflt=1
       headr%name(1)= name
       cascadia=index(name,'cascadia').gt.0
 c if cascadia, all M>=8.8 fill the subduction surface with slip. AF mod added here.
+c      if(cascadia)then
+c new feb 28 2012 add in backarc contour line. need to generalize
+c	open(1,file='/home/harmsen/GRID/Cascadia/region_backarc.xy',status='old',err=2016)
+	nb=0
+	dips=0.2;wids=10.;surf=0.
+c	do
+c	nb=nb+1
+c	read(1,*,end=2017)baclon(nb),baclat(nb)
+c	enddo
+c2017	print *,'success reading region_backarc.xy, nb=',nb
+c	close(1)
+c	else
+c	print *,'a file with backarc contour info is needed'
+c	endif
       dum=dtime(tarray)
 c      write(*,*)tarray
       inquire(file=name,exist=isok)
       if(isok)then
       open(unit=1,file=name,status='old')
-      write(6,*)'HazSUBXnga.test updated July 13 2009;  input file ',name
+      write(6,*)'HazSUBXnga.test updated Apr 23 2013;  input file ',name
       write(6,*)'Date of run ',date,' at ',time
       else
       write(6,*)'hazSUBXnga.test: File not found: ',name
@@ -405,9 +452,6 @@ c portable among different computers
       v30a=.true.
       headr%name(2)=name
       nv30=nvx*nvy
-c 30 character name
-c      nhd=308
-c 128 character name
       nhd=896
       call gethead(hdv30,nhd,nrd)
       call getbuf2(v30,nv30,nvread)
@@ -424,7 +468,8 @@ c---loop through periods
       do 40 ip=1,nper
          read(1,*) period(ip)
          if(period(ip).lt.0.)stop'hazSUBXnga: PGV PGD are not available in subduction code'
-c         write(6,*) "enter name of output file for this period"
+c          write(6,*) "enter name of output file for this period"
+        if(sdi)fac_sde(ip) = alog(980.*max(0.01,period(ip))**2/fourpisq)
          read(1,909) nameout
  909     format(a)
        if(grid)then
@@ -526,6 +571,47 @@ c------- Sadigh type
        write(6,*)ip,iperk(ip),' Kanno 10/06 ip map'
 c vsfac used for site-amp in  the Kanno et al. relation.
         vsfac=alog10(vs30)          
+       elseif(iatten(ip,ia).eq.20)then
+      ka=1
+c New BC Hydro Subd GMPE Jan 2011. For spectral period <=0.02 s, use the pga model.
+      if(period(ip).le.0.02)then
+      piriod=0.0
+      else
+      piriod=period(ip)
+      endif
+      dowhile(abs(piriod-NAAper(ka)).gt.0.001)
+      ka=ka+1
+      if(ka.gt.22)then
+      write(6,*)'Period ',period(ip)
+      stop 'For this period please remove the Abrahamson BC hydro relation from input file'
+      endif
+      enddo
+       ipernaa(ip)=ka     
+       write(6,*)period(ip),ip,ipernaa(ip),' Abrahamson BC Hydro ip map'
+       go_norm=.true.
+       elseif(iatten(ip,ia).eq.21)then
+      ka=1
+c New atkinson-macias (BSSA,2009) GMPE nov 2012. For spectral period <=0.02 s, use the pga model.
+      if(period(ip).gt.0.02)then
+	ka=2
+      dowhile(abs(period(ip)-pdAM(ka)).gt.0.001)
+      ka=ka+1
+      if(ka.gt.15)then
+      write(6,*)'Period ',period(ip)
+      stop 'For this period please remove the Atkinson Macias relation from input file'
+      endif
+      enddo
+      endif
+       ipergail(ip)=ka     
+       write(6,*)period(ip),ip,ipergail(ip),' Atkinson Macias ip map'
+       go_gail=.true.
+c may also need the companion BA period index for soil amp function "basiteamp"
+         j=1
+         dowhile(period(ip).ne.perba(j))
+         j=j+1
+         if(j.eq.24)stop 'period doesnt match BA siteamp period set for including with AtMac09'
+         enddo
+         iperba(ip)=j
          elseif(iatten(ip,ia).eq.15)then
 c Gregor 2002 added oct 2006. Gregor Email says this has been updated.
          write(6,*)'Gregor 2002 subduction model out of date'
@@ -603,12 +689,18 @@ c----- Boore look-up table: removed 10-2006. SH
          if(deagg)then
          nlev(ip)=1
          xlev(1,ip)=safix(ip)
-         endif
+         elseif(sdi)then
+c convert sa to sd
+	 print *,' SA set converted to SD set  for SDI calcs'
+	  do k=1,nlev(ip)
+	  xlev(k,ip)=exp(fac_sde(ip))*xlev(k,ip)
+	  enddo
+	  endif
          do 30 k=1,nlev(ip)
    30    xlev(k,ip)= alog(xlev(k,ip))
    40 continue
 ccccccccccccccccccccccccccccccccccc
-c warn the user if atten model weights don't sum to 1.0.
+c warn the user if atten model weights dont sum to 1.0.
       do ip=1,nper
       if(sumwt(1,ip).lt.0.99.or.sumwt(1,ip).gt.1.01)then
       write(6,*)'Unusual sum of att. model wts for inner annulus ',sumwt(1,ip)
@@ -642,7 +734,7 @@ c
          do 50 imod=1,nmodel
          if(itype.eq.1) then
 c the code is not really set up for itype 1. Needs some review.
-            write(6,*) "Char. M  rate and weight: "
+            write(6,580) "Char. M  rate and weight: "
 4442      FORMAT('Rx    Ry  Mchar  ',f6.2,' Rate_Mchar ',e10.5,' weight ',f6.3,' filein ',a20)
             read(1,*) cmag(imod),crate(imod),wtm(imod)
             write(6,*)cmag(imod),crate(imod),wtm(imod)
@@ -697,11 +789,13 @@ c lengthened to include more input-file information.
       headr%nlev= nlev(ip)
       do 702 k=1,nlev(ip)
  702  headr%xlev(k)= exp(xlev(k,ip))
-c 30 character name
-c      ndata= 308
-c 128 character name
       ndata= 896
 c New 10/2005: store solution grid info.
+	if(sdi)then
+	headr%extra(1)=dy_sdi
+	else
+	headr%extra(1)=-1.
+	endif
       headr%extra(2)=xmin
       headr%extra(3)=xmax
       headr%extra(4)=dx
@@ -712,9 +806,6 @@ c New 10/2005: store solution grid info.
 c store other run-specific info. extra(9) and (10)      
       headr%extra(9)=vs30
       headr%extra(10)=d2p5      !depth of fast rock (not used here)
-c 30 character name
-c         ndata= 308
-c 128 character name
          ndata= 896
       if(grid)then
          call puthead(ifp(ip),headr,ndata,readn)
@@ -726,7 +817,7 @@ ccccccccccccccccccccccccccccccccccc
 c depth of inslab seismicity.
             hslab = 50.      !not used for subduction. hi is used (param)
 
-c no longer building a table of p(). Just get the mean and sd when you need 'em
+c no longer building a table of p(). Just get the mean and sd when you need em
 c mod oct 19 2006. SH
 ccccccccccccccccccccccccccccccccccccccccccc
 
@@ -745,30 +836,31 @@ c---Set up parameters of rupture zones
       do 185 m=1,nmag0(imod)
           xmag = magmin(imod)+(m-1)*dmag(imod)
 c------find rupture length from Geomatrix interface eqs relation
+	if(itype.eq.2)then
           ruplen= (xmag-4.94)/1.39
           ruplen= 10**ruplen
           nrup(m,imod)= max(1,nint((tlen-ruplen)/dlen) +1)
 c max of 1 and the other expression because if tlen < ruplen, will get 0 or less than 0         
        write(6,*) "nrup(m,imod),ruplen,tlen",nrup(m,imod),ruplen,tlen
       if(nrup(m,imod).gt.799)stop' nrup(m,imod) exceeds 799. Up dim 2 of rupture()'
-          if(xmag.ge.8.8.and.cascadia) then
+c          if(xmag.ge.8.8.and.cascadia) then
 c above mod feb 28 to be consistent with AF models for 2007 PSHA update.
-                nrup(m,imod)=1
-                ruplen= tlen
-                write(6,*) xmag, ruplen, tlen
+c                nrup(m,imod)=1
+c                ruplen= tlen
+c                write(6,*) xmag, ruplen, tlen
 c                read(5,*) idum
-                endif
+c                endif
           if(ruplen.ge.tlen) then
             nrup(m,imod)=1
                 ruplen=tlen
           endif 
-          if(itype.eq.2)then
           rate(m,imod)= a(imod) - b(imod)*xmag
 c apply epistemic model weight here corresponding to branch imod.
           rate(m,imod)= wtm(imod)*10.**rate(m,imod)
           else
           rate(m,imod)= crate(imod)*wtm(imod)
           nrup(m,imod)=1
+          ruplen=tlen
           endif
       rtot=rtot+rate(m,imod)
       write(6,*) xmag,rate(m,imod),' M ann rate resp'
@@ -839,6 +931,15 @@ c the below logic worked for hazFXnga5. With all the loops above, doubts creep i
         ry=slat(i)
         write(6,*)'Computing seismic hazard for ',sname(i)
         endif
+c below lxyin only delivers for Cascadia backarc. Need a contour for the general subduction case.
+c	if(go_norm.or.go_gail)then
+c	  if(lxyin(rx,ry,baclon,baclat,nb))then
+c	  kbackarc=1
+c	  else
+c	  kbackarc=0	!use Morgan's contour extended east to -111
+c	  endif
+     	kbackarc=0	!don't use backarc in PacNW runs.
+c       endif	!go_norm
         if(v30a)then
 c find nearest gridpoint in vs30 array to the site with coords rx,ry
         if(rx.gt.vxmax.or.rx.lt.vxmin.or.ry.gt.vymax.or.ry.lt.vymin)then
@@ -941,7 +1042,7 @@ c always use R_cd or Rrup as the distance measure. No subduct. relations use R_j
         
        if(weight.lt.0.0001)goto 270      !some relations downweighed with distance
       if(abb03(ip,ia))then
-      call getABsub(iperab(ip),iclass,0,vs30,xmag,dist,gnd,sigmaf,pcorab)
+      call getABsub(ip,iperab(ip),iclass,0,vs30,xmag,dist,gnd,sigmaf,pcorab)
       elseif(iatten(ip,ia).eq.2) then
 c the 2nd arg, 0, refers to subduction or interface. 0 for subduction. Added oct 26
 c
@@ -949,13 +1050,27 @@ c
       elseif(iatten(ip,ia).eq.7) then
 c the 2nd arg, 0, refers to subduction or interface. 0 for subduction. Added oct 26
 c
-             call zhao(ipzh(ip),xmag,rcd,gnd,sigmaf,ivs, 0,hslab)
+             call zhao(ip, ipzh(ip),xmag,rcd,gnd,sigmaf,ivs, 0,hslab)
 c Zhao: the second-to-last argument, 0, indicates compute for subduction, not for in-slab source.
       elseif(iatten(ip,ia).eq.8) then
       call kanno(iperk(ip),gnd,sigmaf,xmag,rcd,vsfac)
 c--- following are Sadigh forms. Might allow a near-source sigma someday.
          elseif(iatten(ip,ia).eq.3)then
                call getSadighR(ipers(ip),xmag,rcd,gnd,sigmaf,0.,0.)
+c add BCHydro Nov 2012. from hazSUBXnga.f code.
+      elseif(iatten(ip,ia).eq.20)then
+c Norm Abrahamson BC Hydro program Jan 20 2011. Testing. 
+      kevnt=0;
+      delCi=2	!2 is main branch. 1 is low 3 is high.
+      zH = ztop(izpar)
+c      print *,zH,' going in to getNAAsub hypo depth (km)'
+      
+      call getNAAsub(ip, ipernaa(ip), kevnt, kbackarc, xmag, rcd, zH, sigmaf, gnd, delCi, vs30)
+c kevnt=0 interface, not for in-slab source. kbackarc=1 is back-arc. This setting needs
+c to be geometry dependent in final version.
+	elseif(iatten(ip,ia).eq.21)then
+	call getAtkinsub(ip,ipergail(ip),rcd,xmag,vs30,kbackarc,gnd,sigmaf)
+c Atkinson Macias without backarc effect (workshop suggestion 12-15-2012)
          elseif(iatten(ip,ia).eq.-3)then
                call getSadighS(ipers(ip),xmag,rcd,gnd,sigmaf,0.,0.)
       elseif(iatten(ip,ia).eq.6) then
@@ -966,7 +1081,7 @@ c       elseif(iatten(ip,ia).eq.15)then
 c             call Gregor02(iperg(ip),xmag,rcd,vs30,gnd,sigmaf)
 c gregor 2002 only works for subduction, is therefore outputting "gnd2"
        elseif(iatten(ip,ia).eq.16)then
-             call Gregor06(iperg(ip),xmag,rcd,vs30,gnd,sigmaf)
+             call Gregor06(ip,iperg(ip),xmag,rcd,vs30,gnd,sigmaf)
 c gregor 2006 only works for subduction, is therefore outputting "gnd2"
          endif
       wtrate = weight*rate(m,imod)
@@ -1109,8 +1224,8 @@ c mode at that ir, im, ieps location?
        endif
             dum=dtime(tarray)
             write(*,*) tarray(1),' s = time to complete hazSUBXnga.test'
-
-  380 format(a30)
+	stop
+2016	stop 'you need to put a file region_backarc.xy in GRID/Cascadia'
             end program
  
       subroutine readmodel(iflt,tlen)
@@ -1126,7 +1241,7 @@ c         (top, hinge, bottom) of the iflt-th fault
      +(1,5,7000),rsy(1,5,7000),rsz(1,5,7000), send(10,5), vx
      +(1,3,7000),vy(1,3,7000), vz(1,3,7000)
  
-      dimension tlen(500)
+      real tlen
       parameter (coef=3.14159/180.,nlevels=2)
       external fltdst
       tol = 1.e-3
@@ -1145,8 +1260,7 @@ c         write(*,*) 'resample'
    20 continue
 c      write(*,*) 'normvec'
       call normvec2(nlevels,tol)
-c      tlen(iflt) = send(iflt,1)
-       tlen(iflt)= send(iflt,1)
+       tlen= send(iflt,1)
       return
       end subroutine readmodel
  
@@ -2037,22 +2151,29 @@ c
  
  
 
-      subroutine Gregor(ip,xmag,rcd,vs30,gnd,sigmaf)
+      subroutine Gregor(iper,ip,xmag,rcd,vs30,gnd,sigmaf)
 c
 c Gregor ea 2002. predicted ground motion for Cascadia subduction megathrust
 c compile this subroutine with f95 and with -e or equivalent (extended line-length)
 c Programmed Oct 17 2006.
 c
-c In: ip = period index in per() array below, period T goes to 5 s for tall bldgs
+c In:
+c	iper = global period index for use with SDI
+c	 ip = period index in per() array below, period T goes to 5 s for tall bldgs
 c       xmag=moment mag
 c       rcd= closest distance to slab (km)
 c       vs30= top30 m Vs, (m/s)
-c Out: gnd = ln(median), sigmaf = 1/sigma/sqrt2
+c Out: gnd = ln(median SA), sigmaf = 1/sigma/sqrt2
+c If sdi = .true. then gnd is ln(median Inelastic spectral displacement in cm) using dy=dy_sdi
+c in the common/sdi/ block. Added Mar 20 2013.
 c
 c Oct 2006 version of Gregor et al, BSSA v92, pp 1923-1932
 c
       parameter (pi=3.14159265,sqrt2=1.414213562,vref=760.,np=10)
-      real gnd, sigmaf,mfac
+        common/sdi/sdi,dy_sdi,fac_sde
+        real, dimension (8):: fac_sde
+      logical sdi
+      real gnd, sigmaf,mfac,dy_sdi,rhat
       real, dimension(np):: per, cr1,cr2,cr3,cr4,cr5,cr6,sigmart
       real, dimension(np):: cs1,cs2,cs3,cs4,cs5,cs6,sigmast      
       per = (/0.0,0.1,0.2,0.25,0.333,0.5,1.,2.,2.5,5./)
@@ -2086,7 +2207,14 @@ c Another item: depth to slab does not have a specific term unlike Geomatrix rel
       mfac=(xmag-10.)**3
       fac1=alog(rcd+exp(c5))
       gnd=c1+c2*xmag+(c3+c4*xmag)*fac1+c6*mfac
+	if(sdi)then
+       sde=gnd+fac_sde(iper)	!fac_sde is log(T**2/(4pisq))
+       rhat = min(10.,exp(sde)/dy_sdi)	!10 is an upper bound for rhat.
+       gnd = sdi_ratio(per(ip),xmag,rhat,sig,sdisd) + sde
+       sigmaf= 1./sdisd/sqrt2
+       else
       sigmaf=1./sig/sqrt2
+      endif
       return
       end subroutine Gregor
 
@@ -2233,10 +2361,12 @@ c This version has continuous variation.
 c returns median and 1/sigma/sqrt2
       parameter (np=13,sqrt2=1.4142136)
       common/ipindx/iperba(10),ipgeom(10)
-      logical lvs,p_corr
+        common/sdi/sdi,dy_sdi,fac_sde
+        real, dimension (8):: fac_sde
+      logical lvs,p_corr,sdi
       real gc0/0.2418/,gcs0/-0.6687/,ci/0.3846/,cis/0.3643/
       real gch/0.00607/,gchs/0.00648/,gmr/1.414/,gms/1.438/
-      real period,gnd0,gndz,gz,g3,g4,gndm
+      real period,gnd0,gndz,gz,g3,g4,gndm,dy_sdi,sigma,sigmaf,sdisd,rhat
        real, dimension(np):: gc1,gc2,gc3,gc4,gc5,pergeo,gc1s,gc2s,gc3s,gp
        real vgeo(3)
 c array constructors oct 2006
@@ -2269,7 +2399,7 @@ c revised coeffs for reduction beyond 200 km. incl 3-s SA. Dont have 2-s data.
 c Always define a reference PGA, determine nonlinear response based on this value
           gnd0p=gc0+ci*islab
 	  iq=ipgeom(ip)
-c          period=pergeo(iq)
+          period=pergeo(iq)
       if(vs30.gt.520.)then
 c Use rock coeffs. No interface term ci or cis for subduction
         gnd0=gc0 +ci*islab
@@ -2295,7 +2425,6 @@ c Use soil coeffs
            endif
 c gz term  used for subduction, and for benioff (see hazgridXnga2)
           sig= gc4(iq)+gc5(iq)*min(8.,xmag)
-          sigmaf= 1./(sig*sqrt2)
 c same sigma for soil and rock.
 c distance correction if user set atten type as -2. p_corr is then true.
            if(p_corr.and.dist0.gt.200.)gnd0=gnd0+gp(iq)*(dist0-200.)
@@ -2318,10 +2447,18 @@ c to basiteamp produces an amplitude ratio in the variable amp.
 c      if(iq.eq.3.and.dist0.lt.30.)write(39,*) dist0,exp(gnd),exp(amp),pganl
 	      gnd= gnd + basiteamp(pganl,vs30,vgeo(ir),ip)
       endif	!vs30 .ne. vgeo(ir), the reference Vs for soil or rock, geom.
+	if(sdi)then
+       sde=gnd+fac_sde(ip)	!fac_sde is log(T**2/(4pisq))
+       rhat = min(10.,exp(sde)/dy_sdi)	!10 is an upper bound for rhat.
+       gnd = sdi_ratio(period,xmag,rhat,sig,sdisd) + sde
+       sigmaf= 1./sdisd/sqrt2
+       else
+                 sigmaf= 1./(sig*sqrt2)
+       endif
       return
       end subroutine getGeom
 
-      subroutine getABsub(iq,ir,islab,vs30,xmag,dist0,gnd,sigmaf,p_corr)
+      subroutine getABsub(ip,iq,ir,islab,vs30,xmag,dist0,gnd,sigmaf,p_corr)
 c from At&Boore BSSA aug 2003, p1715.  C-site and D-site look good apr 11 2007. SH.
 c Modify 5hz and add 2.5 hz coeffs., 10/10/2008. AB BSSA erratum Oct 2008. 
 c Affects Global but not cascadia. 10/17 also modify 2 hz and 3.33 hz coeffs for global.
@@ -2333,6 +2470,7 @@ c Inputs:
 c xmag = moment magnitude, should be > 7.5 according to doc.
 c dist0 is R_cd, see p 1706, A&B BSSA aug 2003
 c vs30 is top 30 m shear-wave velocity, for determining site class
+c ip = global period index used in sdi calcs for example
 c iq = period index for coefficients
 c 
 c ir=1 PNW Cascadia coeff, BC to E site class
@@ -2353,6 +2491,9 @@ c these are two frequencies where special pleading was introduced 10-2008 BSSA.
 c p_corr = .true. means apply distance correction for R>200 km for these periods:
 c  pga, 0.2, 0.3, 1.0 and 3.0 s SA. Others not currently available Mar 22 2010.
 c
+        common/sdi/sdi,dy_sdi,fac_sde
+        real, dimension (8):: fac_sde
+        logical sdi
       real rc1/-.25/,rs1/2.991/
       real rc2/0.6909/,rs2/0.03525/
       real rc3/0.01130/,rs3/0.00759/
@@ -2360,12 +2501,12 @@ c
 c  Dtor allows a distribution if 
 c you are uncertain about what that depth is. not using this variable dtor here.
 c Global modified coeffs ab 10-2008 affected at 2, 2.5, 3.33, 5 hz.
-      real, dimension(np) :: s2g,s3g,s4g,s5g,s6g,s7g
-      real c1w(np)
+c
+      real, dimension(np) :: s2g,s3g,s4g,s5g,s6g,s7g,c1w
 c interface, names start with s for "Subduction". s1g global, s1 cascadia only.
 c
       real,dimension(np):: pcor,s1,s1g,s2,s3,s4,s5,s6,s7,ssig
-      real perab(10),period
+      real perab(10),period,sde,dy_sdi
 c array constructors oct 2006. 2.5 hz is element number 6 of 10. 1.33 hz is el. 8
       perab= (/0.,0.2,1.0,0.1,0.3,0.4,0.5,0.75,2.0,3.0/)      
 c  Inslab coeffs not used here but provided for ref.
@@ -2435,7 +2576,7 @@ c  Cascadia prediction not modified 10-2008.
           endif
       r1=rs1;r2=rs2;r3=rs3;r4=rs4
 c sigma not discussed 10-2008.
-      sigma=ssig(iq)
+      sigma=ssig(iq)*aln10
       else
 c intraslab. do not use 10-10-2008. not set up...
       stop ' 10/08: inslab needs additional coeff. for 2.5 hz'
@@ -2454,7 +2595,7 @@ c      co5=c5(iq);co6=c6(iq)
 c      r1=rc1;r2=rc2;r3=rc3;r4=rc4
 c      sigma=sig(iq)
       endif
-          sigmaf= 1.0/sigma/sqrt2/aln10
+          sigmaf= 1.0/sigma/sqrt2
           delta= 0.00724*(10.**(0.507*xmag0))
           gnd=gnd0+co2*xmag0
           dist2= sqrt(dist*dist + delta*delta)
@@ -2502,12 +2643,18 @@ c--- DE boundary.
 c log base 10 to base e
           gnd= gnd * aln10
        if(p_corr.and.dist0.gt.200.)gnd=gnd+pcor(iq)*(dist0-200.0)
+	if(sdi)then
+       sde=gnd+fac_sde(ip)	!fac_sde is log(T**2/(4pisq))
+       rhat = min(10.,exp(sde)/dy_sdi)	!10 is an upper bound for rhat.
+       gnd = sdi_ratio(period,xmag,rhat,sigma,sdisd) + sde
+       sigmaf= 1./sdisd/sqrt2
+       endif
 c          if(dist0.lt.30.)period,dist,exp(gnd),xmag0,rpga,sl
 c      write(15,*) period, xmag, dist, exp(gnd), rpga, sl,xmag0,iq,gnd0
       return
       end subroutine getABsub
 
-      subroutine Gregor06(ip,mag,rupDist,vs30,gnd,sigmaf)
+      subroutine Gregor06(iper,ip,mag,rupDist,vs30,gnd,sigmaf)
 c from Gregor's g06.F emailed jan 2 2007.
 c Note: Gregor says that an implicit 25-km depth-of-slab is embedded in this
 c model. How to adjust to 20 km open question for now. Jan 8 2007. SHarmsen.
@@ -2520,6 +2667,7 @@ C     and the ground motion will be computed using the site response
 C     model of Walling and Abrahamson (2005). 
 C
 c     Input Parameters:
+c	iper = global period index for use in SDI calcs.
 c      ip = period index, from period set in Period1
 C     mag= moment  Magnitude
 C     rupDist =rcd =  Rupture Distance (km)
@@ -2528,7 +2676,10 @@ c      Output :
 C     gnd = log(median motion) (g)
 C      sigmaf = sigmafactor
       parameter (np=25,sqrt2=1.4142136,exp2p8=16.44464677)
-      real mag, rupDist, gnd, pgarock, sigmaf, vs30                                  
+        common/sdi/sdi,dy_sdi,fac_sde
+        real, dimension (8):: fac_sde
+      logical sdi
+      real mag, rupDist, gnd, pgarock, sigmaf, vs30, dy_sdi,rhat                                
       real n/1.18/, c/1.88/  
       real, dimension (25) :: c1, c2, c3, c4, c5, c6,
      1 period1, sig, b_soil, theta10, vref, sampadj
@@ -2609,8 +2760,6 @@ c     Compute PGARock (i.e., Vs=1100 m/sec)
          pgaRock =  9.28996 -0.71918*mag + (-3.10146 + 0.23683*mag)*alog(rupdist+exp2p8) +
      1              0.03741*(mag-10.0)**3
          pgarock = exp(pgarock)
-          sigmaf= 1./(sig(i)*sqrt2)
-
 c below line was commented out because not used.
 c         sigrock = 0.7038
          if (vs30 .lt. vref(i)) then
@@ -2623,16 +2772,25 @@ c         sigrock = 0.7038
 C     Now correct for reference Vs30m = 1100 m/sec
          soilamp = soilamp - sampadj(i)
          gnd = gnd + soilamp
+	if(sdi)then
+       sde=gnd+fac_sde(iper)	!fac_sde is log(T**2/(4pisq))
+       rhat = min(10.,exp(sde)/dy_sdi)	!10 is an upper bound for rhat.
+       gnd = sdi_ratio(Period1(ip),mag,rhat,sig(i),sdisd) + sde
+       sigmaf= 1./sdisd/sqrt2		!corresponding to SDi
+       else
+          sigmaf= 1./(sig(i)*sqrt2)	!corresponding to SA
+          endif
       return
       end  subroutine Gregor06                                                                     
                                                    
-      subroutine zhao(ip,xmag,dist,gnd,sigmaf,ivs, islab,hslab)
+      subroutine zhao(iper,ip,xmag,dist,gnd,sigmaf,ivs, islab,hslab)
 c predicted interface g.m. followed Advisory Panel meeting & suggs. Apr 2007
 c compute median and sigmaf for the Zhao model with Somerville correction
 c
 c      input: xmag = source M. Considerably lower than Gregor. May 21 Steve Harmsen.
 c            dist = distance to slab (r_cd, km)
 c            ivs = Vs30 indicator, 1 for B or vs30 > 600 m/s, 2 for C, 3 for D
+c		iper = global period index for use in sdi calcs, etc.
 c            ip = period indicator, corresponding to per below. ip=1 is per(1)=0.0=PGA, etc.
 c            islab=0 for interface events, =1 for intraplate events. Islab = -1 for crustal (option not used 2007)
 c            hslab= depth (km) of slab events (50 km for PacNW). (only applies to interface
@@ -2642,9 +2800,12 @@ c
       parameter (nper=22,hi=20.,sqrt2=1.41421356,xmagc=6.3,gcor=6.88806)
       real, dimension (nper):: a,b,c,d,e,c1,c2,c3,qi,wi,ps,
      & qs,ws,si,sr,ss,ssl,sig,tau,tauI,tauS,per,sigt
-      real afac,dist,hfac,site,sigma,sigmaf
+      real afac,dist,hfac,site,sigma,sigmaf,dy_sdi
 c coefficients from Zhao source code not from BSSA tables: more precision in his software.      
 c added 0.75s nov 2008. 0.75s (1.33 Hz) is an in-demand T.
+        common/sdi/sdi,dy_sdi,fac_sde
+        real, dimension (8):: fac_sde
+        logical sdi
 	per = (/0.0,0.05,0.10,0.15,0.20,0.25,0.30,0.40,
      &     0.50,0.60,0.70,0.75,0.80,0.90,1.0,1.25,1.5,2.0,2.5,3.0,4.0,5.0/)
 	a=(/1.101,1.076,1.118,1.134,1.147,1.149,1.163,
@@ -2672,10 +2833,9 @@ c added 0.75s nov 2008. 0.75s (1.33 Hz) is an in-demand T.
      &       0.0000,-0.0412,-0.0528,-0.1034,-0.1460,-0.15377375,-0.1638,-0.2062,
      &      -0.2393,-0.2557,-0.3065,-0.3214,-0.3366,-0.3306,-0.3898,
      &      -0.4978/)
-	ss=(/0.0557,0.1047,0.1276,0.0780,0.1074,0.0753,
-     &        0.0058,-0.0120,-0.0448,-0.0727,-0.1082,-0.11372811,-0.1257,-0.1859,
-     &       -0.2268,-0.2370,-0.2400,-0.2332,-0.2804,-0.2305,-0.2548,
-     &       -0.3551/)
+c ss coeffs corrected 12/07/2009. SH.
+        ss=(/2.607,2.764,2.156,2.161,1.901,1.814,2.181,2.432,2.629,
+     + 2.702,2.654,2.55,2.48,2.332,2.233,2.029,1.589,0.966,0.789,1.037,0.561,0.225/)
 c sigt = Table 5 total sigma, from intra- and inter-event sigmas sqrt(SS) without the mag-cor term
 c	sigt = (/0.723,0.849,0.811,0.77,0.76,0.775,0.779,0.787,0.776,0.751,0.745/)
 	sig=(/0.6039,0.6399,0.6936,0.7017,0.6917,
@@ -2758,7 +2918,7 @@ c in between.
       afac=0.0
       hfac=0.      !dont use the correction term for crustal events.
       sigma=sigt(ip)
-c crustal events: haven't coded up the xmcor term. use interface for now.
+c crustal events: havent coded up the xmcor term. use interface for now.
         xmcor = qi(ip)*(xmag-xmagc)**2 + wi(ip)
       endif
       r= dist+ c(ip)*exp(d(ip)*xmag)
@@ -2768,6 +2928,15 @@ c--- magnitude square term correction
       gnd= gnd + xmcor
 c cm/s_sq to g
       gnd= gnd - gcor
+	if(sdi)then
+       sde=gnd+fac_sde(iper)	!fac_sde is log(T**2/(4pisq))
+       rhat = min(10.,exp(sde)/dy_sdi)	!10 is an upper bound for rhat.
+       gm = sdi_ratio(per(ip),xmag,rhat,sigma,sdisd) + sde
+       sigmaf= 1./sdisd/sqrt2
+       else
+	
+       sigmaf = 1./sigma/sqrt2
+       endif
       sigmaf = 1./sigma/sqrt2
       return
       end subroutine zhao
@@ -3061,3 +3230,411 @@ c also have to be redefined. (a1,a2) represents a siteamp smoothing range (units
         basiteamp = site-siter
         return
       end function basiteamp
+      
+           logical function LXYIN (X,Y,PX,PY,N)
+c Is point (X,Y) inside the (unclosed) polygon (PX,PY)?
+c See "Application of the winding-number algorithm...",
+c  by Godkin and Pulli, BSSA, pp. 1845-1848, 1984.
+c LXYIN= .true. if (X,Y) is inside or on polygon, .false. otherwise.
+c Written by C. Mueller, USGS.
+      dimension PX(N),PY(N)
+      LXYIN= .true.
+      KSUM= 0
+      do 1 I=1,N-1
+        K= KPSCR(PX(I)-X,PY(I)-Y,PX(I+1)-X,PY(I+1)-Y)
+        if (K.eq.4) return
+        KSUM= KSUM+K
+1       continue
+      K= KPSCR(PX(N)-X,PY(N)-Y,PX(1)-X,PY(1)-Y)
+      if (K.eq.4) return
+      KSUM= KSUM+K
+      if (KSUM.eq.0) LXYIN= .false.
+      return
+      end
+
+      integer function KPSCR (X1,Y1,X2,Y2)
+c Compute the signed crossing number of the segment from (X1,Y1) to (X2,Y2).
+c See "Application of the winding-number algorithm...",
+c  by Godkin and Pulli, BSSA, pp. 1845-1848, 1984.
+c KPSCR= +4 if segment passes through the origin
+c        +2 if segment crosses -x axis from below
+c        +1 if segment ends on -x axis from below or starts up from -x axis
+c         0 if no crossing
+c        -1 if segment ends on -x axis from above or starts down from -x axis
+c        -2 if segment crosses -x axis from above
+c Written by C. Mueller, USGS.
+      KPSCR= 0
+      if (Y1*Y2.gt.0.) return
+      if (X1*Y2.eq.X2*Y1.and.X1*X2.le.0.) then
+        KPSCR= 4
+      elseif (Y1*Y2.lt.0.) then
+        if (Y1.lt.0..and.X1*Y2.lt.X2*Y1) KPSCR= +2
+        if (Y1.gt.0..and.X1*Y2.gt.X2*Y1) KPSCR= -2
+      elseif (Y1.eq.0..and.X1.lt.0.) then
+        if (Y2.lt.0.) KPSCR= -1
+        if (Y2.gt.0.) KPSCR= +1
+      elseif (Y2.eq.0..and.X2.lt.0.) then
+        if (Y1.lt.0.) KPSCR= +1
+        if (Y1.gt.0.) KPSCR= -1
+      endif
+      return
+      end
+
+
+      subroutine getNAAsub(ip, iq, Fevnt, Ffaba, xmag, R, zH, sigmaf, gm, delCi, Vs30)
+c This is Abrahamson 2010 BCHydro Subduction model that was developed using the dataset of 
+c acceleration response spectra of the geometrical mean 5% spectral damping. The coefficients
+c  have been written for periods: pga, 0.050, 0.075,0.100, 0.150,0.200,0.250,0.300,0.400,
+c 0.500, 0.600, 0.750, 1.000, 1.500, 2.000, 2.500, 3.000, 4.000, 5.000, 6.000, 7.500, 10.000.
+c
+c
+c For values of T=0.02sec, use PGA values
+c Recommended values for DelC1 is -0.5, 0.0, 0.5
+c PGA1000 = Median PGA value for a Vs30 1,000 m/sec
+c***************************************************************************************************
+c The parameters are defined as:
+c ip = period  index, global
+c iq	-	Period index, internal
+c Fevnt -	Indicator variable for an intraslab & interface earthquake. Intraslab = 1, interface = 0
+c Ffaba - 	Indicator variable for a forearc or unknown sites & backarc sites. Forearc or unknown
+c		sites = 0, backarc sites = 1.
+c xmag - 	Magnitdue in Mw
+c R	- 	Rupture distance for interface events or hypocentral distance for intraslab events.  
+c zH -  	Hypocentral Distance (km)
+c sigmaf - 	sigmaf = 1/sigma/sqrt2
+c gm  - 	logged SA ground motion (units g)
+c delCi = 	Integer indicator for low middle hi branch, 1 2 or 3 resp.
+c***************************************************************************************************
+	implicit none
+	real sqrt2
+	parameter (sqrt2=1.414213562)
+        common/sdi/sdi,dy_sdi,fac_sde
+	real, dimension(22):: NAAper,b,theta1, theta2, theta6, theta7, theta8, vlin
+	real theta10(22), theta11(22), theta12(22), theta13(22), theta14(22)
+	real theta15(22), theta16(22)
+	real delC(3), delC1, dy_sdi, rhat,sdisd,sde,sdi_ratio
+        real, dimension(8):: fac_sde
+	real xmag, R, zH, fterm
+	integer Fevnt, Ffaba, delCi, c4/10/, ip, iq
+	real c1/7.8/, c/1.88/, n/1.18/
+	real theta3/0.1/, theta4/0.9/, theta5/0.0/, theta9/0.4/
+	real fMag,PGArock,gm
+	real fDepth,  fSite, Vs30, VsStar
+	real Rmax
+	real sigma/0.772/,sigmaf
+	logical sdi
+c NAAper = period set for Norms BC Hydro subduction model. 0.00 for 0 s (PGA) to 0.02 s SA
+	NAAper =(/0.00, 0.050, 0.075,0.100, 0.150,0.200,0.250,0.300,0.400,
+     + 0.500, 0.600, 0.750, 1.000, 1.500, 2.000, 2.500, 3.000, 4.000, 5.000, 6.0, 7.500, 10.0/)
+	vlin = (/865.1,1053.5,1085.7,1032.5,877.6,748.2,654.3,587.1,503.0,456.6,430.3,410.5,400.0,
+     1            400.0, 400.0, 400.0, 400.0, 400.00, 400.0, 400.0, 400.0, 400.0/)
+        b = (/-1.186, -1.346, -1.471,-1.624, -1.931,-2.188, -2.381, -2.518, -2.657, -2.669,
+     1       -2.599, -2.401, -1.955, -1.025, -0.299, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000/)
+        theta1  = (/4.2203, 4.5371, 5.0733, 5.2892, 5.4563,5.2684, 5.0594, 4.7945, 4.4644, 4.0181, 
+     1                 3.6055, 3.2174, 2.7981, 2.0123,1.4128, 0.9976, 0.6443, 0.0657, -0.4624, -0.9809,
+     2                 -1.6017, -2.2937/)
+        theta2  = (/-1.350, -1.400, -1.450, -1.450, -1.450, -1.400, -1.350, -1.280, -1.180, -1.080, 
+     1                 -0.990, -0.910, -0.850, -0.770, -0.710, -0.670, -0.640, -0.580, -0.540, -0.500,
+     2                  -0.460, -0.400/)
+        theta6  = (/-0.0012, -0.0012, -0.0012, -0.0012, -0.0014, -0.0018, -0.0023, -0.0027,
+     1                 -0.0035, -0.0044, -0.0050, -0.0058, -0.0062, -0.0064 , -0.0064, -0.0064,
+     2                 -0.0064, -0.0064, -0.0064, -0.0064 , -0.0064, -0.0064/)
+        theta7  = (/1.0988, 1.2536, 1.4175, 1.3997, 1.3582, 1.1648, 0.9940, 0.8821, 0.7046,
+     1                 0.5799, 0.5021, 0.3687, 0.1746, -0.0820, -0.2821, -0.4108, -0.4466, -0.4344,
+     2               -0.4368, -0.4586, -0.4433, -0.4828/)
+        theta8  = (/-1.42, -1.65, -1.80, -1.80, -1.69, -1.49, -1.30, -1.18, -0.98, -0.82, -0.70, 
+     1                 -0.54, -0.34, -0.05, 0.12, 0.25, 0.30, 0.30, 0.30, 0.30, 0.30, 0.30/)
+        theta10 = (/3.12,3.37,3.37,3.33, 3.25, 3.03, 2.80, 2.59, 2.20, 1.92, 1.70, 1.42, 1.10, 
+     1                  0.70, 0.70, 0.70, 0.70, 0.70, 0.70,0.70, 0.70, 0.70/)
+        theta11 = (/0.0130, 0.0130,0.0130,0.0130,0.0130,0.0129,0.0129,0.0128,0.0127,0.0125,
+     1                    0.0124,0.0120,0.0114,0.0100,0.0085,0.0069,0.0054, 0.0027,0.0005, -0.0013,
+     2                   -0.0033, -0.0060/)
+        theta12 = (/0.980, 1.288, 1.483, 1.613, 1.882, 2.076, 2.248, 2.348, 2.427, 2.399, 2.273,
+     1                   1.993, 1.470, 0.408, -0.401, -0.723, -0.673, -0.627, -0.596, -0.566,
+     2                    -0.528, -0.504/)
+        theta13 = (/-0.0135, -0.0138,-0.0142,-0.0145,-0.0153,-0.0162,-0.0172, -0.0183,-0.0206,
+     1                   -0.0231, -0.0256, -0.0296, -0.0363, -0.0493, -0.0610, -0.0711, -0.0798, 
+     2                   -0.0935, -0.0980 , -0.0980, -0.0980, -0.0980/) 
+        theta14 = (/-0.40,-0.40,-0.40,-0.40,-0.40,-0.35,-0.31, -0.28, -0.23, -0.19, -0.16, -0.12,
+     1                   -0.07, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00/)
+        theta15 = (/0.9996, 1.1030, 1.2732, 1.3042, 1.2600, 1.2230, 1.1600, 1.0500, 0.800,
+     1                    0.6620, 0.5800, 0.4800, 0.3300, 0.3100, 0.300 , 0.300, 0.300, 0.300, 0.300,
+     2                    0.300, 0.300, 0.300/)
+        theta16 = (/-1.00, -1.18, -1.36, -1.36, -1.30, -1.25, -1.17, -1.06, -0.78, -0.62, -0.50,
+     1                  -0.34, -0.14, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00/) 
+        delC = (/-0.5, 0.0,0.5/)
+     
+C	Define DelC1
+	if(delCi.le.3.and.delCi.gt.0) then
+		delC1 = delC(delCi)
+	else 
+		print *, 'Error in delC1'
+	endif
+C		
+C	Calculate Magnitude Scaling Factor fMag(M)
+	if(xmag.le.c1+delC1) then 
+		fMag = theta4*(xmag-(c1+delC1))+theta13(iq)*(10-xmag)**2
+	else !its greater
+		fMag = theta5*(xmag-(c1+delC1))+theta13(iq)*(10-xmag)**2
+	endif
+C	
+C 	Calculate Depth Scaling Factor fDepth(zH)
+	if(Fevnt > 1.or.Fevnt < 0) then 
+		print *,'Error in Fevnt term'
+	else	
+		fDepth = theta11(iq)*(zH-60)*Fevnt
+	endif
+C
+C	Calculate Forearc/Backarc Scaling fFaba
+	if(Ffaba .gt. 1 .or. Ffaba .lt. 0) then 
+		print *,fFaba
+		print *,'Error in Ffaba term'
+	endif
+	if(Fevnt.eq.1 .and. Ffaba.eq.1) then ! its a backarc site loc and intraplate src.
+		Rmax = max(R, 85.0)
+		fterm = (theta7(iq)+theta8(iq)*alog(Rmax/40))	!*Ffaba
+	elseif (Ffaba.eq.1)then !its a backarc  and interface src . 
+		Rmax = max(R, 100.0)
+		fterm = (theta15(iq)+theta16(iq)*alog(Rmax/40))	!*Ffaba
+	else	!forearc site or the site is unknown. No effect.
+		fterm=0.0
+	endif
+C
+C	Calculate Site Scaling Factor	fSite
+c     compute VsStar
+	if(Vs30.gt.1000.) then
+		VsStar = 1000.
+	else
+		VsStar = Vs30
+	endif
+C
+C Calculate PGArock
+	PGArock = theta12(iq)*alog(1000./vlin(iq))+b(iq)*n*alog(1000./vlin(iq))
+C	
+	if(Vs30.lt.Vlin(iq)) then ! non-linear site response
+		fSite = theta12(iq)*alog(VsStar/vlin(iq)) - b(iq)*alog(PGArock+c)+b(iq)*alog(PGArock+c*(VsStar/vlin(iq))**n)
+	else ! linear site repsonse
+		fSite = theta12(iq)*alog(VsStar/vlin(iq))+b(iq)*n*alog(VsStar/vlin(iq))
+	endif	
+C
+
+C Calulate ground motion of Base Function
+	gm = theta1(iq)+theta4*delC1+(theta2(iq)+theta14(iq)*Fevnt+theta3*(xmag-7.8))*
+     1	alog(R+c4*exp((xmag-6)*theta9))+theta6(iq)*R+theta10(iq)*Fevnt+fMag+fDepth+
+     2       fterm +fSite
+	if(sdi)then
+       sde=gm+fac_sde(ip)	!fac_sde is log(T**2/(4pisq))
+       rhat = min(10.,exp(sde)/dy_sdi)	!10 is an upper bound for rhat.
+       gm = sdi_ratio(NAAper(iq),xmag,rhat,sigma,sdisd) + sde
+       sigmaf= 1./sdisd/sqrt2
+       else
+	
+       sigmaf = 1./sigma/sqrt2
+       endif
+       return
+       end subroutine getNAAsub
+	
+	
+	subroutine getAtkinsub(ipg,ip,rcd,M,vs30,backarc,gnd,sigmaf)
+	real rcd,M,vs30,gnd,sigma,sfac,gfac,gnd0,gndp,gnd0p,pganl
+c Atkinson and Macias (BSSA, 2009) for great cascadia subduction eqs M>=7.5
+c	input variables:
+c	ipg = global ip index used with site amplification calculation.
+c	ip = index corresponding to  spectral period (s)
+c	rcd = closest distance to rupture (km)
+c	M = moment magnitude
+c	vs30 = shear wave veloc top 30 m
+c	forearc = logical variable .true. if site is in the forearc region
+c	backarc= 1 (integer) if site is in the backarc.
+c	Varying response w.r.t. this situation is not in the original formulation but may be helpful.
+c c Always define a reference PGA, determine nonlinear response based on this value
+c
+c	Output:
+c	gnd = ln(median SA or PGA) units g
+c	sigma = sig_lnY based on Campbell&Bozorgnia
+c	coded Nov 7 2012 S Harmsen USGS harmsen@usgs.gov
+c
+	integer np
+	parameter (np=15)
+	parameter (gfac=6.8875526,sfac=2.3025851,sqrt2=1.4142136)
+        common/sdi/sdi,dy_sdi,fac_sde
+        real dy_sdi,rhat, sigmaf,sdisd
+        real, dimension (8):: fac_sde
+c base10 to natural logs. cm/s/s to g
+	logical sdi
+	integer backarc,ip,ipq
+	real, dimension(np):: fr,pd,c0,c1,c2,c2b,c3,c4,sig
+	sig =(/0.24,0.26,0.27,0.27,0.27,0.27,0.27,0.29,0.30,0.30,
+     + 0.30,0.3,0.32,0.35,0.38/)
+     	c0=(/5.006,5.843,5.490,4.746,4.303,4.167,3.999,3.621,3.241,3.104,2.978,
+     + 2.814,2.671,2.489,2.338/)
+     	c1=(/-1.5573,-1.9391,-1.6257,-1.1691,-0.9322,-0.8854,
+     + -0.8211,-0.7376,-0.6741,-.6585,-0.6431,-0.6108,-0.5942,-0.6412,-0.6311/)
+       c2=(/-0.00034,0.0,-0.00115,-0.00212,-0.00231,-0.00211,-0.00195,
+     + -0.00128,-0.00081,-0.00063,-0.00057,-0.00046,-0.00040,-0.00003,0.0/)
+       c2b=(/-0.0015,-.0015,-0.00225,-0.00332,-.00331,-0.00281,-0.00225,
+     + -0.00158,-0.00083,-0.00065,-0.00059,-0.00048,-0.00041,-0.000032,0.0/)
+c c2b first attempt at decay in backarc region. hybridizing two Atkinson papers       
+      c3=(/0.1774,0.1813,0.1736,0.1593,0.1713,0.1802,0.1870,0.2116,0.2696,0.2990,
+     + 0.3258,0.3490,0.3822,0.4760,0.5357/)
+      c4 = (/0.0827,0.0199,0.0261,0.0432,0.0270,0.0258,0.0271,0.0328,
+     + -0.0064,-0.0074,-0.0103,-0.0299,-0.0417,-0.0629,-0.0737/)
+      fr = (/99.,20.,10.,5.,3.16,2.5,2.,1.0,0.5,0.4,0.32,0.25,0.2,0.13,0.10/)
+      pd = (/0.01,0.05,0.1,0.2,0.3,0.4,0.5,1.,2.,2.5,3.,4.,5.,7.7,10./)
+c h term from M
+	h=M**2-3.1*M-14.55	!eqn 6
+	xm=M-8.0
+	gnd0p=c0(1)+c3(1)*xm+c4(1)*xm**2
+	gnd0=c0(ip)+c3(ip)*xm+c4(ip)*xm**2
+	r=sqrt(rcd**2+h**2)
+	if(backarc.eq.0)then
+c original GMPE form
+	gnd=gnd0 + c1(ip)*alog10(r)+c2(ip)*r
+	gndp=gnd0p+c1(1)*alog10(r)+c2(1)*r
+	else
+c backarc, steeper falloff Qterm. from Gofrani and Atkinson. Trial balloon: not using 2013. 
+	gnd=gnd0 + c1(ip)*alog10(r)+c2b(ip)*r
+	gndp=gnd0p + c1(1)*alog10(r)+c2b(1)*r
+	endif	
+        gnd = gnd*sfac - gfac
+        if(vs30.ne.760.)then
+        pganl = exp(gndp*sfac - gfac)
+c siteamp: provisional. the above gnd corresponds to rock at B/C boundary (article, p.1569)
+c she suggests BA08 siteamp. pganl is the reference rock pga 
+        gnd=gnd+basiteamp(pganl,vs30,760.,ipg)
+        endif
+        sigma=sig(ip)*sfac
+	if(sdi)then
+       sde=gnd+fac_sde(ipg)	!fac_sde is log(T**2/(4pisq))
+       rhat = min(10.,exp(sde)/dy_sdi)	!10 is an upper bound for rhat.
+       gnd = sdi_ratio(pd(ip),M,rhat,sigma,sdisd) + sde
+       sigmaf= 1./sdisd/sqrt2
+       else
+        sigmaf=1./sigma/sqrt2
+        endif
+        return
+        end subroutine getAtkinsub
+
+	real function sdi_ratio(per,M,rhat,sige,sdi)
+	real M,rhat,td,dt,sde,sdi
+c inputs:
+c per = spectral period per (s)
+c rhat= elastic spectral displacement Sd_e/dY. (Sd_e is not input)
+c M = moment magnitude
+c elastic ln(S_d dispersion), sige
+c 
+c Outputs:
+C compute tothung-cornell spectral displacement ratio, ln(S_di/S_d)
+c Also compute the inelastic log st. deviation, sdi
+c steve harmsen feb 14 2013.
+c Use regression coeffs from table 2.
+c The regression coeffs were designed for a specific GMPE Abrahmson Silva(which?)
+c but we will use these with any crustal-event GMPE at least WUS...
+c Possibly different coeffs may be found for subduction event GMPEs...
+        real, dimension(18):: beta1,beta2,beta3,beta4,beta5,beta6, 
+     + c1p,c2p,c3p,c4p,ap,bp,T
+c special functions g1, g2
+        g1(r,xm,b1,b2,b3,b4,b5)=(b1+b2*xm)*r+
+     + (b3+b4*xm)*r*alog(r) +b5*r**2.5
+         g2(r,b6)=0.37*b6*(r-0.3)
+         T=(/ 0.30, 0.40, 0.50, 0.60, 0.70, 0.750, 0.80, 
+     + 0.850, 0.90, 1.0, 1.100, 1.250, 1.50, 2.0, 2.50, 3.0, 4.0, 5.0/)
+        beta1=(/-0.10370, 0.12260, 0.04490, 0.11160,-0.07590,-0.13070,-0.32330,-0.37980,-0.37910,
+     + -0.38000,-0.33240,-0.35820,-0.42440,-0.13040,-0.22750, 0.06930,-0.16920,-0.41700/)
+        beta2=(/ 0.01380,-0.01970,-0.00730,-0.02110, 0.00660, 0.01570, 0.04340, 0.05040, 
+     + 0.04890, 0.05150, 0.04440, 0.04630, 0.05610, 0.01300, 0.02640,-0.01950, 0.01610, 0.05170/)
+        beta3=(/-0.00590,-0.06960,-0.04890,-0.09530,-0.03500,-0.01560, 0.05680, 0.09710, 
+     + 0.09130, 0.06600, 0.03780, 0.07960, 0.11250,-0.00420, 0.05370,-0.06030, 0.03480, 0.07880/)
+        beta4=(/ 0.01050, 0.01600, 0.01060, 0.01780, 0.00760, 0.00380,-0.00690,-0.01170,
+     + -0.01020,-0.00840,-0.00510,-0.01120,-0.01570, 0.00090,-0.00720, 0.01200,-0.00380,-0.01080/)
+        beta5=(/-0.00220,-0.00080,-0.00070,-0.00030,-0.00030, 0.00000, 0.00000,-0.00040,
+     + -0.00050,-0.00050, 0.00000, 0.00060, 0.00050, 0.00100, 0.00090, 0.00010, 0.00040, 0.00000/)
+        beta6=(/-0.07400, 0.01300, 0.01700, 0.03700, 0.05000, 0.03000,-0.02500,-0.05000,
+     + -0.05000,-0.06100,-0.05000,-0.02000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000/)
+        c1p=(/ 0.00200, 0.00800, 0.00600, 0.00800, 0.00700, 0.00600, 
+     + 0.00900, 0.01100, 0.01400, 0.01300, 0.011, 0.012, 0.008, 0.008, 0.008, 0.013, 0.01800, 0.03500/)
+        c2p=(/-0.01000,-0.04000,-0.02800,-0.04000,-0.03300,-0.03000,-0.04700,
+     + -0.05600,-0.07200,-0.06400,-0.05600,-0.06200,-0.04000,-0.04100,-0.03800,-0.06700,-0.08800,-0.1770/)
+        c3p=(/ 0.09600, 0.09500, 0.07500, 0.06500, 0.05900, 0.05600, 0.04800, 
+     + 0.03700, 0.04600, 0.07300, 0.07800, 0.03900, 0.02000, 0.04500, 0.05300,
+     + 0.08500, 0.09100, 0.16500/)
+        c4p=(/-0.07700,-0.04500,-0.03600,-0.01000,-0.01300,-0.01200, 0.01600, 
+     + 0.03500, 0.04100, 0.00700,-0.00800, 0.03700, 0.03800, 0.01400,-0.00600,
+     + -0.00900,-0.00500, 0.01700/)
+         ap=(/0.9,0.7,0.9,1.0,1.8,1.8,1.2,1.2,1.2,1.4,1.8,1.4,1.0,1.4,1.6,
+     + 1.2,1.0,0.8/)
+         bp=(/3.8,3.8,3.0,2.9,5.0,4.5,2.0,1.8,1.4,3.4,5.0,2.0,2.2,3.5,5.0,
+     + 2.0,4.5,5.0/)
+c
+c find the index corresponding to the requested period 
+       i=1
+       if(per.le.T(1))then
+c first try: do not extrapolate, just use 0.3s coeffs for shorter periods.
+         b1=beta1(1); b2=beta2(1); b3=beta3(1)
+         b4=beta4(1); b5=beta5(1); b6=beta6(1)
+         a=ap(1); b=bp(1); c1 = c1p(1); c2= c2p(1)
+         c4=c4p(1); c3=c3p(1)
+         goto 3
+       endif
+         ip=i+1
+         dowhile(per.gt.T(ip).and.ip.lt.18)
+         ip=ip+1
+         enddo
+       if(abs(per-T(ip)).lt.0.01)then
+c no need to interpolate
+        b1=beta1(ip); b2=beta2(ip); b3=beta3(ip)
+        b4=beta4(ip); b5=beta5(ip); b6=beta6(ip)
+        a=ap(ip); b=bp(ip); c1 = c1p(ip); c2= c2p(ip)
+         c4=c4p(ip); c3=c3p(ip)
+        elseif(T(ip).lt.per)then
+c extrapolate: Need a rule. for now just use 5s coeffs.
+        b1=beta1(ip); b2=beta2(ip); b3=beta3(ip)
+        b4=beta4(ip); b5=beta5(ip); b6=beta6(ip)
+        a=ap(ip); b=bp(ip); c1 = c1p(ip); c2= c2p(ip)
+         c4=c4p(ip); c3=c3p(ip)
+ 	else
+c interpolate. From meeting Feb 12 2013 try linear interpolation.
+	i=ip-1
+	dt=(per-T(i))/(T(ip)-T(i))
+	td=1.0-dt
+	b1=beta1(ip)*dt+beta1(i)*td
+	b2=beta2(ip)*dt+beta2(i)*td
+	b3=beta3(ip)*dt+beta3(i)*td
+	b4=beta4(ip)*dt+beta4(i)*td
+	b5=beta5(ip)*dt+beta5(i)*td
+	b6=beta6(ip)*dt+beta6(i)*td
+	a = ap(ip)*dt+ap(i)*td
+	b=  bp(ip)*dt+bp(i)*td
+	c1=  c1p(ip)*dt+c1p(i)*td
+	c2=  c2p(ip)*dt+c2p(i)*td
+	c3=  c3p(ip)*dt+c3p(i)*td
+	c4=  c4p(ip)*dt+c4p(i)*td
+	endif
+3	continue
+c	print *,'b1,b2,b3,b4,b5,b6,a,b:'
+c	print *,b1,b2,b3,b4,b5,b6,a,b
+       if(rhat.lt.0.2)then
+        sdi_ratio=0.0
+        sdi = sige
+        elseif(rhat.lt.0.3)then
+        sdi_ratio=g1(rhat,M,b1,b2,b3,b4,b5) - g1(0.2,M,b1,b2,b3,b4,b5)
+c because in this interval g2 is zero we don't see it ablove
+        elseif(0.3.le. rhat .and. rhat .lt. 3.0)then
+        sdi_ratio=g1(rhat,M,b1,b2,b3,b4,b5) - g1(0.2,M,b1,b2,b3,b4,b5)+
+     +  g2(rhat,b6)*(M-6.5)
+        elseif(3.0.le.rhat.and. rhat.le.10.)then
+        sdi_ratio=g1(rhat,M,b1,b2,b3,b4,b5) - g1(0.2,M,b1,b2,b3,b4,b5)+
+     +  b6*(M-6.5)
+        else
+        stop' no rule when rhat >100'
+        endif
+c compute sdi for rhat.ge. 0.2
+	if(rhat.ge.0.2)then
+        sdi = sige+c1+c2*rhat
+c        print *,c3,c4
+        if(rhat.gt.a)sdi= sdi + c3*(rhat-a)	
+        if(rhat.gt.b)sdi= sdi + c4*(rhat-b)
+        endif	
+        return
+        end     function sdi_ratio   
+c------------------------------------------------------------------------------
