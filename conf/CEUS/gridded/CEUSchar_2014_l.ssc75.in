@@ -1,6 +1,6 @@
 0 		!Charleston SSC 1-branch zone(Local), Mw 7.5. Use hazgridXnga13l 
-24.0  50. .1
--100.0  -65. .1
+24.6  50. .1
+-115.0  -65. .1
 760 1
 1 5 1 1         !dtor fix at 5 km
 1 00 0

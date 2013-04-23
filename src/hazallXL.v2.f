@@ -55,7 +55,7 @@ c do not need to be computed for WUS hazard maps
       real latmax,latmin,dx,dy
       real, dimension(nbig):: prob, prob0
       dimension out(300000),xlev(20)
-      character name*80,namout*80,nom_de_plume*80      
+      character name*80,namout*80,nom_de_plume*30      
 c File names can be long, but over 30 chars no good for header storage.
 c
       if(iargc().lt.1)stop 'Enter input file of instructions on command line, no <'
