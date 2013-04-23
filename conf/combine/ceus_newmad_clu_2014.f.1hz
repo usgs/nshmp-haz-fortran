@@ -1,0 +1,45 @@
+1
+20
+../out/newmad2014-500-clu.1hz.g1
+0.0225          ! .5 .05 .9 .5
+../out/newmad2014-500-clu.1hz.g2
+0.045
+../out/newmad2014-500-clu.1hz.g3
+0.315 
+../out/newmad2014-500-clu.1hz.g4
+0.045 
+../out/newmad2014-500-clu.1hz.g5
+0.0225 
+../out/newmad2014-750-clu.1hz.g1
+0.0225          ! .5 .05 .9 .5
+../out/newmad2014-750-clu.1hz.g2
+0.045 
+../out/newmad2014-750-clu.1hz.g3
+0.315
+../out/newmad2014-750-clu.1hz.g4
+0.045 
+../out/newmad2014-750-clu.1hz.g5
+0.0225 
+../out/newmad2014-1000-clu.1hz.g1
+0.005           !.5 .1 .05
+../out/newmad2014-1000-clu.1hz.g2
+0.01 
+../out/newmad2014-1000-clu.1hz.g3
+0.070		!.5 .1 .7
+../out/newmad2014-1000-clu.1hz.g4
+0.010
+../out/newmad2014-1000-clu.1hz.g5
+0.005 
+../out/newmad2014-1500-clu.1hz.g1
+0.0225  		!1500 year on central &south arms, adds to 750yr ...
+../out/newmad2014-1500-clu.1hz.g2
+0.045 
+../out/newmad2014-1500-clu.1hz.g3
+0.315 
+../out/newmad2014-1500-clu.1hz.g4
+0.045 
+../out/newmad2014-1500-clu.1hz.g5
+0.0225  
+1
+../out/combine/tmp.newmad.1hz
+0
