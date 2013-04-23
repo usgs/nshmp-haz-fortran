@@ -81,6 +81,7 @@ c      write(6,*) ifil
       write(6,5) "Enter name of hazard-curve file:  "
 5      format(a,$)
       read(infi,900) name
+      name=trim(name)
       write(6,900)name
  900  format(a)
       inquire(file=name,exist=ok)
