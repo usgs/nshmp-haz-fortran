@@ -9,7 +9,7 @@
 -88.600000 -86.600000 0.100000
 0 7.000000 7.000000 0.1 3.0     Characteristic magnitude
 2 0 0  0
-../conf/CEUS/gridded/GR_DOS/Wabash_RLME_2014.xls.agrid
+../conf/CEUS/gridded/GR_DOS/Wabash_RLME.xls.agrid
 1. 0
 26.639674     fixed-strike angle. Dont use avg distance in meanrjb.bin
 3
