@@ -86,6 +86,8 @@ getmeanrjf.v2: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/getmeanrjf.v2 $(UTIL)/getmeanrjf.v2.f $(SRC)/iosubs.o
 gutenberg: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/gutenberg $(UTIL)/gutenberg.f $(SRC)/iosubs.o
+swapf: 
+	$(C_COMPILER) $(CLAGS) -o $(OUT)/swapf $(UTIL)/swapf.c
 
 #	other
 #	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/agridtest2A $(SRC)/agridtest2A.f 
