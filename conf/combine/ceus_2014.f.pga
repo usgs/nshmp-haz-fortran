@@ -1,5 +1,5 @@
 1
-15
+16
 ../out/combine/tmp.newmad.pga
 0.5
 ../out/NMFS_RLME_2014.pga
@@ -28,8 +28,10 @@
 .16675
 ../out/CEUScmpga-srgr.out
 .08325
-../out/CEUS_adGrid_2014.pga
-1
+../out/combine/CEUS_adGrid_2014.pga
+0.5
+../out/combine/CEUS_fixGrid_2014.pga
+0.5
 1
 ../out/combine/tmp.ceus.pga
 0
