@@ -11,7 +11,7 @@
 1 0 0 0
 ../conf/WUS/gridded/GR_DOS/agrd_ORdeep_unif.out
 1. 0
-../bin/meanrjb.bin
+../bin/rjbmean.bin.geoma
 3
 0. 0. 0. PGA
 ../out/coastalOR_deep_un.pga
