@@ -1,0 +1,19 @@
+1
+6
+../out/wusfaultnoCA.bird_no2.3dipgr.1hz
+    0.333
+../out/wusfaultnoCA.bird_no2.3dipchar.1hz
+    0.667
+../out/wusfaultnoCA.bird_no2.3dip65.1hz
+    1.000
+../out/Bird.hazgrid1.1hz.m
+    0.200
+../out/Bird.hazgrid1.1hz.p
+    0.200
+../out/Bird.hazgrid1.1hz
+    0.600
+1
+../out/combine/tmp_bird.wusfaultnoCA.1hz
+0
+
+
