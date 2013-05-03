@@ -1,0 +1,35 @@
+1			!use hazallXL.v2
+15	! anderson
+../out/d1AWS.UT.3dip.ch.5hz    
+0.67
+../out/d1AWS.NV.3dip.ch.5hz
+0.67
+../out/d1AWSS.IMW.all.ch.5hz
+0.67
+../out/d1AWS.ORWA_n.50d.ch.5hz
+0.5
+../out/d1WCsrl.ORWA_c.1dip.ch.5hz
+0.5
+../out/d1AWS.Wasatch.3dip.ch.5hz
+0.72
+../out/d1AWS.UT.3dip.gr.5hz
+0.33
+../out/d1AWS.NV.3dip.gr.5hz
+0.33
+../out/d1AWS.IMW.3dip.gr.5hz
+0.33
+../out/d1AWS.ORWA_n.50d.gr.5hz
+0.5
+../out/d1WCsrl.ORWA_c.1dip.gr.5hz
+0.5
+../out/d1AWS.Wasatch.3dip.gr.5hz
+0.18
+../out/d1AWS.NV.3dip.65.5hz
+1.0
+../out/d1AWS.IMW.all.65.5hz
+1.0
+../out/d1Wasatch.3dip.74.5hz
+0.1
+1
+../out/combine/d1aws.wus.2014.5hz
+0
