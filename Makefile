@@ -24,8 +24,8 @@ UTIL = $(SRC)/util
 
 
 #all: CreateBinDir hazallXL.v2 hazallXL.v4 hazFXnga7c hazFXnga13l hazgridXnga5 hazgridXnga13l hazSUBXnga hazSUBXngatest hazpoint hazinterpnga avg_dist fltrate.v2 get_avalue gethead.nga getmeanrjf getmeanrjf.v2 gutenberg
-#all: CreateBinDir hazallXL.v2 hazallXL.v4 hazallXL.v5 hazFXnga13l hazgridXnga13l hazSUBXnga hazSUBXngatest hazpoint hazinterpnga avg_dist fltrate.v2 get_avalue gethead.nga getmeanrjf getmeanrjf.v2 gutenberg fltrate
-all: CreateBinDir hazallXL.v2 hazallXL.v4 hazallXL.v5 hazFXnga13l hazgridXnga13l hazSUBX hazpoint hazinterpnga avg_dist fltrate.v2 get_avalue gethead.nga getmeanrjf getmeanrjf.v2 gutenberg 
+#all: CreateBinDir hazallXL.v2 hazallXL.v4 hazallXL.v5 hazFXnga13l hazgridXnga13l hazSUBXnga hazSUBXngatest hazpoint hazinterpnga avg_dist fltrate.v2 get_avalue gethead.nga getmeanrjf getmeanrjf.v2 gutenberg
+all: CreateBinDir hazallXL.v2 hazallXL.v4 hazFXnga13l hazgridXnga13l hazSUBXnga hazSUBXngatest hazpoint hazinterpnga avg_dist fltrate.v2 get_avalue gethead.nga getmeanrjf getmeanrjf.v2 gutenberg
 
 CreateBinDir:
 	mkdir -p $(OUT)
@@ -77,6 +77,8 @@ avg_dist: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/avg_dist $(UTIL)/avg_dist.f $(SRC)/iosubs.o
 fltrate.v2: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/fltrate.v2 $(UTIL)/fltrate.v2.f $(SRC)/iosubs.o
+fltrate.2013: iosubs
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/fltrate.2013 $(UTIL)/fltrate.2013.f $(SRC)/iosubs.o
 get_akprob: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/get_akprob $(UTIL)/get_akprob.f $(SRC)/iosubs.o
 get_avalue: iosubs
