@@ -82,6 +82,7 @@ c      write(6,*) ifil
 5      format(a,$)
       read(infi,900) name
       name=trim(name)
+      write(*,*)'NAME_START',name,'NAME_END'
       write(6,900)name
  900  format(a)
       inquire(file=name,exist=ok)

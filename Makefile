@@ -35,6 +35,8 @@ iosubs:
 	$(C_COMPILER)  $(CFLAGS) -c -o $(SRC)/iosubs.o $(SRC)/iosubs.c
 iosubs128:
 	$(C_COMPILER)  $(CFLAGS) -c -o $(SRC)/iosubs_128.o $(SRC)/iosubs_128.c
+iosubs_noLong:
+	$(C_COMPILER)  $(CFLAGS) -c -o $(SRC)/iosubs_noLong.o $(SRC)/iosubs_noLong.c
 
 #	hazard curve generation
 hazallXL.v2: iosubs
@@ -59,6 +61,8 @@ hazgridXnga5: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga5 $(SRC)/hazgridXnga5.f $(SRC)/iosubs.o
 hazgridXnga13l: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga13l $(SRC)/hazgridXnga13l.f $(SRC)/iosubs.o
+hazgridXnga13l_deep: iosubs
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga13l_deep $(SRC)/hazgridXnga13l_deep.f $(SRC)/iosubs.o
 
 hazSUBXnga: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazSUBXnga $(SRC)/hazSUBXnga.f $(SRC)/iosubs.o
@@ -85,6 +89,8 @@ get_avalue: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/get_avalue $(UTIL)/get_avalue.f $(SRC)/iosubs.o
 gethead.nga: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/gethead.nga $(UTIL)/gethead.nga.f $(SRC)/iosubs.o
+gethead_noLong.nga: iosubs
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/gethead_noLong.nga $(UTIL)/gethead.nga.f $(SRC)/iosubs_noLong.o
 getmeanrjf: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/getmeanrjf $(UTIL)/getmeanrjf.f $(SRC)/iosubs.o
 getmeanrjf.v2: iosubs

@@ -64,14 +64,23 @@ c--- for char M>7.5 makes Mmax=7.5 and uses floating M7.5 for characteristic
 c--- modified to accept input cmagmax instead of M7.5
 c---- Note: No longer rounds off char M to nearest 0.1 before rate calculation.
 c -- writes a message if strike changes by more than 90d on adjacent segments
+      implicit none
       character*50 namein,nameout,nameflt,nameout2,namelog,nameout3
       character*50 coord
       character*30 tname(100,3)
       character*3 blank
-      logical bogus,bear,egg,fok
+      logical bogus/.false./,bear/.false./,egg/.false./,fok/.false./
+c      logical bogus,bear,egg,fok
       real, dimension (1000):: x,y
       real bear_r/4.35e-4/,egg_r/7.1e-5/
+      real fac, dmag, dmaggr, rate, rate1, rate2, rate3, rategr, rate65
+      real dip, shift, sdep, ry, rx, rategr3, rategr2, dipo, diff, depth, delta
+      real d, d2r, ctime, crate, charmin, bot, baz, b, avglat, arate, allmo, a, a2
+      real ymag, ybar, xmu, xmo, xmagl, xmag, xlen, xln, wt, widtho, width, trate, totmo, top, sx, sy
+      real sumrate2, sum2, sum1, avgaz
       integer ic/0/
+      integer iuplift, img, itype, npts, iflt, i, icharv, ilat, ilatmn, ilatmx, imag, imax
+      integer ka, j, ineq, ncnt, latlon, nmag, nmg, ndip, igr
 c ic = number of faults where mmax is determined from area or length
       real magmax,magmin,magmax0,morate,morateo
 c add hslip at each 0.25 d increment in latitude. this is the summed horizotal slip rate.
@@ -162,7 +171,7 @@ c
       blank='   '
       sum1=0.
       sum2=0.
-      ichar=1
+      icharv=1
       igr=2
 209      write(6,50)'Enter imag 0 for fixed mag, 1 for calculated: '
       read *,img
@@ -403,7 +412,7 @@ c      nmag= (magmax-magmin)/dmaggr +1.4      XXX use above
 c----"a" is incremental a-value  for dmag interval
 c-----write stuff to output files
       width= width/1000.
-      ichar=1
+      icharv=1
       igr=2
 c--- default min depth
       depth= 0.
@@ -420,7 +429,7 @@ c from dmag/2 to shift, defined above.
       fac=sin(dip*d2r)/sin(dipo*d2r)
       morateo=morate*fac
       widtho=width*fac
-      write(3,*) ichar,itype,1,img,blank,nameflt
+      write(3,*) icharv,itype,1,img,blank,nameflt
       write(3,233) cmag,crate,wt,morateo
  233  format(f6.3,1x,f9.7,1x,f6.4,1x,e11.5)
       write(3,*) dipo, widtho, top, xlen
@@ -477,9 +486,9 @@ c precompute tables of Pex.
       fac=sin(dip*d2r)/sin(dipo*d2r)
       morateo=morate*fac
       widtho=width*fac
-      write(8,*) ichar,itype,1,img,blank,nameflt
+      write(8,*) icharv,itype,1,img,blank,nameflt
       write(8,*) cmag,crate,wt,morateo
-      write(8,*) dip, widtho, depth, xlen
+      write(8,*) dipo, widtho, depth, xlen
       write(20,202)nameflt(1:20),xlen,cmag,1./crate,dipo,wt,0.,b,0.,0.,0.
       write(8,*) npts
       do 105 i=1,npts

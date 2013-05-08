@@ -1111,6 +1111,7 @@ c--- convert from cumulative a-value to incremental a-value if necessary
          endif
  112  continue
       endif
+c-----loop through agrid to remove rates 
 c----------- new line for fixing fault strike if iflt=2
       if(iflt.eq.2.or. iflt.eq.20)then
        read(1,*) fltstr
