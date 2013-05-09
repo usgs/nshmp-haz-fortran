@@ -77,7 +77,7 @@ c      logical bogus,bear,egg,fok
       real dip, shift, sdep, ry, rx, rategr3, rategr2, dipo, diff, depth, delta
       real d, d2r, ctime, crate, charmin, bot, baz, b, avglat, arate, allmo, a, a2
       real ymag, ybar, xmu, xmo, xmagl, xmag, xlen, xln, wt, widtho, width, trate, totmo, top, sx, sy
-      real sumrate2, sum2, sum1, avgaz
+      real sumrate2, sum2, sum1, avgaz, wtin
       integer ic/0/
       integer iuplift, img, itype, npts, iflt, i, icharv, ilat, ilatmn, ilatmx, imag, imax
       integer ka, j, ineq, ncnt, latlon, nmag, nmg, ndip, igr
@@ -195,7 +195,7 @@ c      bear=index(nameflt,'Bear Riv').gt.0
 	print 900,nameflt
 c      write(6,*) "enter slip rate (mm/yr),type,dip,width,nmg,magmax0,wt"
       read(1,*,end=999,err=1999) rate,itype,xln,dip,top,bot,width,
-     + nmg,magmax0,wt      
+     + nmg,magmax0,wtin      
 c img is new, a flag to determin how mmax is computed
       cmagmax=mmax(itype)
       print *,'cmagmax now ',cmagmax
@@ -424,7 +424,7 @@ c from dmag/2 to shift, defined above.
         endif
       if((cmag.gt.6.5).and.(imax.eq.0)) then
       do ka=1,ndip
-      wt=wt_dip(ka)
+      wt=wt_dip(ka)*wtin
       dipo=dip+dip_br(ka)
       fac=sin(dip*d2r)/sin(dipo*d2r)
       morateo=morate*fac
@@ -442,7 +442,7 @@ c from dmag/2 to shift, defined above.
       endif
       if((cmag.gt.6.5).and.(imax.eq.1)) then
       do ka=1,ndip
-      wt=wt_dip(ka)
+      wt=wt_dip(ka)*wtin
       dipo=dip+dip_br(ka)
       print *,wt,dipo,dip,sin(dipo*d2r)
       fac=sin(dip*d2r)/sin(dipo*d2r)
@@ -462,7 +462,7 @@ c from dmag/2 to shift, defined above.
       endif
       if(cmag.gt.6.5) then
       do ka=1,ndip
-      wt=wt_dip(ka)
+      wt=wt_dip(ka)*wtin
       dipo=dip+dip_br(ka)
       fac=sin(dip*d2r)/sin(dipo*d2r)
       morateo=morate*fac
@@ -481,7 +481,7 @@ c precompute tables of Pex.
         endif
       if(cmag.le.6.5) then
       do ka=1,ndip
-      wt=wt_dip(ka)
+      wt=wt_dip(ka)*wtin
       dipo=dip+dip_br(ka)
       fac=sin(dip*d2r)/sin(dipo*d2r)
       morateo=morate*fac
@@ -497,7 +497,7 @@ c precompute tables of Pex.
         endif
       ctime= 1./crate
       do ka=1,ndip
-      wt=wt_dip(ka)
+      wt=wt_dip(ka)*wtin
       dipo=dip+dip_br(ka)
       fac=sin(dip*d2r)/sin(dipo*d2r)
       morateo=morate*fac
