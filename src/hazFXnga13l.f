@@ -1,4 +1,5 @@
-c--- program  hazFXnga13l.f; 04/16/2013; Use  with NGA relations, or others.
+c--- program  hazFXnga13l.f; 05/14/2013; Use  with NGA relations, or others.
+c 5/14/2013: Add anelastic attenuation in CB13, for R>80 km. Bozorgnia email May 2013.
 c 4/16/2013: bssa corrections completed. all 107 periods work
 c 4/12/2013: bssa2013 updated. 4/15: BSSA corrected some.
 c 4/12/2013: CY2013 updated. Corrected a line about HW_taper3 in AS-2013 routine (their only update). 
@@ -743,7 +744,7 @@ c adum could be sa(g) or pgv (cm/s). need flexible format
             endif
       endif
       write (6,61)date,time,name
-61      format('# *** hazFXnga13l 04/09/2013 log file. Pgm run on ',a,' at ',a,/,
+61      format('# *** hazFXnga13l 05/14/2013 log file. Pgm run on ',a,' at ',a,/,
      +'# *** Input control file: ',a)
       if(poly)write(6,*)'hazFXnga13l: Polygon file &npts: ',polygon,npmax
 c Below bypasses are based on file name. Bypass wont work if file names change
@@ -8823,7 +8824,7 @@ c
        common/fix_sigma/fix_sigma,sigma_fx
       logical fix_sigma,ss,rev,normal,obl
         Period  = (/0.01,0.02,0.03,0.04,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,0.5,0.75,1.,1.5,2.,3.,4.,5.,7.5,10./)
-c coeffs. from dec 2012 powerpoint progress report. Two sets which to use depends on Mw (xmag)
+c coeffs. from apr 10 2013 email. Two sets which to use depends on Mw (xmag)
       if(xmag.le.6.75)then
 	a1=(/7.0887,7.1157,7.2087,7.3287,6.2638,5.9051,7.5791,8.0190,9.2812,9.5804,9.8912,9.5342,
      +9.2142,8.3517,7.0453,5.1307,3.3610,0.1784,-2.4301,-4.3570,-7.8275,-9.2857/)
@@ -8965,6 +8966,7 @@ c Example call from above:
       SUBROUTINE CB13_NGA_SPEC  (ip,iper, Mw,Rrup,Rx,Rjb, Frv,Fnm,Ztor,Hhyp,W,Z25,Vs30,Dip,SJ,gnd,sigmaf)
 c     +(Mw,Rrup,Rjb,Rx, Frv,Fnm,Ztor,Hhyp,W,Dip,Vs30,Z25,SJ, 
 c     &Per,Y,Phi,Tau,Sigmatot,icase)
+c Modified May 13 2013 to include an anelastic atten for R>80. Bozorgnia email of May 2013
 c call this subroutine after calling CB13_NGA_SPEC_IN
 c mods by  Harmsen Feb 25 2013. They added PGV index 23 this time.
 c call this with PGA as first period to run for a given source. This is needed to get the A1100 term
@@ -8997,18 +8999,32 @@ c       common/cb13p/Per
        real, dimension(8) :: fac_sde
       real, dimension(nper):: Phi,Tau,Per,c0,c1,c2low,c2,c3,c4,c5,c6,c7,c8,c9,c10,c10j,c10jlow,c11,
      + c11j,c12,c13low,c13hi,c14,c15,k1,k2,k3,a2,h1,h2,h3,h4,h5,h6,phi_lny,phi_low, phi_hi,
-     + tau_lny,tau_lnyB,tau_low,tau_hi,phi_lnAF,rho
+     + tau_lny,tau_lnyB,tau_low,tau_hi,phi_lnAF,rho,c15ca,c15j,c15_China
        real alpha,Mw,A1100,csoil,nsoil,Sigmatot,sigma_fx,phi_lnyB
        logical l_gnd_ep(8),fix_sigma,sdi
 c If sdi is true, this subroutine will return inelastic spectral displ. (cm) instead
 c of pSA. Tothong&Cornell approach
        real gnd_ep(3,3,8)
        save A1100
+c T=.01,.02,.03,.05,.075,.1,.15,.2,.25,.3,0.4,0.5,.75,1,1.5,2,3,4,5,7.5,10,0,-1
+	c15ca=(/-0.0055,-0.0055,-0.0057,-0.0063,-0.007,-0.0073,-0.0069,-0.006,-0.0055,-0.0049,-0.0037,-0.0027,-0.0016,-0.0006,
+     + 0.0,0.0,0.0,0.0,0.0,0.0,0.0,-0.0055,-0.0017/)
+	c15j=(/-0.009,-0.009,-0.0091,-0.01,-0.0107,-0.0107,-0.0099,-0.0091,-0.0088,-0.0084,-0.0071,-0.0061,-0.0048,-0.0036,
+     + -0.0019,-0.0005,0.0,0.0,0.0,0.0,0.0,-0.009,-0.0023/)
+	c15_China=(/-0.0019,-0.0019,-0.002,-0.0023,-0.0031,00.0031,-0.0027,-0.0019,-0.0019,-0.0018,-0.0009,-0.0002,0.0,
+     +  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-0.0019,0.0/)
 c-----Soil model constants (not using the constant vector from Bozorgnia code)
     
        nsoil = 1.18
       csoil = 1.88
         if(iper.eq.1)iper=22    
+	if(SJ.lt.1.0)then
+	c15=c15ca	!use california Qmodel when SJ<1
+	elseif(SJ.lt.2.)then
+	c15=c15j
+	else
+	c15=c15_China
+	endif
 
 C*****Magnitude term
       IF (Mw .LE. 4.5) THEN
@@ -9128,7 +9144,11 @@ C*****Shallow sediment depth and 3-D basin term
       ENDIF
 
 C*****Anelastic attenuatin term
-      F_atn=c15(iper)*Rrup
+      if(Rrup.gt.80.)then
+      F_atn=c15(iper)*(Rrup-80.)
+      else
+      F_atn=0.0
+      endif
 
 C*****For the first period (loop), computer A1100 *****************************
       IF (iperflag.eq.1)THEN
@@ -9160,10 +9180,13 @@ c*****Ground motion parameter, logged.
 
 c       gnd(1) = EXP(F_mag + F_dis + F_flt + F_HW + 
 c     &              F_site + F_sed + F_Hhyp + F_Dip + F_atn)
-       gnd(1) = F_mag + F_dis + F_flt + F_HW + 
-     &              F_site + F_sed + F_Hhyp + F_Dip + F_atn
-C.....
-
+       gnd(1) = F_mag + F_dis + F_flt + F_HW + F_sed + F_Hhyp + F_Dip +F_atn
+C.....check that S.P. SA>PGA. This is done before adding siteamp because
+c the only PGA available at this moment is PGA(1100 m/s rock)
+      if(Per(iper).gt.0.0 .and.Per(iper).le. 0.25)then
+      gnd(1) = max(gnd(1),alog(A1100))
+      endif
+	gnd(1)=gnd(1)+F_site
 C.....CALCULATE ALEATORY UNCERTAINTY
 C     Note: This part has been changed
 

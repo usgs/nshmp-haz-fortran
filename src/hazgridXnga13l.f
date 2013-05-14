@@ -1,4 +1,14 @@
-c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  04.16. 2013. Long header version.
+c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  05/13/ 2013. Long header version.
+c 5/13/2013: Add anelastic attenuation in CB13, for R>80 km. Bozorgnia email May 2013.
+c 5/10/2013: Further update hypocenter in CB13. USE W&C M(A) to estimate flt width
+c
+c 5/09/2013: Increase the R index to 310 to allow di=1 and Rmax of 300 km. Steering committee
+c	recommendation is to step up Rmax to 300 km to capture afault influence in Arizona.
+c	Put the hypocenter 1/2 way downdip in CB13 virtual faults. Was 3/4 down previously.
+c
+c 5/08/2013: Deep seismicity can be treated with a staircase distribution of depths
+c            These depths and the longitudes where they change are input in the dtor line.
+c 		There can be up to three deep seismicity levels.
 c 4/16/2013: BSSA13 running for all 107 periods incl PGV (index 1). 
 c 4/12/2013: CY2013 updated. Corrected a line about HW_taper3 in AS-2013 routine (their only update). 
 c 4/11/2013: Update Idriss NGA-W GMPE coeffs to latest available (emailed 4/10)
@@ -360,7 +370,7 @@ c gridded sources?
       common/dipinf_90/dipang,cosDELTA,cdipsq,cyhwfac,cbhwfac
       common/dipinf_50/dipang2,cosDELTA2,cdip2sq,cyhwfac2,cbhwfac2
       common/geotec/vs30,dbasin
-      common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
+      common/depth_rup/ntor,dtor,wtor,wtor65
       common/gail3/freq
 c rjbmean = mean rjb distance (km) from random oriented src
 c Sizeof of rjbmean will work for Rmax of 1000 km. Mmin 6.05 Mmax 8.55 (feb 1 2013)
@@ -371,9 +381,10 @@ c Sizeof of rjbmean will work for Rmax of 1000 km. Mmin 6.05 Mmax 8.55 (feb 1 20
 c add SDI-related common block sdi feb 22 2013
       common/sdi/sdi,dy_sdi,fac_sde
       real, dimension(8) :: fac_sde
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10)
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10)
       real ylev(20,8)
       integer nlev(8),icode(8,10)
+      real, dimension(3):: dtor,wtor,wtor65,w_edge
         real, dimension(0:9):: dipbck
       real, dimension (3,3,8) :: gnd_ep
       real, dimension(16,40,8,3,3) :: hbin,ebar,rbar,mbar
@@ -384,20 +395,20 @@ c (first dimension) in zones 1 to 10 (2nd dimension)
 c epsilon_0 pre-calcs. will occur if and only if deagg = .true.
 c separate arrays are kept for each atten. model. epsilon band contribs may be computed
 c later, during the summing-up stage.
-      common/e0_wus/e0_wus(260,31,8,3,3)
+      common/e0_wus/e0_wus(310,31,8,3,3)
       common/fix_sigma/fix_sigma,SIGMA_FX
-      LOGICAL fix_sigma,sdi/.false./
+      LOGICAL fix_sigma,sdi/.false./,pnw_deep/.false./
 c 
 c If multiple depths (3 or less) are run, the below arrays will work. However, typical
 c case for WUS intrslab is just one depth at 50 km. May need to remove this dim.
 c to reduce memory demand.
-      common/e0_sub/e0_sub(260,31,8,3)
+      common/e0_sub/e0_sub(310,31,8,3)
 c 
 c 3 intraplate models e0s will be combined in this array as a fcn of distance, M, period,
 c ad depth of source-zone top.
 c
 c e0_ceus not saving a depth of rupture dim, not sens. to this. last dim is ip (period index)
-       common/e0_ceus/e0_ceus(260,31,8)
+       common/e0_ceus/e0_ceus(310,31,8)
         common/ceus_sig/lceus_sigma,ceus_sigma
       real, dimension (107):: perbssa13
       real, dimension(40,nzonex):: mwmax,wtmw,wt_zone
@@ -681,7 +692,7 @@ c adum could be sa(g) or pgv (cm/s). need flexi format
       endif
       call date_and_time(date,time,zone,ival)
       write (6,61)date,time,zone,namein
-61      format('hazgridXnga13l (4/11/2013) log file. Pgm run on ',a,' at ',a,1x,a,/,
+61      format('hazgridXnga13l (5/13/2013) log file. Pgm run on ',a,' at ',a,1x,a,/,
      + '# Control file:',a)
         call getarg(0,progname)
         ind=index(progname,' ')
@@ -865,11 +876,18 @@ c check reasonableness of distribution
       wtor7=wtor7+wtor65(k)
       tormin=min(tormin,dtor(k))
       enddo
-      if (abs(wtor6-1.0).gt.0.001)then
+      if (abs(wtor6-1.0).gt.0.001.and.tormin.lt.32.)then
       write(6,*)'sum of dtor weights not equal to 1. Please check input'
       stop 'and retry with improved weights'
+      elseif(abs(wtor6-float(ntor)).le.0.001.and.tormin.ge.32.)then
+      write(6,*)'For deep seismicity all focal-depth weights are 1'
+      pnw_deep = .true.		!special study if tormin>32 and 3 depths
+      w_edge=wtor65	!the locations of steps are input in wtor65 in this special case
+      elseif(tormin.ge.32.)then
+      write(6,*)'For deep seismicity all focal-depth weights should be 1'      
+      stop'Reset these to 1.0 and retry'
       endif
-      if (abs(wtor7-1.0).gt.0.001)then
+      if (abs(wtor7-1.0).gt.0.001.and.tormin.lt.32.)then
       write(6,*)'sum of M6.5+ dtor Wt not equal to 1. Please check input'
       stop 'and retry with improved weights'
       endif
@@ -1111,7 +1129,6 @@ c--- convert from cumulative a-value to incremental a-value if necessary
          endif
  112  continue
       endif
-c-----loop through agrid to remove rates 
 c----------- new line for fixing fault strike if iflt=2
       if(iflt.eq.2.or. iflt.eq.20)then
        read(1,*) fltstr
@@ -1692,38 +1709,38 @@ c Put soil formulation in separate subroutine.
        elseif((ipiaa.eq.12..or.ipiaa.eq.16).and.okabs)then
        if(vs30.lt.190.)then
        ir = 4
-       write(6,*)'AB PNW DE or E-soil called, seism. at ',dtor(1),' km'
+       write(6,*)'AB PNW DE or E-soil called, seism. at ',dtor(1:ntor),' km'
        elseif (vs30.lt.360.)then
        ir = 3
-       write(6,*)'AB PNW  D-soil called, seism. at ',dtor(1),' km'
+       write(6,*)'AB PNW  D-soil called, seism. at ',dtor(1:ntor),' km'
        elseif(vs30.lt.660.)then 
        ir = 2
-       write(6,*)'AB PNW  C-soil called, seism. at ',dtor(1),' km'
+       write(6,*)'AB PNW  C-soil called, seism. at ',dtor(1:ntor),' km'
       elseif(vs30.le.780.)then
       ir=1
-       write(6,*)'AB PNW BC-rock called, seism. at ',dtor(1),' km'
+       write(6,*)'AB PNW BC-rock called, seism. at ',dtor(1:ntor),' km'
       else
       ir=0
-       write(6,*)'AB PNW benioff B rock called, seism. at ',dtor(1),' km'
+       write(6,*)'AB PNW benioff B rock called, seism. at ',dtor(1:ntor),' km'
       endif
        call getABsub(ip,jabs,ir,slab,ia,ndist,di,nmag,magmin,dmag,vs30)
 c  getABsub for world data set, gets new index, 17 (subd) or 18 (slab). 
        elseif(ipiaa.eq.17.or.ipiaa.eq.18.and.okabs)then
       if(vs30.gt.780.)then
       ir = 5
-       write(6,*)'AB World  B-rock called, seism. at ',dtor(1),' km'
+       write(6,*)'AB World  B-rock called, seism. at ',dtor(1:ntor),' km'
       elseif(vs30.gt.660.)then
-       write(6,*)'AB World  BC rock called, seism. at ',dtor(1),' km'
+       write(6,*)'AB World  BC rock called, seism. at ',dtor(1:ntor),' km'
       ir  = 6
       elseif(vs30.gt.360.)then
         ir = 7
-       write(6,*)'AB World  C-soil called, seism. at ',dtor(1),' km'
+       write(6,*)'AB World  C-soil called, seism. at ',dtor(1:ntor),' km'
        elseif(vs30.gt.190.)then
        ir=8
-       write(6,*)'AB World  D-soil called, seism. at ',dtor(1),' km'
+       write(6,*)'AB World  D-soil called, seism. at ',dtor(1:ntor),' km'
        else
        ir=9
-       write(6,*)'AB World  DE or E-soil called, seism. at ',dtor(1),' km'
+       write(6,*)'AB World  DE or E-soil called, seism. at ',dtor(1:ntor),' km'
        endif
        call getABsub(ip,jabs,ir,slab,ia,ndist,di,nmag,magmin,dmag,vs30)
       elseif(ipia.eq.13.and.okgeo)then
@@ -1737,7 +1754,7 @@ c those transition coeffs? not linear interpolations that is for certain.
       endif
 c use soil coeffs as starting case if vs30<520 m/s. Modify siteamp from there.
       call getGeom(ip,ir,ia,slab,ndist,di,nmag,magmin,dmag,vs30)
-       write(6,*)'Geomatrix intraslab relation for rock, seism. at ',dtor(1),' km'
+       write(6,*)'Geomatrix intraslab relation for rock, seism. at ',dtor(1:ntor),' km'
       elseif(ipia.eq.14.and.okgeo)then
       slab=.false.
       if(vs30.ge.520.)then
@@ -1749,7 +1766,7 @@ c those transition coeffs? not linear interpolations that is for certain.
       endif
 c use soil coeffs as starting case if vs30<520 m/s. Modify siteamp from there.
       call getGeom(ip,ir,ia,slab,ndist,di,nmag,magmin,dmag,vs30)
-       write(6,*)'Geomatrix interplate relation for rock, seism. at ',dtor(1),' km'
+       write(6,*)'Geomatrix interplate relation for rock, seism. at ',dtor(1:ntor),' km'
       elseif(ipia.eq.-13.and.okgeo)then
        slab=.true.
       if(vs30.ge.520.)then
@@ -1758,17 +1775,17 @@ c use soil coeffs as starting case if vs30<520 m/s. Modify siteamp from there.
       ir=2
       endif
       call getGeom(ip,ir,ia,slab,ndist,di,nmag,magmin,dmag,vs30)
-       write(6,*)'Geomatrix intraslab relation for soil, seism. at ',dtor(1),' km'
+       write(6,*)'Geomatrix intraslab relation for soil, seism. at ',dtor(1:ntor),' km'
       elseif(ipia.eq.27.and.okzhao)then
       slab=.true.
 c the 1 below is a slab flag: inslab source if this is 1.
       call zhao(ip,jzhao,1,ia,ndist,di,nmag,magmin,dmag)
-       write(6,*)'Zhao intraslab relation for rock, seism. at ',dtor(1),' km'
+       write(6,*)'Zhao intraslab relation for rock, seism. at ',dtor(1:ntor),' km'
       elseif(ipia.eq.28.and.okzhao)then
       slab=.false.
 c the 0 below is a subduction flag: 
       call zhao(ip,jzhao,0,ia,ndist,di,nmag,magmin,dmag)
-       write(6,*)'Zhao interface relation for rock, seism. at ',dtor(1),' km'
+       write(6,*)'Zhao interface relation for rock, seism. at ',dtor(1:ntor),' km'
       elseif(ipia.eq.41.and.oktogo)then
        call getMota(ip,iq,ia,ndist,di,nmag,magmin,dmag,sigmanf,distnf)
        write(6,*)'Mota&Atkinson PRVI atten-relation table set up.'
@@ -2125,6 +2142,12 @@ c-- bin rate by distance and magnitude (asum)
       isy= (j-1)/nsx
       isx= j-1-isy*nsx
       sx= xsmin+float(isx)*dsx
+      if(pnw_deep)then
+      kksrc=1
+      dowhile(sx.gt.w_edge(kksrc).and.kksrc.lt.ntor)
+      kksrc=kksrc+1
+      enddo
+      endif	!special index for pacnw deep 5/02/2013. Needs to be generalized.
       sy= ysmax-float(isy)*dsy
       dlen= 1.
       xdiff= abs(sx-rx)
@@ -2163,6 +2186,10 @@ c
 c point source calc based on moment mag being < 6.
       if((xmag.lt.6.0).or..not.finite) then
 c point-source summation
+	if(pnw_deep)then
+         asum(m,idist,kksrc)= asum(m,idist,kksrc) + arate(j,m)*wt1
+         asum(m,ifrac,kksrc)= asum(m,ifrac,kksrc) + arate(j,m)*wt2
+	else
       do kk=1,ntor
       if(xmag.lt.6.5)then
          asum(m,idist,kk)= asum(m,idist,kk) + arate(j,m)*wtor(kk)*wt_mask(m)*wt1
@@ -2172,6 +2199,7 @@ c point-source summation
          asum(m,ifrac,kk)= asum(m,ifrac,kk) + arate(j,m)*wtor65(kk)*wt_mask(m)*wt2
          endif
          enddo      !top of rupture kk index
+         endif	!pnw_deep?
       else      !finite fault follows
       if(iflt.eq.1.or.iflt.gt.2.and.iflt.lt.15)then
 c new apr 30 2008: use 2D rjbmean array to speed up runs. 8.55 is moment-mag
@@ -2214,6 +2242,11 @@ c less or more depending on aspect ratio, dip, other fault geom details.
       wt1=1.-wt2
       endif
 c Rjb is distance. Different weights to different depths & M applied here
+	if(pnw_deep)then
+c only one depth per source location if deep.
+         asum(m,idist,kksrc)= asum(m,idist,kksrc) + arate(j,m)*wt1
+         asum(m,ifrac,kksrc)= asum(m,ifrac,kksrc) + arate(j,m)*wt2
+         else
          do kk=1,ntor
          if(xmag.lt.6.5)then
          asum(m,idist,kk)= asum(m,idist,kk) + arate(j,m)*wtor(kk)*wt_mask(m)*wt1
@@ -2222,7 +2255,8 @@ c Rjb is distance. Different weights to different depths & M applied here
          asum(m,idist,kk)= asum(m,idist,kk) + arate(j,m)*wtor65(kk)*wt_mask(m)*wt1
          asum(m,ifrac,kk)= asum(m,ifrac,kk) + arate(j,m)*wtor65(kk)*wt_mask(m)*wt2
          endif
-         enddo
+         enddo		!kk sum
+         endif		!pnw_deep?
          endif      !close enough to add rate
          endif      !finite fault
 c 111  continue
@@ -2555,7 +2589,7 @@ c site amp: for now use that of BJF97. THis should be reviewed July26 2006.
       common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
       common/geotec/vs30,d	!assume vs30 is fixed for all sites. "Soil map" "rock map" etc
       common / atten / pr, xlev, nlev, icode, wt, wtdist
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
         real, dimension(np) :: b1,b2,b3,b4,b5,h,sigma,bv,va
 c array constructors OCT 2006. No coeffs corresponding to PGV, perx(8)
@@ -2638,8 +2672,8 @@ c clamp on upper-bound ground accel is applied here. As in original hazgridX cod
            real   ptail(6) 
       common / atten / pr, xlev, nlev, icode, wt,wtdist
 c e0_ceus not saving a depth of rupture dim, not sens. to this
-      common/e0_ceus/e0_ceus(260,31,8)
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      common/e0_ceus/e0_ceus(310,31,8)
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
       
 c array constructors. add 0.04 and 0.4 s coeffs july 16 2008. From NRC files
@@ -2786,7 +2820,7 @@ c iq is index of atten model period corresponding to ip
       common/geotec/vs30,dbasin
       common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
             common / atten / pr, xlev, nlev, icode, wt,wtdist
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
       real sc1(7),sc2/1./,sc3(7),sc4(7),sc5(7),sc6(7),perx(7)
       real sd1(7),sd2/1.1/,sd3(7),sd4(7),sd5(7),sd6(7),sd7(7)	
@@ -2894,7 +2928,7 @@ c iq is index of atten model period corresponding to ip
       common/geotec/vs30,dbasin
       common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
             common / atten / pr, xlev, nlev, icode, wt,wtdist
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
       real ssigma1(7),ssigma2(7),ssigmacoef(7),smagsig(7)
 c this routine is for soil. according to Cao hazFXv3-s.f. With minor changes
@@ -3009,8 +3043,8 @@ c
       common/deagg/deagg
 c e0_ceus not saving a depth of rupture dim, although could be sens. to this.
 c FOR CEUS runs 2008, only one depth of rupture is considered.
-      common/e0_ceus/e0_ceus(260,31,8)
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      common/e0_ceus/e0_ceus(310,31,8)
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
       real bdepth/5./,bsigma(9),clamp(9),xlogfac(7)/7*0./
 c bdepth is no longer used. use dtor instead.
@@ -3182,7 +3216,7 @@ c these are applied in main, to rate matrices.
 c Do not apply wtor here. We do apply att model epist. weight wt() here, however.
       common / atten / pr, xlev, nlev, icode, wt, wtdist
       common/deagg/deagg
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
            real perx(8)	!possible period set. 
 c perx(8) corresponds to PGV which is not set up for Somerville. Could check
@@ -3293,7 +3327,7 @@ c do not apply wtor here! added 3-s coeffs aug 2006. removed 3-s, oct2006.
       real perx(8),sig,sigp,sigmasq
       common / atten / pr, xlev, nlev, icode, wt, wtdist
       common/deagg/deagg
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
         perx= (/0.,0.2,1.0,0.1,0.3,0.5,2.0,-1./)
       as1= (/1.64,2.406,0.828,2.16,2.114,1.615,-0.15/)
@@ -3395,7 +3429,7 @@ c wtor = weights to top of rupture. these are applied in main, to rate matrices.
 c Do not apply wtor here.
       common / atten / pr, xlev, nlev, icode, wt, wtdist
       common/deagg/deagg
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
       real c1(7),c2(7),c3(7),c4(7),c5(7),c6(7),c7(7),c8(7),c9(7)
       real c10(7), c11(7), csite(7), c15(7),c1s(7)
@@ -3523,9 +3557,9 @@ c you are uncertain about what that depth is.
 c Also, dtor should not have a period dependence. It can have a magnitude dependence.
        common/prob/p(25005),plim,dp2   !table of complementary normal probab
       common / atten / pr, xlev, nlev, icode, wt, wtdist
-      common/e0_sub/e0_sub(260,31,8,3)
+      common/e0_sub/e0_sub(310,31,8,3)
       common/deagg/deagg
-      dimension pr(260,38,20,8,3,3),xlev(20,8),nlev(8),icode(8,10),
+      dimension pr(310,38,20,8,3,3),xlev(20,8),nlev(8),icode(8,10),
      + wt(8,10,2),wtdist(8,10) 
       real gc0/0.2418/,gcs0/-0.6687/,ci/0.3846/,cis/0.3643/
       real gch/0.00607/,gchs/0.00648/,gmr/1.414/,gms/1.438/
@@ -3726,12 +3760,12 @@ c These are applied in main, as factors to rate matrices.
 c do not apply wtor here. dtor replaces "depth" of 2002 code. Dtor allows a distribution if 
 c you are uncertain about what that depth is.
        common/prob/p(25005),plim,dp2   !table of complementary normal probab.
-      common/e0_sub/e0_sub(260,31,8,3)
+      common/e0_sub/e0_sub(310,31,8,3)
 c last dim of e0_sub is ia model, 
       common / atten / pr, xlev, nlev, icode, wt, wtdist
       common/deagg/deagg
       logical slab, sdi
-      dimension pr(260,38,20,8,3,3),xlev(20,8),nlev(8),icode(8,10),
+      dimension pr(310,38,20,8,3,3),xlev(20,8),nlev(8),icode(8,10),
      + wt(8,10,2),wtdist(8,10)
       real, dimension(np) :: c1,c1w,c2,c3,c4,c5,c6,c7,sig,perx
       real, dimension(np+1) :: s1,s2,s3,s4,s5,s6,s7,pcor,ssig,peri
@@ -3942,9 +3976,9 @@ c ir=2 A or hard rock. Only difference is in constant term (check this)
       common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
 c wtor = weights applied to top of CEUS seismicity (km). 
       common / atten / pr, xlev, nlev, icode, wt, wtdist
-       common/e0_ceus/e0_ceus(260,31,8)
+       common/e0_ceus/e0_ceus(310,31,8)
       common/deagg/deagg
-      dimension pr(260,38,20,8,3,3),xlev(20,8),nlev(8),icode(8,10),
+      dimension pr(310,38,20,8,3,3),xlev(20,8),nlev(8),icode(8,10),
      + wt(8,10,2),wtdist(8,10) 
       real,dimension(np):: c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,
      1 clamp,c1h,c11,c12,c13,perx
@@ -4077,7 +4111,7 @@ c also prepared for 7 periods. based on Frankel's getBJF97
       common/mech/wtss,wtrev,wtnormal
       logical fix_sigma
       common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
-      dimension pr(260,38,20,8,3,3),xlev(20,8),nlev(8),icode(8,10),
+      dimension pr(310,38,20,8,3,3),xlev(20,8),nlev(8),icode(8,10),
      + wt(8,10,2),wtdist(8,10) 
         real, dimension(np):: b1ss,b2,b3,b4,b5,hsq,sigma,
      + b1rv,b1all,bv,va
@@ -4167,7 +4201,7 @@ c
 c wtor = weights applied to top of PRVI seismicity (km). 
       common / atten / pr, xlev, nlev, icode, wt, wtdist
       common/deagg/deagg
-      dimension pr(260,38,20,8,3,3),xlev(20,8),nlev(8),icode(8,10),
+      dimension pr(310,38,20,8,3,3),xlev(20,8),nlev(8),icode(8,10),
      + wt(8,10,2),wtdist(8,10) 
       logical deagg
       real, dimension(np):: c1,c2,c3,c4,sigma,bv,va
@@ -4253,7 +4287,7 @@ c  How often is it "on?"  SH.
       parameter (sqrt2=1.414213562)   
       real gnd_ep(3,3,8),mcut(2),dcut(2),gndx
       logical e_wind(8)
-      dimension pr(260,38,20,8,3,3),xlev(20,8),nlev(8),icode(8,10),
+      dimension pr(310,38,20,8,3,3),xlev(20,8),nlev(8),icode(8,10),
      + wt(8,10,2),wtdist(8,10) 
       real dp2
       real, dimension(3) :: gnd
@@ -4445,7 +4479,7 @@ c subscripting because only pga is available.
       common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
       common / atten / pr, xlev, nlev, icode, wt, wtdist
       common/deagg/deagg
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
 
       real ylev(20,8) 
@@ -4559,11 +4593,11 @@ c plfac = ln(pga_low/0.1)      This never changes so shouldnt be calculated.
       common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
       common / atten / pr, xlev, nlev, icode, wt, wtdist
       common/deagg/deagg
-      common/e0_wus/e0_wus(260,31,8,3,3)
+      common/e0_wus/e0_wus(310,31,8,3,3)
       common/epistemic/nfi,e_wind,gnd_ep,mcut,dcut
       real gnd_ep(3,3,8),mcut(2),dcut(2),gndout(3)
       logical e_wind(8),fix_sigma
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
       real ptail(6),prlr
            real magmin,dmag,sigmanf,distnf,gndx,dy
@@ -4895,12 +4929,12 @@ c....................................................................
 c rockcoef = alog(1100/k1(1)), expm75=exp(-0.75)         
       common/epistemic/nfi,e_wind,gnd_ep,mcut,dcut
       real gnd_ep(3,3,8),mcut(2),dcut(2),gndout(3)
-      real, dimension (0:220,31) :: avghwcb      !new dec 12
+      real, dimension (0:310,31) :: avghwcb      !new dec 12
       logical fix_sigma,deagg,e_wind(8),sdi
        common/sdi/sdi,dy_sdi,fac_sde
        real, dimension(8) :: fac_sde
       common/fix_sigma/fix_sigma,sigma_fx	!add option to fix sigma_aleatory.
-      common/e0_wus/e0_wus(260,31,8,3,3)
+      common/e0_wus/e0_wus(310,31,8,3,3)
       common/prob/p(25005),plim,dp2	!table of complementary normal probab.
       common/mech/wtss,wtrev,wtnormal
       common/dipinf_90/dipang,cosDELTA,cdipsq,cyhwfac,cbhwfac
@@ -4910,12 +4944,12 @@ c rockcoef = alog(1100/k1(1)), expm75=exp(-0.75)
        common / atten / pr, xlev, nlev, icode, wt, wtdist
       common/deagg/deagg
       real sigsqu,spgasq/0.228484/,sln_Ab, sln_yb,sigma_fx
-      real pgar(260,31),magmin,dmag,f1,f2,f3,f4,f5,f6,sigt,alpha,pga_rk
+      real pgar(310,31),magmin,dmag,f1,f2,f3,f4,f5,f6,sigt,alpha,pga_rk
       save pgar
       real,dimension(np):: Pd,c0,c1,c2,c3,c4,c5,c6,c7,c8,
      1 c9,c10,c11,c12,k1,k2,k3,
      2 rhos,slny,tlny,slnAF,sC,sig_t
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
 c coefficients from CB06_NGA_MODEL.txt. 24 periods available, -1 is PGV. 0.00 is PGA.
 c SHarmsen Nov 15 2006. Pd=spectral period vector. The c* coeffs do not change in Sept 1 rev.
@@ -5179,10 +5213,10 @@ c is obtained by calling avghw_cy subroutine. Currently, virtual faults
 c have dip of 50 d and centers at depth 7.5 km. strike is random with uniform distribution
 c effect is multiplied by the fraction of dip slip sources (wtrev+wtnormal)
 c
-      real, dimension(0:220,31):: avghwcy
+      real, dimension(0:310,31):: avghwcy
       real gnd_ep(3,3,8),mcut(2),dcut(2),gndout(3)
       logical fix_sigma,deagg,e_wind(8),sdi
-      common/e0_wus/e0_wus(260,31,8,3,3)
+      common/e0_wus/e0_wus(310,31,8,3,3)
       common/prob/p(25005),plim,dp2
       common/mech/wtss,wtrev,wtnormal
       common/dipinf_90/dipang,cosDELTA,cdipsq,cyhwfac,cbhwfac
@@ -5194,7 +5228,7 @@ c is vaguely defined. But it may occur with same probability as (wtrev+wtnormal)
       common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
       common/atten/ pr, xlev, nlev, icode, wt, wtdist
       common/deagg/deagg
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
 c Predictor variables
         real PERIOD, M, Width, R_rup, R_JB, R_x, V_S30, Z1, 
@@ -5853,8 +5887,8 @@ c  log10(70),log10(140),ln(v1/v2),ln(v2/vref),resp
       common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
        common / atten / pr, xlev, nlev, icode, wt, wtdist
       common/deagg/deagg
-      common/e0_ceus/e0_ceus(260,31,8)
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      common/e0_ceus/e0_ceus(310,31,8)
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
       logical deagg,et,sp      !sp = true for a short-period gm limit in ceus. 
       real f0,f1,f2,R,Mw,bnl,S,magmin,dmag,di,period,test,temp
@@ -6102,8 +6136,8 @@ c ditto for 0.04s. Use cubic splines to interpolate (pgm intTP05.f)
       common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
        common / atten / pr, xlev, nlev, icode, wt, wtdist
       common/deagg/deagg
-      common/e0_ceus/e0_ceus(260,31,8)
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      common/e0_ceus/e0_ceus(310,31,8)
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
       real f1,f2,f3,R,Rrup,Mw,cor,period,magmin,dmag
       real c5sq,corsq,H1sq
@@ -6338,8 +6372,8 @@ c pacificengineering.com. looks different from the 2002 CEUS model.
       common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
        common / atten / pr, xlev, nlev, icode, wt, wtdist
       common/deagg/deagg
-       common/e0_ceus/e0_ceus(260,31,8)
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+       common/e0_ceus/e0_ceus(310,31,8)
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
 c m-index of 30 allows 4.5 to 7.5 because of dM/2 shift (4.55 to 7.45 by 0.1)
          real magmin,dmag,di,fac,fac2,gnd,gnd0,period,test0,test
@@ -6468,7 +6502,7 @@ c Steve Harmsen dec 18 2007. Add pgv coeffs Jan 2009.
       parameter (d2r=0.0174533,pi=3.14159265,np=106)
       real, dimension (np):: prd,c9,c9a
       real amag,H,Hsq,M,x(2),y(2),magmin,dmag,rjbbar
-      real, dimension(0:220,31):: avghwcy
+      real, dimension(0:310,31):: avghwcy
       integer i,ip
 c prd array  used below. Assume SA 0.01 s is PGA.
        prd= (/0.010,0.020,0.022,0.025,0.029,0.030,0.032,0.035,0.036,0.040,0.042,0.044,0.045,0.046,
@@ -6564,8 +6598,8 @@ c      write(2,6)M,z1,prd(ip)
      +' period(s)=',f6.2)
 c           stop
 c z1 (km) is depth of top of rupture
-      do ista=0,200
-c sample receivers at fault center and go West 200 km in 1-km increments
+      do ista=0,300
+c sample receivers at fault center and go West 300 km in 1-km increments
       theta = 0.0
       rx=x0-float(ista) *xkm2d
       ry=y0
@@ -6652,14 +6686,14 @@ c        area =  10**((M-4.07)/0.98)
 c      set z0=7.5 km deep
 c rotate fault through pi radians and find coords of top of fault
 c use aspect ratio of 1.5 if possible. top must be at least 0.5 km deep
-c output is <dist, effect> where dist =0 to 200 km from center at -100,40.
+c output is <dist, effect> where dist =0 to 300 km from center at -100,40.
 c effect is lnY effect also in 3rd column is the Y-effect (g).
 c the effect is applied at the average rjb distance. avg rjb is the
 c fundamental distance at many places in this program
       parameter (d2r=0.0174533,pi=3.14159265,sqrt2=1.414213562,np=24)
       real,dimension (np) :: c9,Pd
       real amag,M,magmin,dmag,x(2),y(2)
-      real, dimension(0:220,31) :: avghwcb
+      real, dimension(0:310,31) :: avghwcb
        c9=(/ 0.490, 0.490, 0.490, 0.490, 0.490, 0.490, 0.490, 0.490, 0.490, 0.490, 0.490, 0.490, 0.490,
      + 0.490, 0.490, 0.371, 0.154, 0.000, 0.000, 0.000, 0.000, 0.490, 0.358, 0.000/)
       Pd=(/0.010,0.020,0.030,0.050,0.075,0.100,0.150,0.200,0.250,0.300,0.400,0.500,0.750,
@@ -6711,8 +6745,8 @@ c6      format(/,'#stadist Camp_f4 exp() Rrbar(km) for M ',f6.2,'; top ',f4.2,' 
 c     +' period(s)=',f6.2)
 c z1 (km) is depth of top of rupture
       iper=ip
-      do ista=0,200
-c sample receivers at fault center and go W 200 km in 1-km increments
+      do ista=0,300
+c sample receivers at fault center and go W 300 km in 1-km increments
       theta = 0.0
       rx=x0-float(ista) *xkm2d
       ry=y0
@@ -6999,9 +7033,9 @@ c
       common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
       common/atten/ pr, xlev, nlev, icode, wt, wtdist
       common/deagg/deagg
-      common/e0_sub/e0_sub(260,31,8,3)
+      common/e0_sub/e0_sub(310,31,8,3)
       common/prob/p(25005),plim,dp2     !table of complementary normal probab.
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
       real, dimension (nper):: a,b,c,d,e,si,c1,c2,c3,qi,wi,
      + ps,qs,ws,sr,ss,ssl,sig,taui,taus,per
@@ -7164,7 +7198,7 @@ c conversion factors gfac cm/s/s to g, sfac log10 to ln.
       common/geotec/V_S30,dbasin
       common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
       common/atten/ pr, xlev, nlev, icode, wt, wtdist
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
       real, dimension (37) :: T,a1,b1,c1,d1,e1,pp,q
         real sigma,sigmaf,vsfac,gnd,weight
@@ -7437,8 +7471,8 @@ c clamp on upper-bound ground accel is applied here. As in original hazgridX cod
       integer, dimension(8):: ia08
       common / atten / pr, xlev, nlev, icode, wt,wtdist
 c e0_ceus not saving a depth of rupture dim, not sens. to this
-      common/e0_ceus/e0_ceus(260,31,8)
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      common/e0_ceus/e0_ceus(310,31,8)
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
        character*32 name
            clamp = (/3.,6.,0.,6.,6.,6.,0.,6.,6./)
@@ -7531,8 +7565,8 @@ c clamp on upper-bound ground accel is applied here. As in original hazgridX cod
       integer, dimension(8):: ia08
       common / atten / pr, xlev, nlev, icode, wt,wtdist
 c e0_ceus not saving a depth of rupture dim, not sens. to this
-      common/e0_ceus/e0_ceus(260,31,8)
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      common/e0_ceus/e0_ceus(310,31,8)
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
        character*32 name
            clamp = (/3.,6.,0.,6.,6.,6.,0.,6.,6./)
@@ -7629,8 +7663,8 @@ c clamp on upper-bound ground accel is applied here. As in original hazgridX cod
       integer m,jf,kk,ip,ia
       common / atten / pr, xlev, nlev, icode, wt,wtdist
 c e0_ceus not saving a depth of rupture dim, not sens. to this
-      common/e0_ceus/e0_ceus(260,31,8)
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      common/e0_ceus/e0_ceus(310,31,8)
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
        character*32 name
            clamp = (/3.,6.,0.,6.,6.,6.,0.,6.,6./)
@@ -7914,12 +7948,12 @@ c wtor = weights to top of Benioff zone (km). these are applied in main, to rate
       real fDepth,  fDepthp, fSite, Vs30, VsStar, xm10
       real Rmax
       real sigma/0.772/,sigmaf
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
 c lines from hazgrid. table production
        common/prob/p(25005),plim,dp2   !table of complementary normal probab
       common / atten / pr, xlev, nlev, icode, wt, wtdist
-      common/e0_sub/e0_sub(260,31,8,3)
+      common/e0_sub/e0_sub(310,31,8,3)
       common/deagg/deagg
       parameter (sqrt2=1.414213562)
       common/geotec/vs30,dbasin
@@ -8079,6 +8113,7 @@ c      goto 102      !skip this innermost loop for initial tests.
       enddo	!kk loop
       xmag = xmag+dmag	!increase magnitude
       enddo	!im loop (mag)      
+ 	print *,(kk,pr(1,5,10,ip,kk,1),kk=1,ntor), '(1,5,10,ip,kk,1)'
        return
        end subroutine getNAAsub
 
@@ -8144,6 +8179,7 @@ c      print *,c14(iper),c15(iper),phi_lnAF(iper), rho(iper),'c14(iper),c15(iper
       SUBROUTINE CB13_NGA_SPEC  (ip,iper,ia,ndist,di,nmag,magmin,dmag,DIP,SJ,rxsign)
 c     +(Mw,Rrup,Rjb,Rx, Frv,Fnm,Ztor,Hhyp,W,Dip,Vs30,Z25,SJ, 
 c     &Per,Y,Phi,Tau,Sigmatot,icase)
+c Modified May 13 2013 to include an anelastic atten for R>80. Bozorgnia email of May 2013
 c call this subroutine after calling CB13_NGA_SPEC_IN
 c mods by  Harmsen Feb 25 2013 This is the Feb 2013 update. Includes PGV (index 23).
 c call this with PGA as first period to run for a given source. This is needed to get the A1100 term
@@ -8184,7 +8220,7 @@ c add SDI-related common block sdi feb 22 2013
      + c12,c13low,c13hi,c14,c15,k1,k2,k3,a2,h1,h2,h3,h4,h5,h6,phi_lny,phi_low, phi_hi,
      + tau_lny,tau_lnyB,tau_low,tau_hi,phi_lnAF,rho
        common/cb13p/Per
-      REAL, dimension(nper) ::  Phi, Tau, tau_low,tau_hi
+      REAL, dimension(nper) ::  Phi, Tau, tau_low,tau_hi,c15ca,c15j,c15_China
       REAL, dimension(nper) ::  Per, c0, c1, c2low, c2, c3, c4,c5, c6, c7, c8, c9,c10, c10J, c10Jlow, c11, c11J 
       REAL, dimension(nper) :: c12, c13low,c13hi, c14,c15,k1, k2, k3,a2,h1,h2,h3
       REAL, dimension(nper) :: h4,h5,h6, phi_low, phi_hi,phi_lny,tau_lny,tau_lnyB,phi_lnAF, rho
@@ -8194,17 +8230,30 @@ c lines from hazgrid. table production
       common/geotec/Vs30,Z25
       common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
       common/deagg/deagg
-      real pr(260,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
+      real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
-       real Mw,A1100(260,31,3),csoil,nsoil,Sigmatot,di,magmin,dmag,sigma_fx,phi_lnPGAB
+       real Mw,A1100(310,31,3),csoil,nsoil,Sigmatot,di,magmin,dmag,sigma_fx,phi_lnPGAB
        save A1100
+c T=.01,.02,.03,.05,.075,.1,.15,.2,.25,.3,0.4,0.5,.75,1,1.5,2,3,4,5,7.5,10,0,-1
+	c15ca=(/-0.0055,-0.0055,-0.0057,-0.0063,-0.007,-0.0073,-0.0069,-0.006,-0.0055,-0.0049,-0.0037,-0.0027,-0.0016,-0.0006,
+     + 0.0,0.0,0.0,0.0,0.0,0.0,0.0,-0.0055,-0.0017/)
+	c15j=(/-0.009,-0.009,-0.0091,-0.01,-0.0107,-0.0107,-0.0099,-0.0091,-0.0088,-0.0084,-0.0071,-0.0061,-0.0048,-0.0036,
+     + -0.0019,-0.0005,0.0,0.0,0.0,0.0,0.0,-0.009,-0.0023/)
+	c15_China=(/-0.0019,-0.0019,-0.002,-0.0023,-0.0031,00.0031,-0.0027,-0.0019,-0.0019,-0.0018,-0.0009,-0.0002,0.0,
+     +  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-0.0019,0.0/)
        rxfac=(/0.,0.5,1.,2.,3.,4.,4.5,5.,5.5,6./)
 c-----Soil model constants. Do not switch these to vectors until they change with T
        nsoil = 1.18
       csoil = 1.88
 c site term for hard rock. indep. of all loop variables.
          F_site_1100 = (c10(22) + k2(22)*nsoil)*alog(1100.0/k1(22))
-
+	if(SJ.lt.1.0)then
+	c15=c15ca	!use california Qmodel when SJ<1
+	elseif(SJ.lt.2.)then
+	c15=c15j
+	else
+	c15=c15_China
+	endif
         if(iper.eq.1)iper=22    
 c effects that are independent of depth, of M, and of R or distance.
 C*****Style-of-fauting term
@@ -8213,6 +8262,7 @@ C.....f_HW_dip
       f_HW_dip= (90.0 - DIP)/45.0
       sinedip=sin(DIP*d2r)
       cosdip = cos(DIP*d2r)
+        wmax = 14./sinedip	!maximum seismogenic width.
 C*****Shallow sediment depth and 3-D basin term
       IF (Z25 .LT. 1.0) THEN
         F_sed = (c11(iper) + c11J(iper)*SJ)*(Z25 - 1.0)
@@ -8236,8 +8286,11 @@ C.....f_HW_Z
 
       do jj=1,nmag
 C*****Magnitude term
-      W=Mw+2*rxfac(icode(ip,ia))	!assign width = magnitude+delta for initial checkup. Later need a model..
-      Hhyp = min(15.,0.75*(Ztor + W*sinedip))	!virtual hypocentrs 3/4 of the way down dip.
+c base area on w&c formula for all sources. Update to Stirling Wesnouski 2013?
+        area =  10**((Mw-4.07)/0.98)
+        W=sqrt(area/1.5)        !aspect ratio 1.5
+        W= min (W,wmax)
+      Hhyp = min(15.,Ztor +0.50*W*sinedip)	!virtual hypocentrs 1/2 of the way down dip.
        if(e_wind(ip))then
           if (Mw.lt.mcut(1))then
           ime=1
@@ -8309,6 +8362,7 @@ C.....Dip term has been changed
 c R1, R2 used with hanging wall effects
         R1= W * cosdip
         R2= 62.*Mw - 350.
+        F_atn=0.0	!initialize anelastic attn at zero. Kicks in at 80 km
       if(abs(Mw-6.05).lt.0.02)write(12,122)Mw,Ztor,iper,F_Dip
 122      format(/,'#Rrup GM  sigma_lnY f_HW for Mw,Ztor,iper,Fdip ',f6.2,1x,f6.1,1x,i2,1x,e11.5)
         do ii=1,ndist
@@ -8354,14 +8408,14 @@ c this effect user should run both cases and treat as logic tree branches SH Dec
         f_HW_R= (max(f2_Rx, 0.0))* f_HW_Rrup
       ENDIF
       F_HW= c9(iper)* f_HW_R * f_HW_M * f_HW_Z * f_HW_Dip
-C*****Anelastic attenuatin term
-      F_atn=c15(iper)*Rrup
+C*****Anelastic attenuation term: modified May 13 2013 SH.
+      if(Rrup.gt.80.)F_atn=c15(iper)*(Rrup-80.)
 
 C*****For the first period (loop), computer A1100 *****************************
       IF (ip.eq.1)THEN
 C........Shallow site conditions term for ROCK PGA (i.e., Vs30 = 1100 m/s)
 C........Rock PGA
-
+c	if(kk.eq.1.and.jj.ge.10)print *,F_atn,Mw
          A1100(ii,jj,kk) = EXP(F_mag + F_dis + F_flt + F_HW + 
      +               F_site_1100 + F_sed + F_Hhyp + F_Dip + F_atn)
       ENDIF
@@ -8380,8 +8434,14 @@ c******************************************************************************
 
 c*****Ground motion parameter (log space)(units g)
 
-      gm = F_mag + F_dis + F_flt + F_HW + 
-     +              F_site + F_sed + F_Hhyp + F_Dip + F_atn
+      gm = F_mag + F_dis + F_flt + F_HW  + F_sed + F_Hhyp + F_Dip + F_atn
+c PGA was not stored. Get the required effect from A1100
+      if(Per(iper).gt.0.0 .and.Per(iper).le. 0.25)then
+      if(exp(gm).lt.A1100(ii,jj,kk))print *,exp(gm),A1100(ii,jj,kk),Per(iper),Rrup
+c SA, before siteamp, must be greater than PGA(Rock 1100). From Boz. email May 2013
+      gm = max(gm,alog(A1100(ii,jj,kk)))
+      endif
+      gm = gm + F_site
 C.....
 C.....CALCULATE ALEATORY UNCERTAINTY
 
@@ -8520,10 +8580,10 @@ c lines from hazgrid. table production
       common/depth_rup/ntor,dtor,wtor,wtor65
 c      common/deagg/deagg
       real, dimension(25005):: p
-       real, dimension (260,38,20,8,3,3):: pr
+       real, dimension (310,38,20,8,3,3):: pr
        real, dimension(20,8):: xlev
        real, dimension(3):: dtor,wtor,wtor65
-       real, dimension(260,38,3):: Sa1100      !rock median
+       real, dimension(310,38,3):: Sa1100      !rock median
        integer nlev(8),icode(8,10),nfi,ntor
        real wt(8,10,2),wtdist(8,10),sigma_fx,wtss
        real, dimension(0:9) :: rxfac
@@ -8908,7 +8968,7 @@ c lines from hazgrid. table production
       common/epistemic/nfi,e_wind,gnd_ep,mcut,dcut
        real gnd_ep(3,3,8),mcut(2),dcut(2),gndout(3),gndx
       real, dimension(25005):: p
-       real, dimension (260,38,20,8,3,3):: pr
+       real, dimension (310,38,20,8,3,3):: pr
        real, dimension(20,8):: xlev
        real, dimension(3):: dtor,wtor,wtor65
        integer nlev(8),icode(8,10),nfi
@@ -9184,7 +9244,7 @@ c lines from hazgrid. table production
       common/epistemic/nfi,e_wind,gnd_ep,mcut,dcut
        real gnd_ep(3,3,8),mcut(2),dcut(2),gndout(3),gndx,sigma_fx
       real, dimension(25005):: p
-       real, dimension (260,38,20,8,3,3):: pr
+       real, dimension (310,38,20,8,3,3):: pr
        real, dimension(20,8):: xlev
        real, dimension(3):: dtor,wtor,wtor65
        integer nlev(8),icode(8,10)
@@ -9413,7 +9473,7 @@ c lines from hazgrid. table production
       real, dimension (nper):: a1, a2, a3, b1,b2, x,g, phi, Period
       real gnd_ep(3,3,8),mcut(2),dcut(2),gndout(3),gndx,gnd0,gndm,gnd,sigma_fx
       real, dimension(25005):: p
-      real, dimension (260,38,20,8,3,3):: pr
+      real, dimension (310,38,20,8,3,3):: pr
       real, dimension(20,8):: xlev
       real, dimension(3):: dtor,wtor,wtor65
       integer nlev(8),icode(8,10)
@@ -9426,7 +9486,7 @@ c----  This version assumes v30 effect is linear with rock gm.
 c----  uses ln coefficients
       real xmag,magmin,dmag
       logical changem
-c coeffs. from oct 5 2005 powerpoint progress report
+c coeffs. from apr 2013 email
 c	Period=(/0.01,0.02,0.03,0.04,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,0.5,0.75,1.,1.5,2.,3.,4.,5.,7.5,10.0/)
         Period  = (/0.01,0.02,0.03,0.04,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,0.5,0.75,1.0,1.5,2.,3.,4.0,5.,7.5,10./)
 	a1=(/7.0887,7.1157,7.2087,7.3287,6.2638,5.9051,7.5791,8.0190,9.2812,9.5804,9.8912,9.5342,
@@ -9785,7 +9845,7 @@ c added MPM 20130320
 c        real magmin, dmag, rxsign
         real gnd_ep(3,3,8),mcut(2),dcut(2),gndout(3),gndx
       real, dimension(25005):: p
-       real, dimension (260,38,20,8,3,3):: pr
+       real, dimension (310,38,20,8,3,3):: pr
        real, dimension(20,8):: xlev
        real, dimension(3):: dtor,wtor,wtor65
        integer nlev(8),icode(8,10),nfi,ntor
@@ -10316,7 +10376,7 @@ c add SDI-related common block sdi feb 22 2013
       common/epistemic/nfi,e_wind,gnd_ep,mcut,dcut
       real gnd_ep(3,3,8),mcut(2),dcut(2),gndx,plim,dp2
       real, dimension(25005):: p
-      real, dimension (260,38,20,8,3,3):: pr
+      real, dimension (310,38,20,8,3,3):: pr
       real, dimension(20,8):: xlev
       real, dimension(3):: dtor,wtor,wtor65
       integer nlev(8),icode(8,10),ntor,nmag,ndist
