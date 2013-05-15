@@ -1,53 +1,53 @@
 1		!use hazallXL.v2
 24
-../out/sub0_ch_bot.1hz.out  
+../out/sub0_ch_bot.1hz
 0.3	! ch is for full rupture, Mscaling GMPEs in input, 0.3 is wt of bot
-../out/sub0_ch_mid.1hz.out  
+../out/sub0_ch_mid.1hz
 0.5	!Mscaling GMPE in input, 0.5 is wt of mid
-../out/sub0_ch_top.1hz.out  
+../out/sub0_ch_top.1hz
 0.2	!Mscaling GMPE in input, 0.2 is wt of top 
-../out/sub0_GRb0_bot.1hz.out
+../out/sub0_GRb0_bot.1hz
 0.015 !Mscaling GMPE in input, 0.3 is wt of bot,b=0 0.5 wt,float 0.5wt, full rup 0.2
-../out/sub0_GRb0_mid.1hz.out
+../out/sub0_GRb0_mid.1hz
 0.025 !Mscaling GMPE in input, 0.5 is wt of mid ,b=0 0.5 wt,float 0.5wt, fullrupt 0.2
-../out/sub0_GRb0_top.1hz.out
+../out/sub0_GRb0_top.1hz
 0.01 !Mscaling GMPE in input, 0.2 is wt of top ,b=0 0.5 wt,float 0.5wt, fullrupt 0.2
-../out/sub0_GRb1_bot.1hz.out
+../out/sub0_GRb1_bot.1hz
 0.015 !Mscaling GMPE in input, 0.3 is wt of bot,b=1 0.5 wt,float 0.5wt, fullrupt 0.2
-../out/sub0_GRb1_mid.1hz.out
+../out/sub0_GRb1_mid.1hz
 0.025 !Mscaling GMPE in input, 0.3 is wt of bot,b=1 0.5 wt,float 0.5wt, fullrupt 0.2
-../out/sub0_GRb1_top.1hz.out
+../out/sub0_GRb1_top.1hz
 0.01 !Mscaling GMPE in input, 0.2 is wt of top ,b=1 0.5 wt,float 0.5wt, fullrupt 0.2
-../out/sub1_GRb0_bot.1hz.out
+../out/sub1_GRb0_bot.1hz
 0.06   !sub1 is for south rate=1/1000, float 0.5, bot 0.3, b=0 0.5,southernsegs 0.8, Mscaling GMPE in input
-../out/sub1_GRb0_mid.1hz.out 
+../out/sub1_GRb0_mid.1hz
 0.10  !sub1 is for south rate=1/1000, float 0.5, mid 0.5, b=0 0.5,southernsegs 0.8, Mscaling GMPE in input
-../out/sub1_GRb0_top.1hz.out 
+../out/sub1_GRb0_top.1hz
 0.04  !sub1 is for south rate=1/1000, float 0.5, top 0.2, b=0 0.5,southernsegs 0.8, Mscaling GMPE in input
-../out/sub1_GRb1_bot.1hz.out 
+../out/sub1_GRb1_bot.1hz
 0.06  !sub1 is for south rate=1/1000, float 0.5, bot 0.3, b=1 0.5,southernsegs 0.8, Mscaling GMPE in input
-../out/sub1_GRb1_mid.1hz.out 
+../out/sub1_GRb1_mid.1hz
 0.10  !sub1 is for south rate=1/1000, float 0.5, mid 0.5, b=1 0.5,southernsegs 0.8, Mscaling GMPE in input
-../out/sub1_GRb1_top.1hz.out 
+../out/sub1_GRb1_top.1hz
 0.04  !sub1 is for south rate=1/1000, float 0.5, top 0.2, b=1 0.5,southernsegs 0.8, Mscaling GMPE in input
-../out/sub1_ch_bot.1hz.out 
+../out/sub1_ch_bot.1hz
 0.15  !sub1_ch_bot uses 1/1000 rate, ch 0.5, bot 0.3
-../out/sub1_ch_mid.1hz.out
+../out/sub1_ch_mid.1hz
 0.25   !sub1_ch_bot uses 1/1000 rate, ch 0.5, mid 0.5
-../out/sub1_ch_top.1hz.out
+../out/sub1_ch_top.1hz
 0.10   !sub1_ch_bot uses 1/1000 rate, ch 0.5, top 0.2
-../out/sub2_ch_bot.1hz.out   
+../out/sub2_ch_bot.1hz
 0.15   !sub1_ch_bot uses 1/1000 rate, ch 0.5, bot 0.3
-../out/sub2_ch_mid.1hz.out
+../out/sub2_ch_mid.1hz
 0.25   !sub1_ch_bot uses 1/1000 rate, ch 0.5, mid 0.5
-../out/sub2_ch_top.1hz.out
+../out/sub2_ch_top.1hz
 0.10   !sub1_ch_bot uses 1/1000 rate, ch 0.5, top 0.2
-../out/sub3_ch_bot.1hz.out
+../out/sub3_ch_bot.1hz
 0.15
-../out/sub3_ch_mid.1hz.out 
+../out/sub3_ch_mid.1hz
 0.25
-../out/sub3_ch_top.1hz.out 
+../out/sub3_ch_top.1hz
 0.10
 1
-../out/combine/sub.2014.1hz.crv
+../out/combine/sub.2014.1hz
 0
