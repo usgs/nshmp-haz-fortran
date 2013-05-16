@@ -12,9 +12,9 @@
 ../conf/CEUS/gridded/GR_DOS/mmax_2zone.out
 1 4 6.5 0.2 7.0 0.5 7.5 0.2 8.0 0.1  usgs craton
 2 4 6.8 0.1 7.2 0.3 7.6 0.5 8.0 0.1  usgs margin
-3 4 6.5 0.3 7.0 0.5 7.5 0.1 8.0 0.1  rockyMtn
-4 4 6.5 0.3 7.0 0.5 7.5 0.1 8.0 0.1  coloPlateau
-5 4 6.5 0.3 7.0 0.5 7.5 0.1 8.0 0.1  other
+3 4 6.5 0.2 7.0 0.5 7.5 0.2 8.0 0.1  rockyMtn
+4 4 6.5 0.2 7.0 0.5 7.5 0.2 8.0 0.1  coloPlateau
+5 4 6.5 0.2 7.0 0.5 7.5 0.2 8.0 0.1  other
 ../conf/CEUS/gridded/GR_DOS/agrd_CEUS_adaptSm_2_4zone.out
 1. 0
 ../bin/meanrjb.bin
