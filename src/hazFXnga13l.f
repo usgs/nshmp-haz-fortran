@@ -1,5 +1,7 @@
-c--- program  hazFXnga13l.f; 05/15/2013; Use  with NGA relations, or others.
-c 5/15/2013: update CY NGA-W to May version 
+c--- program  hazFXnga13l.f; 05/17/2013; Use  with NGA relations, or others.
+c 5/17/2013: correct some e5 coeffs in bssa2013drv. Make cDPP = 0 in CY2013. (no directivity)
+c 5/16/2013: Update AS13 to May version. Norm A recommends using this instead of AS08 as of May 15.
+c 5/15/2013: update CY NGA-W to May version. 5/16: correct small typo from Chiou email
 c 5/14/2013: Add anelastic attenuation in CB13, for R>80 km. Bozorgnia email May 2013.
 c 4/16/2013: bssa corrections completed. all 107 periods work
 c 4/12/2013: bssa2013 updated. 4/15: BSSA corrected some.
@@ -16,7 +18,6 @@ c 4/04/2013: Reduce basin effect in GK13 if Vs30>600 m/s.  Basin bottom is depth
 c	site condition. Update sigma_aleatory model in gk13.
 c 3/29/2013: include GK13 model which replaces GK12. Index 38.
 c 3/19/2013 : increase nfltmx to 1000.
-c 3/13/2013: revise AS13 to v10. The subroutine with v10 is according to Norm closer to AS08 than the v5 version.
 c 3/14/2013: revise AS08 to use our Rx. 3/15:Use vs30_class=1 (measured). Index 16
 C 3/11/2013: working on BSSA13. Mar 11. Running. Simplified the coding some. Perhaps more needed (SH).
 c 3/06/2013: working on CY2013. Dirctivity, cDPP, is turned off for initial exercise.
@@ -745,7 +746,7 @@ c adum could be sa(g) or pgv (cm/s). need flexible format
             endif
       endif
       write (6,61)date,time,name
-61      format('# *** hazFXnga13l 05/15/2013 log file. Pgm run on ',a,' at ',a,/,
+61      format('# *** hazFXnga13l 05/16/2013 log file. Pgm run on ',a,' at ',a,/,
      +'# *** Input control file: ',a)
       if(poly)write(6,*)'hazFXnga13l: Polygon file &npts: ',polygon,npmax
 c Below bypasses are based on file name. Bypass wont work if file names change
@@ -1353,18 +1354,13 @@ c!pga or other?
       k=k+1
       enddo
       if(per.ne.Peras13(k))then
-      print *,' period ',per,' not available for AS13(V10) model'
+      print *,' period ',per,' not available for AS13(V5 May) model'
       stop 'please remove this GMPE from your input file'
       endif
       ipas13(ip)=k
       	endif
       write(6,*)'Calling AS2013 NGA-W revision with z1=',z1km,' period index ',ipas13(ip)
-c 12/17L commandeer icode to use as a decision on Ry0 usage. 1 = use it.
-      if(icode(ip,ia).eq.1)then
-      useRy0(ip)=.true.
-      else
       useRy0(ip)=.false.
-      endif
       print *,'Using Ry0 metric for this spectral period?',useRy0(ip)
         vs30_rock = 1100.
         z10_rock = 0.006
@@ -1563,13 +1559,13 @@ c code should be able to work with earlier file format if clustering is not requ
       endif
             if(iftype(ift).eq.1)then
       ibtype(ift)=1
-      cDPP(ift)=0.5
+      cDPP(ift)=0.0
       elseif(iftype(ift).eq.2)then
-      ibtype(ift)=3	!boore 2012 swithces
-      cDPP(ift)=0.25
+      ibtype(ift)=3	!boore 2013 swithces
+      cDPP(ift)=0.0
       else
       ibtype(ift)=2
-      cDPP(ift)=0.125	!temporary setting for amount of directivity effect
+      cDPP(ift)=0.0	!temporary setting for amount of directivity effect
       endif
 
       if(itype(ift).gt.0)then
@@ -2461,13 +2457,13 @@ c hanging-wall flag for as12 model added dec 7 2012.
       else
       hwflag=0
       endif
-      call AS2013_v10_model ( ipas13(ip),xmag,dip0(ift), W_rup, dtor1, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,lnSa, phi, tau, useRy0(ip) )
+      call AS2013_v5_model ( ipas13(ip),xmag,dip0(ift), W_rup, dtor1, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
+     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,lnSa, phi, tau )
       Sa1100 = exp(lnSa)
 c 
 c     Compute Sa at spectral period for given Vs30
-      call AS2013_v10_model ( ipas13(ip),xmag, dip0(ift), W_rup, dtor1, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30, SA1100, z1km, z1_ref, hwflag, vs30_class,lnSa, phi, tau, useRy0(ip) )
+      call AS2013_v5_model ( ipas13(ip),xmag, dip0(ift), W_rup, dtor1, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
+     1                     vs30, SA1100, z1km, z1_ref, hwflag, vs30_class,lnSa, phi, tau )
       gnd(1)=lnSa
 c      print *,exp(lnSa),phi,tau,width(ift)
          if(l_gnd_ep(ip))then
@@ -2498,7 +2494,7 @@ c gnd is lnSA in AS code. need to fill in some other input. vs30_class ?
 c period1 is output by AS_modelXX. period1 should equal per(ip)
        sigmaf=1./sqrt2/sigma1
       elseif(ipia.eq.34)then
-      SJ=0.0	!Are we in Japan? 1 = yes.
+      SJ=0.0	!Are we in Japan? 1 = yes. 0 = california 3 = China.
       Hhyp=min(12.,dtor1+8.)	!Take a stab at hypocenter depth.
       call CB13_NGA_SPEC  (ip,ipcb12(ip), xmag,Rrup,R_x,Rjb,F_RV, F_NM,dtor1,Hhyp,W_rup,dbasin,Vs30,
      +Dip0(ift),SJ,gnd,sigmaf)
@@ -2812,10 +2808,6 @@ c      if(ift.eq.1)print *,ip,exp(gnd(1)),rrup,xmag,1/sigmaf/sqrt2
 c from BChiou email use fmeasured=1.
       F_Measured=1.
       F_Inferred=0.0	!could change these. Reference rock.
-c      call  CY2012_NGA(ip,icy13(ip), xmag2, rrup, rjb, R_x, vs30,
-c     1                   F_Measured, F_Inferred, z1, dip0(ift), dtor,
-c     1                   F_RV, F_NM,
-c     1                   psa_ref, gnd, tau, sigma_NL0, sigmaf)
        call CY2013_NGA(ip,icy13(ip), xmag2, rrup, rjb, R_x, vs30,
      1                   F_Measured, F_Inferred, deltaZ1, dip0(ift), dtor,
      1                   F_RV, F_NM, cDPP(ift), gnd, tau, sigma_NL0, sigmaf)
@@ -2832,13 +2824,13 @@ c hanging-wall flag for as12 model added dec 7 2012.
       else
       hwflag=0
       endif
-      call AS2013_v10_model ( ipas13(ip),xmag2,dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,lnSa, phi, tau, useRy0(ip) )
+      call AS2013_v5_model ( ipas13(ip),xmag2,dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
+     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,lnSa, phi, tau )
       Sa1100 = exp(lnSa)
 c 
 c     Compute Sa at spectral period for given Vs30
-      call AS2013_v10_model ( ipas13(ip),xmag2, dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30, SA1100, z1km, z1_ref, hwflag, vs30_class,lnSa, phi, tau, useRy0(ip) )
+      call AS2013_v5_model ( ipas13(ip),xmag2, dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
+     1                     vs30, SA1100, z1km, z1_ref, hwflag, vs30_class,lnSa, phi, tau )
       gnd(1)=lnSa
 c      print *,exp(lnSa),phi,tau,width(ift),xmag2,Width(ift)
          if(l_gnd_ep(ip))then
@@ -2847,7 +2839,7 @@ c      print *,exp(lnSa),phi,tau,width(ift),xmag2,Width(ift)
          endif
         sigmaf = 1./sqrt( phi**2 + tau**2 )/sqrt2
       elseif(ipia.eq.34)then
-      SJ=0.0	!Are we in Japan? 1 = yes.
+      SJ=0.0	!Are we in Japan? 1 = yes. 2 = no, but China. 0 = no, but WUS
       Hhyp=min(12.,dtor+8.)	!Take a stab at hypocenter depth.
       call CB13_NGA_SPEC  (ip,ipcb12(ip), xmag2,Rrup,R_x,Rjb,F_RV, F_NM,dtor,Hhyp,Width(ift),dbasin,Vs30,
      +Dip0(ift),SJ,gnd,sigmaf)
@@ -3202,13 +3194,13 @@ c hanging-wall flag for as12 model added dec 7 2012.
       hwflag=0
       endif
       SA_rock = 0.
-      call AS2013_v10_model ( ipas13(ip),xmag,dip0(ift), W_rup, dtor1, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,lnSa, phi, tau, useRy0(ip) )
+      call AS2013_v5_model ( ipas13(ip),xmag,dip0(ift), W_rup, dtor1, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
+     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,lnSa, phi, tau )
       Sa1100 = exp(lnSa)
 c 
 c     Compute Sa at spectral period for given Vs30
-      call AS2013_v10_model ( ipas13(ip),xmag, dip0(ift), W_rup, dtor1, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30, SA1100, z1km, z1_ref, hwflag, vs30_class,lnSa, phi, tau, useRy0(ip) )
+      call AS2013_v5_model ( ipas13(ip),xmag, dip0(ift), W_rup, dtor1, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
+     1                     vs30, SA1100, z1km, z1_ref, hwflag, vs30_class,lnSa, phi, tau )
 c      print *,exp(lnSa),phi,tau,w_rup
       gnd(1)=lnSa
          if(l_gnd_ep(ip))then
@@ -3581,13 +3573,13 @@ c hanging-wall flag for as12 model added dec 7 2012.
       endif
       dippy=max(dip0(ift),65.)
       Ry0=dmin(5)      !new dec 10
-      call AS2013_v10_model ( ipas13(ip),xmag2,dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,lnSa, phi, tau, useRy0(ip) )
+      call AS2013_v5_model ( ipas13(ip),xmag2,dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
+     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,lnSa, phi, tau )
       Sa1100 = exp(lnSa)
 c 
 c     Compute Sa at spectral period for given Vs30
-      call AS2013_v10_model ( ipas13(ip),xmag2, dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30, SA1100, z1km, z1_ref, hwflag, vs30_class,lnSa, phi, tau, useRy0(ip) )
+      call AS2013_v5_model ( ipas13(ip),xmag2, dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
+     1                     vs30, SA1100, z1km, z1_ref, hwflag, vs30_class,lnSa, phi, tau )
       gnd(1)=lnSa
       sig=sqrt( phi**2 + tau**2 )
 c      print *,exp(lnSa),xmag2,rrup,rjb,r_x,Sa1100,sig,period(ip)
@@ -3971,14 +3963,14 @@ c hanging-wall flag for as12 model added dec 7 2012.
       else
       hwflag=0
       endif
-      call AS2013_v10_model ( ipas13(ip),xmag,dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,lnSa, phi, tau, useRy0(ip) )
+      call AS2013_v5_model ( ipas13(ip),xmag,dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
+     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,lnSa, phi, tau )
       Sa1100 = exp(lnSa)
 c      print *,rx,ry,xmag,rRup,r_x,Sa1100,period(ip),' AS12 '
 c 
 c     Compute Sa at spectral period for given Vs30
-      call AS2013_v10_model ( ipas13(ip),xmag, dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30, SA1100, z1km, z1_ref, hwflag, vs30_class,lnSa, phi, tau, useRy0(ip) )
+      call AS2013_v5_model ( ipas13(ip),xmag, dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
+     1                     vs30, SA1100, z1km, z1_ref, hwflag, vs30_class,lnSa, phi, tau )
       gnd(1)=lnSa
       sig=sqrt( phi**2 + tau**2 )
 c      print *,exp(lnSa),sig,Sa1100,period(ip),xmag,rRup
@@ -9522,7 +9514,7 @@ c        deltaZ1 = Z1 - mZ1
 	c11 = 0.0
 c Center Z_TOR on the Z_TOR-M relation in Chiou and Youngs (2013)
         if (F_RV.EQ.1) then
-          if (M .le. 5.869) then
+          if (M .le. 5.849) then	!corrected from 5.869 May 16 2013
               mZ_TOR = 2.704*2.704
           else
               mZ_TOR = max(2.704-1.226*(M-5.849), 0.)
@@ -9558,7 +9550,7 @@ c Far-field distance scaling
      1       R_Rup * gamma
 
 c Scaling with other source variables (F_RV, F_NM, deltaZ_TOR, and Dip)
-        coshM = cosh(2*max(M-4.5,0.))
+        coshM = cosh(2.0*max(M-4.5,0.0))
         cosDELTA = cos(DELTA*d2r)
         r4 = (c1a(iprd)+c1c(iprd)/coshM) * F_RV +
      1       (c1b(iprd)+c1d(iprd)/coshM) * F_NM +
@@ -9570,14 +9562,14 @@ c HW effect
          hw = 0.0
         else
          hw = c9(iprd) * cosDELTA *
-     1        (c9a(iprd)+(1-c9a(iprd)) *tanh(R_x/c9b(iprd))) *
-     1        (1.0 - sqrt(R_JB**2+Z_TOR**2)/(R_Rup + 1))
+     1        (c9a(iprd)+(1.0 -c9a(iprd)) *tanh(R_x/c9b(iprd))) *
+     1        (1.0 - sqrt(R_JB**2+Z_TOR**2)/(R_Rup + 1.))
         endif
 
 c Directivity effect
         fd = c8(iprd) *
-     1       max(1-max(R_Rup-40.0,0.)/30.0, 0.0) *
-     1       min(max(M-5.5,0.)/0.8, 1.) *
+     1       max(1-max(R_Rup-40.0,0.0)/30.0, 0.0) *
+     1       min(max(M-5.5,0.0)/0.8, 1.0) *
      1       exp(-c8a(iprd)*(M-c8b(iprd))**2) * cDPP
 
         psa_ref = r1+r2+r3+r4+hw+fd
@@ -9585,7 +9577,7 @@ c Directivity effect
 c        write (*,'(7f10.4)') r1, r2, r3, r4, hw, fd, psa_ref
 
 c Soil effect: linear response
-        a = phi1(iprd) * min(log(V_S30/1130.), 0.)
+        a = phi1(iprd) * min(log(V_S30/1130.), 0.0)
 
 c Soil effect: nonlinear response
         b = phi2(iprd) *
@@ -9785,8 +9777,8 @@ c several of the below periods dont work. 0.9 s is one example. there are many o
      + 1.856400, 1.886800, 1.915200, 1.968100, 2.017000, 2.040600, 2.062800, 2.101400, 2.132300, 2.154500,
      + 2.170400, 2.177500, 2.183400, 2.193800, 2.204000, 2.212300, 2.218100, 2.223000, 2.226800, 2.229900,
      + 2.238900, 2.237700, 2.215000, 2.172000, 2.118700, 2.061300, 2.008400, 1.960500, 1.918900, 1.883700/)
-	e5      =(/-0.153600, 0.050530, 0.049320, 0.053388, 0.054888, 0.057529, 0.060,732
-     + 0.061444, 0.062806, 0.064559, 0.065028, 0.066183, 0.066438, 0.066663, 0.066774, 0.066891, 0.0,67127
+	e5      =(/-0.153600, 0.050530, 0.049320, 0.053388, 0.054888, 0.057529, 0.060732,
+     + 0.061444, 0.062806, 0.064559, 0.065028, 0.066183, 0.066438, 0.066663, 0.066774, 0.066891, 0.067127,
      + 0.067357, 0.067797, 0.068591, 0.070127, 0.070895, 0.072075, 0.073549, 0.073735, 0.071940, 0.068097,
      + 0.062327, 0.055231, 0.037389, 0.016373,-0.005158,-0.011354,-0.024711,-0.042065,-0.057593,-0.071861,
      + -0.085640,-0.098884,-0.110960,-0.133000,-0.152990,-0.162130,-0.170410,-0.184630,-0.190570,-0.195900,
@@ -11230,14 +11222,14 @@ c     Set total to return
       return
       end subroutine AS_072007_model
       			
-      subroutine AS2013_v10_model ( iper,mag, dip, FltWidth, ZTOR, Frv, Fn, rRup, rjb, Rx, Ry0, 
-     1                     vs30, Sa1100, Z1, Z1_ref, hwflag, vs30_class, lnSa, phi, tau,useRy0)
- 
+
+      subroutine AS2013_v5_model (iper, mag, dip, FltWidth, ZTOR, Frv, Fn, rRup, rjb, Rx, Ry0, 
+     1                     vs30, Sa1100, Z1, z1_ref, hwflag, vs30_class, lnSa, phi, tau)
+c May 15 2013 update. z1_ref is input rather than computed here.
+c  
       implicit none
       integer MAXPER     
       parameter (MAXPER=22)
-c z1_ref added as input mar 13 2013. But NA is using a diff. fcn compared to Chiou's latest...
-      logical useRy0
       real c4(MAXPER), a1(MAXPER), a2(MAXPER), a3(MAXPER), a4(MAXPER), a5(MAXPER), a6(MAXPER),
      1     a7(MAXPER), a8(MAXPER), a9(MAXPER), a10(MAXPER), a11(MAXPER),
      1     a12(MAXPER), a13(MAXPER), a14(MAXPER), a15(MAXPER), a17(MAXPER),
@@ -11251,87 +11243,99 @@ c z1_ref added as input mar 13 2013. But NA is using a diff. fcn compared to Chi
       real f1, f4, f5, f6, f7, f8, f9, f10
       real Ry1, ZTOR, Frv, Fn, SpecT
       real phiA, phiB, tauA, tauB, phi, tau
-c      integer iper, vs30_class, hwflag, iPer
-      integer iper, vs30_class, hwflag
+      integer vs30_class, hwflag, iPer
       real n, c, Z1, zhat, c4_mag
       real R, V1, Vs30Star, hw_a2, h1, h2, h3, R1, R2, z1_ref
 
       data period / 0.00, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 
-     1              0.3, 0.4, 0.5, 0.75, 1, 1.5, 2, 3, 4, 5, 6, 7.5, 10 /
-      data Vlin/ 660, 680, 770, 800, 800, 800, 740, 590, 495, 430, 360, 340, 330, 
-     1           330, 330, 330, 330, 330, 330, 330, 330, 330 /
-      data b/ -1.37, -1.35, -1.26, -1.16, -1.15, -1.23, -1.53, -1.86, -2.16, -2.411,
-     1        -2.785, -3.006, -3.113, -2.851, -1.891, -0.792, 0, 0, 0, 0, 0, 0 /
-      data c4/ 6, 6, 6, 6, 6, 5.9, 5.8, 5.7, 5.6, 5.5, 5.2, 4.8, 4.4, 4, 3.75, 3.5,
-     1         3.25, 3, 3, 3, 3, 3 /
-      data s1/ 0.7541, 0.7593, 0.7742, 0.8179, 0.826, 0.805, 0.796, 0.7788, 
-     1         0.75, 0.731, 0.6934, 0.6682, 0.6209, 0.5848, 0.5632, 0.5452, 
-     1          0.5302, 0.5152, 0.4956, 0.4755, 0.44, 0.4365 /
-      data s2/ 0.5439, 0.5466, 0.5488, 0.5587, 0.5837, 0.6035, 0.6069, 0.6112,
-     1          0.6148, 0.6171, 0.6123, 0.6206, 0.6395, 0.6618, 0.6574, 0.6563, 
-     1          0.6231, 0.5996, 0.5834, 0.5834, 0.56, 0.5273 /
-      data s3/ 0.47, 0.47, 0.47, 0.47, 0.47, 0.47, 0.47, 0.47, 0.47, 0.47,
-     1         0.47, 0.47, 0.47, 0.47, 0.47, 0.47, 0.47, 0.47, 0.47, 0.47, 0.47, 0.47 /
-      data s4/ 0.38, 0.38, 0.38, 0.38, 0.38, 0.38, 0.38, 0.38, 0.38, 0.38,
-     1         0.38, 0.38, 0.38, 0.38, 0.38, 0.38, 0.38, 0.38, 0.38, 0.38, 0.38, 00.38 /
+     1              0.3, 0.4, 0.5, 0.75, 1., 1.5, 2., 3., 4., 5., 6., 7.5, 10. /
+      data Vlin/ 660.,680.,770.,800.,800.,800.,740.,590.,495.,430.,360.,340.,330.,330.,
+     1			 330.,330.,330.,330.,330.,330.,330.,330. /
+      data b/ -1.47,-1.459,-1.39,-1.219,-1.152,-1.23,-1.587,-2.012,-2.411,-2.757,
+     1 		  -3.278,-3.599,-3.8,-3.5,-2.4,-1,0,0,0,0,0,0 /
+      data c4/ 6,6,6,6,6,5.9,5.8,5.7,5.6,5.5,5.2,4.8,4.4,4,3.75,3.5,3.25,
+     1		   3,3,3,3,3 /
+      data s1/ 0.754,0.760,0.781,0.810,0.810,0.810,0.801,0.789,0.770,0.740,
+     1		   0.699,0.676,0.631,0.609,0.578,0.555,0.548,0.527,0.505,0.477,
+     2		   0.457,0.429 /
+      data s2/ 0.520,0.520,0.520,0.530,0.540,0.550,0.560,0.565,0.570,0.580,
+     1		   0.590,0.600,0.615,0.630,0.640,0.650,0.640,0.630,0.630,0.630,
+     2		   0.630,0.630 /
+      data s3/ 0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,
+     1 		   0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47 /
+      data s4/ 0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,
+     1 		   0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36 /
 
-      data a1/ 1.0889, 1.1027, 1.2548, 1.5266, 1.753, 1.79, 2.0379, 2.2006, 2.2707, 
-     1         2.28, 2.2564, 2.152, 1.8695, 1.5505, 1.0223, 0.6529, 0.1946, -0.1555, 
-     2        -0.4919, -0.9061, -1.414, -2.3488/
-      data a2/ -1.03, -1.03, -1.07, -1.09, -1.09, -1.07, -1.05, -1.02, -1, -0.98, 
-     1         -0.96, -0.94, -0.91, -0.88, -0.84, -0.82, -0.78, -0.75, -0.72, -0.66, -0.595, -0.48 /
-      data a3/ 0.281, 0.281, 0.281, 0.281, 0.278, 0.27, 0.258, 0.25, 0.242, 0.239, 
-     1         0.231, 0.23, 0.23, 0.23, 0.23, 0.23, 0.23, 0.23, 0.23, 0.23, 0.23, 0.23 /
-      data a4/ -0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1,
-     1         -0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1/
-      data a5/ -0.49, -0.49, -0.49, -0.49, -0.49, -0.49, -0.49, -0.49, -0.49, -0.49,
-     1         -0.49, -0.49, -0.49, -0.49, -0.49, -0.49, -0.49, -0.49, -0.49, -0.49, -0.49, -0.49/
-      data a6/ 2.2882, 2.2863, 2.2497, 2.1728, 2.1246, 2.1728, 2.2013, 2.2591, 2.3286, 
-     1         2.3237, 2.4414, 2.5174, 2.6745, 2.7543, 2.8332, 2.8674, 2.8927, 2.8194, 2.9062, 
-     2         3.0193, 3.1474, 3.4479 /
+      data a1/ 0.464,0.473,0.4569,0.652,0.950,1.160,1.487,1.712,1.796,1.849,
+     1		   1.825,1.768,1.543,1.292,0.855,0.521,0.160,-0.070,-0.410,
+     2 	       -0.838,-1.433,-2.368 /
+      data a2/ -0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,
+     1 		   -0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,
+     2 		   -0.756,-0.700,-0.620,-0.515 /
+      data a3/ 0.281,0.281,0.281,0.281,0.278,0.270,0.258,0.250,0.242,0.239,
+     1 		   0.231,0.230,0.230,0.230,0.230,0.230,0.230,0.230,0.230,0.230,
+     2 		   0.230,0.230 /
+      data a4/ -0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,
+     1		   -0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1 /
+      data a5/ -0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,
+     1 		   -0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49 /
+      data a6/ 2.28,2.28,2.25,2.18,2.13,2.14,2.19,2.25,2.30,2.35,2.45,2.55,2.65,
+     1 		   2.70,2.75,2.75,2.75,2.75,2.75,2.75,2.75,2.75 /
       data a7/ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /
-      data a8/ 0, 0, 0, 0, 0, 0, -0.029, -0.05, -0.066, -0.079, -0.099, -0.115, 
-     1         -0.144, -0.165, -0.194, -0.214, -0.243, -0.264, -0.27, -0.27, -0.27, -0.27 /
-      data a9/ 6.75, 6.75, 6.75, 6.75, 6.75, 6.75, 6.75, 6.75, 6.75, 6.75, 6.75, 6.75,
-     1         6.75, 6.75, 6.75, 6.75, 6.82, 6.92, 7, 7.06, 7.145, 7.25 /
-      data a10/ 1.56, 1.54, 1.43, 1.35, 1.3, 1.31, 1.57, 1.99, 2.39, 2.73, 3.27, 
-     1          3.58, 3.74, 3.35, 1.91, 0.26, -0.93, -0.93, -0.93, -0.93, -0.93, -0.93 /
+      data a8/ 0,0,0,0,0,0,-0.029,-0.050,-0.066,-0.079,-0.099,-0.115,-0.144,
+     1 	       -0.165,-0.194,-0.214,-0.243,-0.264,-0.270,-0.270,-0.270,-0.270 /
+      data a9/ 6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,
+     1 		   6.75,6.75,6.75,6.82,6.92,7,7.06,7.145,7.25 /
+      data a10/ 1.735,1.718,1.615,1.358,1.258,1.310,1.660,2.220,2.770,3.250,
+     1 		    3.990,4.450,4.750,4.300,2.650,0.550,-0.950,-0.950,-0.930,-0.910,
+     2 			-0.875,-0.800 /
       data a11/ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /
-      data a12/ -0.2, -0.2, -0.2, -0.2, -0.2, -0.2, -0.2, -0.2, -0.2, -0.2, -0.2, 
-     1          -0.2, -0.2, -0.2, -0.2, -0.2, -0.2, -0.2, -0.2, -0.2, -0.2, -0.2 /
-      data a13/ 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.58, 0.56, 0.53,
-     1          0.5, 0.42, 0.35, 0.2, 0, 0, 0, 0, 0 /
-      data a14/ -0.3, -0.3, -0.3, -0.3, -0.3, -0.3, -0.3, -0.3, -0.24, -0.19, -0.11,
-     1          -0.04, 0.07, 0.15, 0.27, 0.35, 0.46, 0.54, 0.61, 0.65, 0.72, 0.8 /
-      data a15/ 1.1, 1.1, 1.1, 1.1, 1.1, 1.1, 1.1, 1.1, 1.1, 1.03, 0.92, 0.84, 0.68, 
-     1          0.57, 0.42, 0.31, 0.16, 0.05, -0.04, -0.11, -0.19, -0.3 /
-      data a17/ -0.0025, -0.0025, -0.0025, -0.003, -0.0037, -0.004, -0.0037, 
-     1          -0.0032, -0.0028, -0.0023, -0.0013, -0.0007, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /
-      data a43/ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.08, 0.1, 0.1, 0.1, 0.13, 0.24, 
-     1          0.3, 0.36, 0.43, 0.51, 0.61, 0.55, 0.42/
-      data a44/ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.04, 0.06, 0.11, 
-     1          0.15, 0.2, 0.21, 0.25, 0.29, 0.32, 0.33, 0.32, 0.265, 0.21 /
-      data a45/ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.02, 0.04, 0.07, 0.13, 0.17, 
-     1          0.2, 0.22, 0.25, 0.23, 0.21, 0.18, 0.155, 0.13 /
-      data a46/ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.03, 0.07, 0.11, 0.13, 
-     1         0.14, 0.15, 0.16, 0.14, 0.12, 0.11, 0.07, 0.07, 0.07 /
+      data a12/ -0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,
+     1 			-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1 /
+      data a13/ 0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.58,0.56,0.53,
+     1 			0.50,0.42,0.35,0.20,0,0,0,0,0 /
+      data a14/ -0.30,-0.30,-0.30,-0.30,-0.30,-0.30,-0.30,-0.30,-0.24,-0.19,
+     1 		    -0.11,-0.04,0.07,0.15,0.27,0.35,0.46,0.54,0.61,0.65,0.72,0.80 /
+      data a15/ 1.10,1.10,1.10,1.10,1.10,1.10,1.10,1.10,1.10,1.03,0.92,0.84,
+     1 		    0.68,0.57,0.42,0.31,0.16,0.05,-0.04,-0.11,-0.19,-0.30 /
+      data a17/ -0.0066,-0.0066,-0.0066,-0.0075,-0.0092,-0.0101,-0.0097,
+     1 		    -0.0084,-0.0074,-0.0064,-0.0043,-0.0032,-0.0025,-0.0022,
+     2 			-0.0016,-0.0013,-0.0010,-0.0010,-0.0010,-0.0010,-0.0010,-0.0010 /
+      data a43/ 0.10,0.10,0.10,0.10,0.10,0.10,0.10,0.10,0.10,0.10,0.10,0.10,
+     1 	        0.14,0.165,0.22,0.26,0.34,0.41,0.51,0.55,0.55,0.42 /
+      data a44/ 0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.07,
+     1 			0.10,0.14,0.165,0.21,0.25,0.30,0.32,0.32,0.32,0.29,0.22 /
+      data a45/ 0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.03,0.06,
+     1 			0.10,0.14,0.165,0.20,0.22,0.23,0.23,0.22,0.20,0.17,0.14 /
+      data a46/ -0.05,-0.05,-0.05,-0.05,-0.05,-0.05,-0.05,0.03,0.00,0.03,
+     1 			0.06,0.09,0.13,0.14,0.16,0.16,0.16,0.14,0.13,0.10,0.08,0.08 /
      
       n = 1.5
-      c = 1.8
+      c = 2.4
      
+
+c	  magnitude dependent taper for C4.
+      if ( mag .ge. 5. ) then
+        c4_mag = c4(iper)
+      elseif ( mag .ge. 4.) then
+        c4_mag = c4(iper) - (c4(iper)-1.)*(5. - mag)
+      else
+        c4_mag = 1.
+      endif
+		
 c     Set distance (eq 3)
-      R = sqrt(rRup**2 + c4(iper)**2)
-               
+      R = sqrt(rRup**2 + c4_mag**2)
+       	  
 C     Base Model (eq 2)
       M1 = a9(iper)
       M2 = 5.0
       if ( mag .le. M2 ) then
         f1 = a1(iper) + a6(iper)*(Mag-M2) + a7(iper)*(Mag-M2)**2 + a4(iper)*(M2-M1) + a8(iper)*(8.5-M2)**2 +
-     1                (a2(iper) + a3(iper)*(M2-M1)) * alog(R) + a17(iper)*R
+     1                (a2(iper) + a3(iper)*(M2-M1)) * alog(R) + a17(iper)*rRup
       elseif ( mag .le. M1 ) then
-        f1 = a1(iper) + a4(iper)*(Mag-M1) + a8(iper)*(8.5-Mag)**2 + (a2(iper) + a3(iper)*(Mag-M1)) * alog(R) + a17(iper)*R
+        f1 = a1(iper) + a4(iper)*(Mag-M1) + a8(iper)*(8.5-Mag)**2 + (a2(iper) + a3(iper)*(Mag-M1)) * alog(R) + a17(iper)*rRup
       else
-        f1 = a1(iper) + a5(iper)*(Mag-M1) + a8(iper)*(8.5-Mag)**2 + (a2(iper) + a3(iper)*(Mag-M1)) * alog(R) + a17(iper)*R
+        f1 = a1(iper) + a5(iper)*(Mag-M1) + a8(iper)*(8.5-Mag)**2 + (a2(iper) + a3(iper)*(Mag-M1)) * alog(R) + a17(iper)*rRup
       endif
 
 c     style of faulting (eq 15 an 16) 
@@ -11364,19 +11368,19 @@ c     Set VS30_star (eq 5)
       if ( vs30 .lt. v1 ) then
          vs30Star = vs30
       else
-      vs30Star = v1
-      endif      	
+	vs30Star = v1
+      endif		
 
 c     Compute site amplification (Eq. 4)  
-      n = 1.5
-      c = 1.8
       if (vs30 .lt. vLin(iPer)) then
         f5 = a10(iper)*alog(vs30Star/vLin(iper)) - b(iper)*alog(c+Sa1100) 
      1              + b(iper)*alog(Sa1100+c*((vs30Star/vLin(iper))**(n)) )
       else
-           f5 = (a10(iper) + b(iper)*n) * alog(vs30Star/vLin(iper))
+     	f5 = (a10(iper) + b(iper)*n) * alog(vs30Star/vLin(iper))
       endif
 
+c     Set CA z1 reference (eq 18) in main.
+c      z1_ref = exp ( -7.67/4. * alog( (Vs30**4 + 610.**4)/(1360.**4+610.**4) ) ) / 1000.
 
 C     Soil Depth Model (eq 17)
       if ( vs30 .lt. 200. ) then 
@@ -11385,10 +11389,8 @@ C     Soil Depth Model (eq 17)
         f10 = a44(iper) * alog( (z1+0.01) /(z1_ref+0.01) )
       elseif ( vs30 .lt. 500. ) then
         f10 = a45(iper) * alog( (z1+0.01) /(z1_ref+0.01) )
-      elseif ( vs30 .lt. 700. ) then
+      else 
         f10 = a46(iper) * alog( (z1+0.01) /(z1_ref+0.01) )
-      else
-        f10 = 0.
       endif        
 
 c     Compute HW taper1 (eq 9) 
@@ -11403,14 +11405,13 @@ c     Compute HW taper2 (eq. 10)
       if( mag .gt. 6.5 ) then
         HW_taper2 = 1. + hw_a2 * (mag-6.5) 
       elseif ( mag .gt. 5.5 ) then
-c the - sign below is a correction made on Mar 14 2013. 
         HW_taper2 = 1. + HW_a2 * (mag-6.5) - (1-HW_a2)*(mag-6.5)**2
-c        HW_taper2 = 1. + HW_a2 * (mag-6.5) + (1-HW_a2)*(mag-6.5)**2      !wrong NA
       else
         HW_taper2 = 0.
       endif
 
 c     Compute HW taper 3 (eq. 11)
+C	  April 11, correction by ronnie for HW_taper3 when Rx.gt.R2
       h1 = 0.25
       h2 = 1.5
       h3 = -0.75
@@ -11421,8 +11422,7 @@ c     Compute HW taper 3 (eq. 11)
       elseif ( Rx . lt. R2 ) then
         HW_taper3 = 1. - (Rx-R1)/(R2-R1)
       else
-c        HW_taper3 = 1.
-	 HW_taper3 = 0.	!corrected code from Ronnie Kamai email of 4/11/2013.
+        HW_taper3 = 0.
       endif 
 
 c     Compute HW taper 4 (eq 12)
@@ -11446,7 +11446,7 @@ c     Compute HW taper 5 (eq. 13a)  **** No Ry0 version ***
       if (Rjb .eq. 0. ) then
         HW_taper5 = 1. 
       elseif ( Rjb .lt. 30. ) then
-        HW_taper5 = 1 - Rjb/30.
+        HW_taper5 = 1.0 - Rjb/30.
       else
         HW_taper5 = 0.
       endif
@@ -11457,14 +11457,14 @@ c     Hanging wall Model (eq 8)
       else
         f4 = 0.
       endif
-      
+	
 C     Set the Sigma Values
       
 c     Compute within-event term, phiA, at the surface for linear site response (eq 23)
-      if (mag .lt. 3.5) then
+      if (mag .lt. 4.0) then
          phiA = s1(iper)
-      elseif (mag .le. 7.0) then
-         phiA = s1(iper) + ((s2(iper)-s1(iper))/3.5)*(mag-3.5)
+      elseif (mag .le. 6.0) then
+         phiA = s1(iper) + ((s2(iper)-s1(iper))/2.0)*(mag-4.0)
       else
          phiA = s2(iper)
       endif
@@ -11501,5 +11501,4 @@ c     Compute median ground motion (eq. 1)
       lnSa = f1 + f4 + f5 + f6 + f7 + f8 + f9 + f10  
 
       return
-      end subroutine AS2013_v10_model
-      
+      end subroutine AS2013_v5_model

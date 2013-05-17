@@ -79,8 +79,7 @@ c      logical bogus,bear,egg,fok
       real ymag, ybar, xmu, xmo, xmagl, xmag, xlen, xln, wt, widtho, width, trate, totmo, top, sx, sy
       real sumrate2, sum2, sum1, avgaz, wtin
       integer ic/0/
-      integer iuplift, img, itype, npts, iflt, i, icharv, ilat, ilatmn, ilatmx, imag, imax
-      integer ka, j, ineq, ncnt, latlon, nmag, nmg, ndip, igr
+      integer iuplift, ndip, itype, imax, img, ichar 
 c ic = number of faults where mmax is determined from area or length
       real magmax,magmin,magmax0,morate,morateo
 c add hslip at each 0.25 d increment in latitude. this is the summed horizotal slip rate.
@@ -215,7 +214,11 @@ c some faults may have different "sdep" than the regional value entered,
 c example Calaveras C with sdepth 10 km but regional sdep might be 15 km. Below
 c effectively kills this fault-specific information. SH may 3 2006.      
       if(sdep.ne.0.) width= sdep/sin(abs(dip)*d2r)
-      if((iuplift.eq.1).and.(dip.lt.89.).and.itype.gt.1) rate= rate/sin(abs(dip)*d2r)
+      if((iuplift.eq.1).and.(dip.lt.89.).and.itype.gt.1) then
+        rateorig= rate
+        rate= rate/sin(abs(dip)*d2r)
+c        write(*,*)'rateOrig/rate: ',rateorig,rate
+      endif
 c--itype= 1 for strike slip; 2 for reverse; 3 for normal
 c    write(6,*) "enter number of segment points"
        write(2,*) nameflt
