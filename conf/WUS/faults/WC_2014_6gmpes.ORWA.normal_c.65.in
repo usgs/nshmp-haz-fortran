@@ -2,7 +2,7 @@
 24.6 50. 0.05           !site grid. Using M=M(SRL) Wells and Co. except special situations 
 -125. -100. 0.05
 760.0 2.0          ! Vs30 and depth (km) to 2.5 km/s rock
-1.0 300.
+1.0 200.
 3       !3 spectral periods.  M<6.5 sources are in a separate file
 0. 1. 0. PGA. 
 0.370 0.220 0.220
