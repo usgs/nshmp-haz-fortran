@@ -2,7 +2,7 @@
 24.6 50. 0.1   standard WUS grid    
 -125. -100. 0.1
 760 1.
-1 50. 1 1	dtor 50 km
+3 42. 1 -123.25 50. 1 -122.49   60. 1 -120. dtor 42, 50 or 60 km
 1. 0 0 		!wts to ss, rev, normal (shouldnt affect deep)
 1. 200.
 24.6 50. .1
