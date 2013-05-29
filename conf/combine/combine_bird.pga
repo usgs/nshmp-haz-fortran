@@ -1,19 +1,13 @@
 1
-6
-../out/wusfaultnoCA.bird_no2.3dipgr.pga
-    0.333
-../out/wusfaultnoCA.bird_no2.3dipchar.pga
-    0.667
-../out/wusfaultnoCA.bird_no2.3dip65.pga
-    1.000
-../out/Bird.hazgrid1.pga.m
-    0.200
-../out/Bird.hazgrid1.pga.p
-    0.200
-../out/Bird.hazgrid1.pga
-    0.600
+3
+../out/bird_geod.gr.pga
+0.333
+../out/bird_geod.char.pga
+0.667
+../out/bird_geod.65.pga
+1.000
 1
-../out/combine/tmp_bird.wusfaultnoCA.pga
+../out/combine/bird.wus.pga
 0
 
 

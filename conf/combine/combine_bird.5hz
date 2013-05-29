@@ -1,19 +1,13 @@
 1
-6
-../out/wusfaultnoCA.bird_no2.3dipgr.5hz
-    0.333
-../out/wusfaultnoCA.bird_no2.3dipchar.5hz
-    0.667
-../out/wusfaultnoCA.bird_no2.3dip65.5hz
-    1.000
-../out/Bird.hazgrid1.5hz.m
-    0.200
-../out/Bird.hazgrid1.5hz.p
-    0.200
-../out/Bird.hazgrid1.5hz
-    0.600
+3
+../out/bird_geod.gr.5hz
+0.333
+../out/bird_geod.char.5hz
+0.667
+../out/bird_geod.65.5hz
+1.000
 1
-../out/combine/tmp_bird.wusfaultnoCA.5hz
+../out/combine/bird.wus.5hz
 0
 
 

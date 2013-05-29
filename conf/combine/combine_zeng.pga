@@ -1,13 +1,13 @@
 1
 3
-../out/wusfaultnoCA.zeng.3dipgr.pga
+../out/zeng_geod.gr.pga
 0.3333
-../out/wusfaultnoCA.zeng.3dipchar.pga
+../out/zeng_geod.char.pga
 0.6667
-../out/wusfaultnoCA.zeng.3dip65.pga
+../out/zeng_geod.65.pga
 1.0    
 1
-../out/combine/tmp_zeng.wusfaultnoCA.pga
+../out/combine/zeng.wus.pga
 0
 
 

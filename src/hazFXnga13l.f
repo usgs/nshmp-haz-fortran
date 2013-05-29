@@ -1,4 +1,5 @@
-c--- program  hazFXnga13l.f; 05/17/2013; Use  with NGA relations, or others.
+c--- program  hazFXnga13l.f; 05/21/2013; Use  with NGA relations, or others.
+c 5/21/2013: correct  c11 term in gksa13v2
 c 5/20/2013: Add May 18 BSSA. 
 c 5/17/2013: correct some e5 coeffs in bssa2013drv. Make cDPP = 0 in CY2013. (no directivity)
 c 5/16/2013: Update AS13 to May version. Norm A recommends using this instead of AS08 as of May 15.
@@ -8140,7 +8141,8 @@ c the Pezeshk article is in base10 logarithm units. we work in natural log units
 
 
       subroutine gksa13v2(L,ip,Mw,x,gndout,sigmaf,Vs,mec,Bdepth,Q)
-c from GKSA13fl.f sent Mar 22 2013. Then updated apr 9 2013 (v2).
+c from GKSA13fl.f sent Mar 22 2013. Then updated apr 9 2013 (v2). corrected
+c c11 May 21. 
 c Revised Graizer and Kalkan model with continuous response variation with 
 c      basin depth. Also PGA has been identified with 0.01s SA due to basin
 c      effect. 
@@ -8195,7 +8197,7 @@ c         c9 =  0.525
          bv = -0.240 
          Va = 484.5
          R1 = 100.0
-         c11= 1.0
+         c11= 0.345	!corrected May 21 2013. Lower Q and lower c11.
          D1 = 0.65
          sigpga = 0.550
          if (per(L).le.0.12) then
@@ -8222,7 +8224,7 @@ ccccc      Mec = 4 combination of thrust and strike
           Frv = 1.14
       ENDIF
       A = (c1*atan(Mw+c2)+c3)*Frv
-      A = A/1.096
+      A = A/1.12	!corrected denom. May 21 2013.
       Y1 = alog(A)
 
 c********* Distance R0 Factor ********************
@@ -9569,7 +9571,7 @@ c HW effect
 
 c Directivity effect
         fd = c8(iprd) *
-     1       max(1-max(R_Rup-40.0,0.0)/30.0, 0.0) *
+     1       max(1.0-max(R_Rup-40.0,0.0)/30.0, 0.0) *
      1       min(max(M-5.5,0.0)/0.8, 1.0) *
      1       exp(-c8a(iprd)*(M-c8b(iprd))**2) * cDPP
 
@@ -10139,8 +10141,8 @@ c Subroutine updated by SH. May 20 2013.
       real :: sqrt2
       parameter (sqrt2=1.414213562)
       real, dimension(3) :: c
-      real :: per,m, r, v30, z1, pga4nl, amref,rref,delta_c3,e(0:6),amh,
-     :        clin, vclin, vref,phi2, phi3,f1,f2,f3,f4,f5,f6,f7,phi1, 
+      real :: per,m, r, v30, z1, pga4nl, amref, rref, delta_c3,e(0:6), amh,
+     :        clin, vclin, vref, phi3,  f1, f2, f3, f4, f5, f6,f7,phi1, phi2, 
      :         delta_phiR, rjb,r1,r2,
      :        delta_phiV, v1, v2,
      :        tau1, tau2,

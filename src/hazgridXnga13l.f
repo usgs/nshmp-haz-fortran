@@ -1,4 +1,5 @@
-c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  05/20/ 2013. Long header version.
+c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  05/21/ 2013. Long header version.
+c 5/21/2013: correct c11 definition in gk13v2.
 c 5/20/2013: Add May 18 BSSA. Correct definition of z1km used in GK13 and AS08.
 c 5/17/2013: correct some e5 coeffs in bssa2013drv. Make cDPP = 0 in CY2013. (no directivity)
 c 5/16/2013: Update AS2013 NGA-W. Use the W&C M(A) to infer a fault width, as in CB13.
@@ -9010,7 +9011,7 @@ c         c9 =  0.525
          bv = -0.240 
          Va = 484.5
          R1 = 100.0
-         c11= 1.0
+         c11= 0.345	!corrected May 21 2013. 0.345 corresponds to Q=157
          D1 = 0.65
          sigpga = 0.550
          sigmaf=1./sigpga/sqrt2
@@ -9075,7 +9076,7 @@ c loop on magnitude
       do jj=1,nmag
 C*****Magnitude term
       A = (c1*atan(Mw+c2)+c3)*Frv
-      A = A/1.096
+      A = A/1.12	!corrected denom. to 1.12 May 21 2013.
 c------- Vs30 site effect in sfac--------------------------
       Y1 = alog(A) +sfac
        if(e_wind(ip))then
@@ -9959,7 +9960,7 @@ c HW effect
 
 c Directivity effect
         fd = c8(iprd) *
-     1       max(1-max(R_Rup-40.0,0.0)/30.0, 0.0) *
+     1       max(1.0-max(R_Rup-40.0,0.0)/30.0, 0.0) *
      1       min(max(M-5.5,0.0)/0.8, 1.0) *
      1       exp(-c8a(iprd)*(M-c8b(iprd))**2) * cDPP
         psa_ref = r1+r2+r3+r4+hw+fd
@@ -10267,8 +10268,8 @@ c add SDI-related common block sdi feb 22 2013
      +856.21,840.97,826.47,812.92,799.72,787.55,776.05,765.55,756.97,735.74,728.14,726.30,728.24,731.96,735.81,
      +739.50,743.07,746.55,750.00/)
 	Vref=760.
-        f1=0.0
-        f3=0.1	!fill out with constant value
+	f1=0.0
+	f3=0.1	!fill out with constant value
 	f4=(/-0.1000,-0.1500,-0.1483,-0.1471,-0.1477,-0.1496,-0.1525,-0.1549,-0.1574,-0.1607,-0.1641,-0.1678,
      +-0.1715,-0.1760,-0.1810,-0.1862,-0.1915,-0.1963,-0.2014,-0.2066,-0.2120,-0.2176,-0.2232,-0.2287,-0.2337,
      +-0.2382,-0.2421,-0.2458,-0.2492,-0.2519,-0.2540,-0.2556,-0.2566,-0.2571,-0.2571,-0.2562,-0.2544,-0.2522,
@@ -10597,11 +10598,11 @@ c version ofmay 18 2013
      :        rref, delta_c3,
      :        e(0:6), amh,
      :        clin, vclin, vref,
-     :        phi2, phi3,   
+     :         phi3,   
      :        f1, f2, f3, f4, f5, f6,f7,
      :        rjb_bar, delta_phiR, 
      :        delta_phiV, v1, v2,
-     :        phi1,  
+     :        phi1, phi2, 
      :        tau1, tau2,
      :        y, fe, fpb, fp, fsb, fs, 
      :        phiM, phiMR, phi, tau, sigma, 
@@ -10644,6 +10645,7 @@ c      z1 = -9.9
 c need to rework code with irelation some day. SH
 c        if (irelation == 1 .or. irelation == 2) then
           delta_z1 = z1 - mu1_vs30(v30, irelation)
+c          print *,delta_z1,' delta_z1', z1,mu1_vs30(v30, irelation)
 c        else
 c          delta_z1 = 0.0
 c        end if
