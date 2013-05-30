@@ -20,12 +20,12 @@ echo "time1: $time1"
 log_gen_files=1
 log_check_files=1
 # hazard calcs
-log_run_haz=0
+log_run_haz=1
 log_run_combine=0
 log_run_haz_check=0
 # plotting
 log_plot=0
-log_mail=0
+log_mail=1
 
 # set vars
 scripts_dir=$based/scripts
@@ -118,21 +118,12 @@ if (( $log_run_haz || $log_run_haz_check )); then
 #WUS
   for modf in `ls $faults_dir | grep _${gmpenm}`; do
     if (( $log_run_haz_check )); then
-      echo $bin_dir/hazFXnga13l $faults_dir_rel/$modf 
+      echo $bin_dir/hazFXnga13p $faults_dir_rel/$modf 
     fi
     if (( $log_run_haz )); then
       logf=`echo $modf | sed 's/\.in//'`
-      $bin_dir/hazFXnga13l $faults_dir_rel/$modf >& $log_dir/${logf}.log
-    fi
-  done
-#CA
-  for modf in `ls $faults_dirCA | grep _${gmpenm}`; do
-    if (( $log_run_haz_check )); then
-      echo $bin_dir/hazFXnga13l $faults_dir_relCA/$modf 
-    fi
-    if (( $log_run_haz )); then
-      logf=`echo $modf | sed 's/\.in//'`
-      $bin_dir/hazFXnga13l $faults_dir_relCA/$modf >& $log_dir/${logf}.log
+      echo "Running $modf ${logf}.log..."
+      $bin_dir/hazFXnga13p $faults_dir_rel/$modf >& $log_dir/${logf}.log
     fi
   done
 # gridded files
