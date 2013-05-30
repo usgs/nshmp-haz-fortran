@@ -21,8 +21,10 @@ scripts_path=$trunk_path/scripts
 time1=`date`
 
 # change to scripts directory
+# check all scripts are executable
 if [ -d $scripts_path ]; then
   cd $scripts_path
+  chmod 750 hazrun_*.sh
 else
   echo "$scripts path does not exist"
   exit
@@ -60,33 +62,38 @@ fi
 cd $scripts_path
 
 # run hazard calculation scripts
-time1a=`date`
-./hazrun_wus.sh >& ../logs/log_hazrun_wus.txt
-time2a=`date`
-./hazrun_ca.sh >& ../logs/log_hazrun_ca.txt
-time3a=`date`
-./hazrun_casc.sh >& ../logs/log_hazrun_casc.txt
-time4a=`date`
-./hazrun_ceus.sh >& ../logs/log_hazrun_ceus.txt
+for reg in wus ca casc ceus; do
+  scr_nm=hazrun_${reg}.sh 
+  logf=../logs/log_${reg}.txt
+  echo "running $scr_nm - $logf"
+  ./$scr_nm >& $logf
+done
+#./hazrun_wus.sh >& ../logs/log_hazrun_wus.txt
+#./hazrun_ca.sh >& ../logs/log_hazrun_ca.txt
+#./hazrun_casc.sh >& ../logs/log_hazrun_casc.txt
+#./hazrun_ceus.sh >& ../logs/log_hazrun_ceus.txt
 time5a=`date`
 
 # combine the WUS output files, CEUS output files, merge WUS-CEUS
+echo "running combine_wus.sh log_combine_wus.txt"
 ./combine_wus.sh >& ../logs/log_combine_wus.txt
+echo "running combine_ceus_wus.sh log_combine_ceus_wus.txt"
 ./combine_ceus_wus.sh >& ../logs/log_combine_ceus_wus.txt
 
 # plot 2% in 50 yrs results for and convert to pdf
-plot_haz_maps_2pc50.gmt ../out/combine/us_hazard.pga.2pc50
-plot_haz_maps_2pc50.gmt ../out/combine/us_hazard.1hz.2pc50
-plot_haz_maps_2pc50.gmt ../out/combine/us_hazard.5hz.2pc50
-if [ ! -d ../figs ]; then
-  mkdir ../figs
-fi
-ps2pdf pl_us_hazard_pga_2pc50.ps ../figs/pl_us_hazard_pga_2pc50.pdf
-mv pl_us_hazard_pga_2pc50.ps ../figs/
-ps2pdf pl_us_hazard_1hz_2pc50.ps ../figs/pl_us_hazard_1hz_2pc50.pdf
-mv pl_us_hazard_1hz_2pc50.ps ../figs/
-ps2pdf pl_us_hazard_5hz_2pc50.ps ../figs/pl_us_hazard_5hz_2pc50.pdf
-mv pl_us_hazard_5hz_2pc50.ps ../figs/
+# no plotting in this version
+#plot_haz_maps_2pc50.gmt ../out/combine/us_hazard.pga.2pc50
+#plot_haz_maps_2pc50.gmt ../out/combine/us_hazard.1hz.2pc50
+#plot_haz_maps_2pc50.gmt ../out/combine/us_hazard.5hz.2pc50
+#if [ ! -d ../figs ]; then
+#  mkdir ../figs
+#fi
+#ps2pdf pl_us_hazard_pga_2pc50.ps ../figs/pl_us_hazard_pga_2pc50.pdf
+#mv pl_us_hazard_pga_2pc50.ps ../figs/
+#ps2pdf pl_us_hazard_1hz_2pc50.ps ../figs/pl_us_hazard_1hz_2pc50.pdf
+#mv pl_us_hazard_1hz_2pc50.ps ../figs/
+#ps2pdf pl_us_hazard_5hz_2pc50.ps ../figs/pl_us_hazard_5hz_2pc50.pdf
+#mv pl_us_hazard_5hz_2pc50.ps ../figs/
 
 # send mail to user
 time2=`date`
@@ -101,6 +108,7 @@ Finished WUS/Started CA: $time2a
 Finished CA/Started Casc: $time3a
 Finished Casc/Started CEUS: $time4a
 Finished CEUS: $time5a
+NO Plotting in this version of the script
 
 
 All hazard calculations written to file

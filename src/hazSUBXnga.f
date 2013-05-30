@@ -3454,7 +3454,9 @@ C	Define DelC1
 	if(delCi.le.3.and.delCi.gt.0) then
 		delC1 = delC(delCi)
 	else 
-		pause 'Error in delC1'
+c		pause 'Error in delC1'
+		write(*,*) 'Error in delC1'
+		stop
 	endif
 C		
 C	Calculate Magnitude Scaling Factor fMag(M)
@@ -3466,7 +3468,9 @@ C	Calculate Magnitude Scaling Factor fMag(M)
 C	
 C 	Calculate Depth Scaling Factor fDepth(zH)
 	if(Fevnt > 1.or.Fevnt < 0) then 
-		pause 'Error in Fevnt term'
+c		pause 'Error in Fevnt term'
+		write(*,*) 'Error in Fevnt term'
+		stop
 	else	
 		fDepth = theta11(iq)*(zH-60)*Fevnt
 	endif
@@ -3474,7 +3478,9 @@ C
 C	Calculate Forearc/Backarc Scaling fFaba
 	if(Ffaba .gt. 1 .or. Ffaba .lt. 0) then 
 		print *,fFaba
-		pause 'Error in Ffaba term'
+c		pause 'Error in Ffaba term'
+		write(*,*) 'Error in Ffaba term'
+		stop
 	endif
 	if(Fevnt.eq.1 .and. Ffaba.eq.1) then ! its a backarc site loc and intraplate src.
 		Rmax = max(R, 85.0)

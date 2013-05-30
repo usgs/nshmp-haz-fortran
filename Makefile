@@ -9,7 +9,8 @@
 .PHONY: all clean
 
 #m_bit=-m32 # flag does not work on Linux cluster
-m_bit=-m32 # flag does not work on Linux cluster
+#m_bit=-m32 # flag does not work on Linux cluster
+m_bit=
 
 F_COMPILER = gfortran
 FFLAGS1 = -O2 -Warray-bounds -ffixed-line-length-none -ffpe-trap= $(m_bit)

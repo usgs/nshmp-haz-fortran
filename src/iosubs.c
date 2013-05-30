@@ -20,8 +20,8 @@ struct header *headr;
 struct sheader
 {
    char name[MAXCHAR][6];
-   long int period;
-   long int nlev;
+   int period;
+   int nlev;
    float xlev[20];
    float extra[10];
 };
@@ -125,22 +125,22 @@ char name[];
 }
 
 void getbuf_(buf,bufsiz,readn)
-long int *bufsiz,*readn;
+int *bufsiz,*readn;
 short int *buf;
 {
        *readn= fread(buf,2,*bufsiz,fp[0]);
 }
 
 void getbuf2_(buf2,bufsiz,readn)
-long int *bufsiz,*readn;
+int *bufsiz,*readn;
 float *buf2;
 {
        *readn= fread(buf2,4,*bufsiz,fp[0]);
 }
 
 void getbuf3_(buf2,bufsiz,readn,skip)
-long int *bufsiz, *readn;
-long int *skip;
+int *bufsiz, *readn;
+int *skip;
 float *buf2;
 {
        fseek(fp[0], *skip, 0);
@@ -148,14 +148,14 @@ float *buf2;
 }
 
 void putbuf2_(buf2,bufsiz,readn)
-long int *bufsiz,*readn;
+int *bufsiz,*readn;
 float *buf2;
 {
        *readn= fwrite(buf2,4,*bufsiz,fp[0]);
 }
 
 void putbuf_(buf2,bufsiz,readn)
-long int *bufsiz,*readn;
+int *bufsiz,*readn;
 short int *buf2;
 {
        *readn= fwrite(buf2,2,*bufsiz,fp[0]);
@@ -163,7 +163,7 @@ short int *buf2;
 
 void putbufx_(fpx,buf2,bufsiz,readn)
 //int *ip;
-long int *bufsiz,*readn;
+int *bufsiz,*readn;
 float *buf2;
 int *fpx;
 {
@@ -172,7 +172,7 @@ int *fpx;
 
 void puthead_(fpx,headr,bufsiz,readn)
 struct header *headr;
-long int *bufsiz,*readn;
+int *bufsiz,*readn;
 int *fpx;
 {
        *readn= fwrite(headr,*bufsiz,1,fp[*fpx]);
@@ -189,14 +189,14 @@ int *fpx;
 
 void gethead_(headr,bufsiz,readn)
 struct header *headr;
-long int *bufsiz,*readn;
+int *bufsiz,*readn;
 {
       *readn= fread(headr,*bufsiz,1,fp[0]);
 }
 
 void getshead_(sheadr,bufsiz,readn)
 struct sheader *sheadr;
-long int *bufsiz,*readn;
+int *bufsiz,*readn;
 {
       *readn= fread(sheadr,*bufsiz,1,fp1);
 }
@@ -210,7 +210,7 @@ int *fpx;
 }
 void getheadx_(fpx,headr,bufsiz,readn)
 struct header *headr;
-long int *bufsiz,*readn;
+int *bufsiz,*readn;
 int *fpx;
 {
       *readn= read(*fpx,headr,*bufsiz);
