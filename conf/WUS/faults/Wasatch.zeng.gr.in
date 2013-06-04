@@ -50,7 +50,8 @@
 3               !3 branches on Magnitude epistemic variability
 -.2 0. .2           ! -dM, 0, + dM epistemic mag variability. Branches have same moment rate
 .2 .6 .2          !Weights assigned to epistemic mag variability branches
-0.0 1          !M aleatory variability - none in floating rupture branches           2           3           1           0    2351d Wasatch fault, Brigham City section         
+0.0 1          !M aleatory variability - none in floating rupture branches           
+2           3           1           0    2351d Wasatch fault, Brigham City section         
  2.23279  0.80  6.500  6.900 0.1000 0.60000 0.38184E+17
    50.000000       19.581120       0.0000000       40.814560    
           15

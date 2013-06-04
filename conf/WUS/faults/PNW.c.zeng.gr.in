@@ -50,7 +50,8 @@
 3               !3 branches on Magnitude epistemic variability
 -.2 0. .2           ! -dM, 0, + dM epistemic mag variability. Branches have same moment rate
 .2 .6 .2          !Weights assigned to epistemic mag variability branches
-0.0 1          !M aleatory variability - none in floating rupture branches          2           2           1           0    566 Mill Creek Thrust fault                       
+0.0 1          !M aleatory variability - none in floating rupture branches          
+2           2           1           0    566 Mill Creek Thrust fault                       
  0.70370  0.80  6.500  7.100 0.1000 1.00000 0.20332E+16
    60.000000       17.320515       0.0000000       56.477695    
           11

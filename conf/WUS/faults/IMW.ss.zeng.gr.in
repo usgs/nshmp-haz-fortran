@@ -50,7 +50,8 @@
 3               !3 branches on Magnitude epistemic variability
 -.2 0. .2           ! -dM, 0, + dM epistemic mag variability. Branches have same moment rate
 .2 .6 .2          !Weights assigned to epistemic mag variability branches
-0.0 1          !M aleatory variability - none in floating rupture branches          2           1           1           0    1123 Kane Spring Wash fault                       
+0.0 1          !M aleatory variability - none in floating rupture branches          
+2           1           1           0    1123 Kane Spring Wash fault                       
 -0.10517  0.80  6.500  7.000 0.1250 1.00000 0.19180E+15
    90.000000       15.000000       0.0000000       42.621403    
           14
