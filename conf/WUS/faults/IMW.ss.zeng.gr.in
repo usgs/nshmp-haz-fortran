@@ -1,14 +1,14 @@
-0               !Use with hazFX. Characteristic-M fault file 
+ 0               !Use with hazFX. Characteristic-M fault file - floating ruptures
 24.6 50. 0.05           !site grid. Using M=M(SRL) Wells and Co. except special situations 
 -125. -100. 0.05
 760.0 2.0          ! Vs30 and depth (km) to 2.5 km/s rock
-1.0 200.
+1. 200.
 3       !3 spectral periods.  M<6.5 sources are in a separate file
 0. 1. 0. PGA. 
-0.370 0.220 0.220
-0.250 0.230 0.230
-0.400 0.360 0.330
-../out/Zeng.ss.gr.pga
+0.375 0.210 0.245
+0.230 0.225 0.23
+0.400 0.360 0.31
+../out/zeng_geod.IMW.ss.gr.pga
 20
 .005 .007 .0098 .0137 .0192 .0269 .0376 .0527 .0738 .103 .145 .203 .284 .397 .556 .778 1.09 1.52 2.2 3.3
 6
@@ -19,10 +19,10 @@
 37 0.18 1000.   0.0 0 ID2013
 38 0.10 1000.   0.0 0 GK2013
 0.20 1. 0. PSA
-0.370 0.220 0.220
-0.250 0.230 0.230
-0.400 0.360 0.330
-../out/Zeng.ss.gr.5hz
+0.375 0.210 0.245
+0.230 0.225 0.23
+0.400 0.360 0.31
+../out/zeng_geod.IMW.ss.gr.5hz
 19
 .005 .0075 .0113 .0169 .0253 .0380 .0570 .0854 .128 .192 .288 .432 .649 .973 1.46 2.19 3.28 4.92 7.38
 6
@@ -33,10 +33,10 @@
 37 0.18 1000.   0.0 0 ID2013
 38 0.10 1000.   0.0 0 GK2013
 1.00 1. 0. PSA
-0.370 0.220 0.220
-0.250 0.230 0.230
-0.400 0.360 0.330
-../out/Zeng.ss.gr.1hz
+0.375 0.210 0.245
+0.230 0.225 0.23
+0.400 0.360 0.31
+../out/zeng_geod.IMW.ss.gr.1hz
 20
 .0025 .00375 .00563 .00844 .0127 .0190 .0285 .0427 .0641 .0961 .144 .216 .324 .487 .730 1.09 1.64 2.46 3.69 5.54
 6
@@ -50,8 +50,7 @@
 3               !3 branches on Magnitude epistemic variability
 -.2 0. .2           ! -dM, 0, + dM epistemic mag variability. Branches have same moment rate
 .2 .6 .2          !Weights assigned to epistemic mag variability branches
-0.0 1          !M aleatory variability, sigma=0.12, 5 steps on either side of 0, each sigma*0.4
-           2           1           1           0    1123 Kane Spring Wash fault                       
+0.0 1          !M aleatory variability - none in floating rupture branches          2           1           1           0    1123 Kane Spring Wash fault                       
 -0.10517  0.80  6.500  7.000 0.1250 1.00000 0.19180E+15
    90.000000       15.000000       0.0000000       42.621403    
           14
