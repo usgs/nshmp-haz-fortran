@@ -572,6 +572,7 @@ c------- Sadigh type
 c vsfac used for site-amp in  the Kanno et al. relation.
         vsfac=alog10(vs30)          
        elseif(iatten(ip,ia).eq.20)then
+      izpar=1
       ka=1
 c New BC Hydro Subd GMPE Jan 2011. For spectral period <=0.02 s, use the pga model.
       if(period(ip).le.0.02)then
@@ -892,7 +893,7 @@ c store this in m= 24 bin.
 c      endif
       write(6,*)' Cumulative annual rate of subd events: ',rtot
       write(6,*)' This is equivalent to recurr. interval of ',1./rtot,' yrs'
-c---Here's the guts
+c---Heres the guts
 c
 c---loop through receiver sites 250 at a time. Why 250 at a time? big mystery.
       i = 0
@@ -1063,7 +1064,7 @@ c Norm Abrahamson BC Hydro program Jan 20 2011. Testing.
       kevnt=0;
       delCi=2	!2 is main branch. 1 is low 3 is high.
       zH = ztop(izpar)
-c      print *,zH,' going in to getNAAsub hypo depth (km)'
+c      print *,zH,izpar, ' going in to getNAAsub hypo depth (km)'
       
       call getNAAsub(ip, ipernaa(ip), kevnt, kbackarc, xmag, rcd, zH, sigmaf, gnd, delCi, vs30)
 c kevnt=0 interface, not for in-slab source. kbackarc=1 is back-arc. This setting needs

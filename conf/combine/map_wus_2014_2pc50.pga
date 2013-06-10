@@ -1,8 +1,12 @@
 24.6 50.0 0.05
 -125 -100 0.05
-4
+6
 ../out/combine/wc.wus.2014.pga
-1.0
+0.7
+../out/combine/zeng.wus.pga
+0.2
+../out/combine/bird.wus.pga
+0.1
 ../out/combine/wus_2014.g.pga
 1
 ../out/combine/sub.2014.pga
