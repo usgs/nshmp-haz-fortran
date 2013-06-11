@@ -10101,7 +10101,8 @@ c       endif
      :        alny, sigmaf)     
 c Note output log(SA) not SA in this version. No need for SA in downstream calcs. 
 c removed iregion: taken care of before arriving here.    
-c z1 is depth to 1 km/s Vs. Units km (?). 
+c z1 is depth to 1 km/s Vs. Units km (?) - nope, meters. 
+c Subroutine updated by SH. June 11 2013.
 c Subroutine updated by SH. May 20 2013.
 !Input arguments:
 
@@ -10191,7 +10192,7 @@ c      z1 = -9.9	!should not do this. communicates this to rest of pgm
       irelation=1
 c need to rework code with irelation some day. SH
 c        if (irelation == 1 .or. irelation == 2) then
-          delta_z1 = z1 - mu1_vs30(v30, irelation)
+          delta_z1 = z1*1000 - mu1_vs30(v30, irelation)
 c        else
 c          delta_z1 = 0.0
 c        end if
