@@ -50,7 +50,7 @@
 3               !3 branches on Magnitude epistemic variability
 -.2 0. .2           ! -dM, 0, + dM epistemic mag variability. Branches have same moment rate
 .2 .6 .2          !Weights assigned to epistemic mag variability branches
-0.0 1          !M aleatory variability, sigma=0.12, 5 steps on either side of 0, each sigma*0.4
+.12 0          ! Wasatch M7.4 weirdness - must have nonzero sdal but 0 branches on either side of trunk ok
  2 3 1 1    2351 Wasatch fault zone                           
  3.2287204 0.8 7.4 7.4 0.1 0.6 2.8755565E+17
  50.0 19.58112 0.0E+0 312.4896
