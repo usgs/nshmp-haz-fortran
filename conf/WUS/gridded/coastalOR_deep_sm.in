@@ -7,8 +7,9 @@
 1. 200.
 42. 47. .1
 -125. -122 .1
-0.40 6.5 7.2 .1 3.		Mmin set to 6.5 afrankel email may 18
-1 0 0 0
+0.40 6.5 7.5 .1 3.		Mmin set to 6.5 afrankel email may 18
+1 0 0 7.2
+../conf/WUS/gridded/GR_DOS/wtgrid.ORdeep_sm
 ../conf/WUS/gridded/GR_DOS/agrd_ORdeep_sm.out
 1. 0
 ../bin/rjbmean.bin.geoma
