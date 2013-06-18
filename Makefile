@@ -53,7 +53,7 @@ hazallXL.v5: iosubs
 hazFXnga7c: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazFXnga7c $(SRC)/hazFXnga7c.f $(SRC)/iosubs.o
 hazFXnga13l: iosubs
-	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazFXnga13l $(SRC)/hazFXnga13l.f $(SRC)/iosubs.o
+	$(F_COMPILER) $(FFLAGS1) -finit-local-zero -o $(OUT)/hazFXnga13l $(SRC)/hazFXnga13l.f $(SRC)/iosubs.o
 hazFXnga7.temp: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazFXnga7.temp $(SRC)/hazFXnga7.temp.f $(SRC)/iosubs.o
 hazFXnga12: iosubs
