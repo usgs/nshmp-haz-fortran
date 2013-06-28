@@ -48,11 +48,12 @@ c 12/24/2012: add AS2012 model index 34. As in CB12, you can vary dip of virtual
 c by using icode values in the range 0 to 9, or 0 to -9 to put all sites on footwall side
 c DEC 20 2012: iconv becomes icode to add options associated with WUS gmpes as well as CEUS gmpes
 c add Campbell-Bozorgnia 2012 GMPE for wus. Icode for CB12 set up to vary dip of random sources:
+c      icode=0 90 =>d; 1=>80 d, 2=>70 d , 3=>60 d , 4=>50 d , 5=>40 d , 6=>30 d
 c      icode=0 90 =>d; 1=>80 d, 2=>70 d, and so on. Index 32.
 c Add GK12 model with basin effect. index 39. Q_s is 435 everywhere in the initial model setup.
 c this version has the long header records (896 instead of 308 byte)
 c 11/16/2012: add NAAsub corresponding to the BCHYDRO GMPE of 2010. Index=31. For intraplate sources.
-c       we don't intend to use NAAsub for subduction sources in this code (see hazSUBXnga.test)
+c       we dont intend to use NAAsub for subduction sources in this code (see hazSUBXnga.test)
 c GetGeom  : use BA nonlinear siteamp, from AF hazgridXGT.f. 
 c GetABsub: do not modify. Use the original 2003 formulation of siteamp. Some corrections to getABsub
 c were discovered by Pengsheng and fixed in this code Jan 9, 2013. SHarmsen.
@@ -603,7 +604,7 @@ c available periods for CB as of Mar 2008. pga=0.0 here. Displacement per is -2
      +0.25,0.30,0.35,0.40,0.45,0.50,0.60,0.70,0.80,0.90,1.00,1.10,1.20,
      +1.30,1.50,1.70,2.00,2.20,2.50,3.00,3.50,4.00,4.50,5.00/)
 c perabs: period set for ab slab-zone (deep) eqs.
-c ab06 frequencies, these don't seem to be extremely close to 1/T
+c ab06 frequencies, these dont seem to be extremely close to 1/T
       abfrq = (/2.00e-01,2.50e-01,3.20e-01,4.00e-01,5.00e-01,6.30e-01,8.00e-01,1.00e+00,
      1       1.26e+00,1.59e+00,2.00e+00,2.52e+00,3.17e+00,3.99e+00,5.03e+00,6.33e+00,
      1       7.97e+00,1.00e+01,1.26e+01,1.59e+01,2.00e+01,2.52e+01,3.18e+01,4.00e+01,
@@ -819,7 +820,7 @@ c *** NEW 11/05 **** Enter soil Vs30 condition  ******NEW*******
       if(override_vs)vs30=vs30d
 c use Chiou-Youngs 10-2007 default depth to 1 km/s rock. Z1 Units: m.
         Z1cal = exp(-7.15/4 * log(((VS30/1000.)**4 + .57094**4)/(1.360**4 + .57094**4)))
-c     Norm Abrahamson's CA z1 reference (eq 18)
+c     Norm Abrahamsons CA z1 reference (eq 18)
        z1_ref = exp ( -7.67/4. * alog( (Vs30**4 + 610.**4)/(1360.**4+610.**4) ) ) / 1000.
 c      deltaZ1=0.0	!dont know use 0. from guidance in CY doc.
       z1=z1cal	!CY2013 function used until we know better for wus...
@@ -897,7 +898,7 @@ c check reasonableness of distribution
       stop 'and retry with improved weights'
       endif
 c large tormin could be associated with deep Benioff zone. For crustal
-c earthquakes, this check isn't very interesting.
+c earthquakes, this check isnt very interesting.
       if(tormin.lt.0..or.tormin.gt.202.)stop'Top of rupture distribution
      +  not reasonble. Please reenter'
       dipang1=pi/2.
@@ -963,7 +964,7 @@ c
 c--- ibmat=1 uses b-value matrix
 c--- maxmat = 1 uses Mmax matrix. mmax>1 uses zones of Mmax. New April 2013.
 c --  maxmat = -1, use min of Mmax matrix and magmax scalar value input below
-c-- set each to zero if you don't want these
+c-- set each to zero if you dont want these
 c New nov 14 07L add field Mtaper (real variable). If M>Mtaper, multiply rate by wtgrid(k)
 c to include CA
 c      write(6,*) "enter iflt,ibmat,maxmat, Mtaper"
@@ -972,7 +973,7 @@ c New nov 14 07L add field Mtaper (real variable). If M>Mtaper, multiply rate by
 c to include CA
       read (1,*) iflt,ibmat,maxmat,Mtaper
       if(maxmat.gt.nzonex)stop'maximum number of Mmax zones is exceeded'
-c New sept 2008: Use logical variable finite to control whether it's handled as a point src.
+c New sept 2008: Use logical variable finite to control whether its handled as a point src.
       if(iflt.le.0.and.iflt.ne.-2)then
       finite=.false.
       iflt=abs(iflt)
@@ -1231,6 +1232,7 @@ c----Boore Atkinson 87 conversion
 c new 12/18/2006:
 c Use precalculated mean distance of random oriented source to sites up to 1000 km away
 c      write(6,*) "enter number of periods"
+c read in number of spectral periods for calculating hazard
       read(1,*) nper
       write(6,*)'Number of spectral periods ',nper
       if(nper.gt.npmx)stop'number exceeds npmx'
@@ -8537,7 +8539,7 @@ c------------------------------------------------------------------------------
 * -1 if it cannot find one.
 
 * Dates -- 05/19/98 - Written by D. Boore, following
-*                     Larry Baker's suggestion
+*                     Larry Bakers suggestion
 
       logical isopen
       do i = 99,10,-1

@@ -1,4 +1,8 @@
-c--- program  hazFXnga13l.f; 05/21/2013; Use  with NGA relations, or others.
+c--- program  hazFXnga13l.f; 06/27/2013; Use  with NGA relations, or others.
+c 6/27/2013: For the Pezeshk 2012 relation, force rkm to be max(1., rkm). Very
+c              close hypocenters will cause Pezeshk GMPE to issue NaN median value.
+c		For the AB06' GMPE(index 26), force rkm to be max(1.8,rkm)
+c 6/11/2013: correct z1 units when calling bssa2013drv. Units are m. Use Chiou Z1cal.
 c 5/21/2013: correct  c11 term in gksa13v2
 c 5/20/2013: Add May 18 BSSA. 
 c 5/17/2013: correct some e5 coeffs in bssa2013drv. Make cDPP = 0 in CY2013. (no directivity)
@@ -153,7 +157,7 @@ c      can be important for many relatively long WUS faults.
 c Clustered source model has been checked for characteristic-without-uncertainty-in-M
 c types of ruptures only. Future work, add aleatory uncert to clustered source model.
 c
-c late March: use Zengs mindist1 algorithm for all rjb, rcd dist calculations.
+c late March: use Zeng's mindist1 algorithm for all rjb, rcd dist calculations.
 c 8/12/2009: add getDahle95 for Panama hazard assessments.
 c 3/19/2007: use Frankel HR->FR factors for TP05 at 7 periods (this still needs work at other
 c      periods). Somerville HR revised slightly.
@@ -169,7 +173,7 @@ c when GR-distributed sources and 6.5<=M<=7.0. Testing is nearly complete.
 c  Added GR with 6 < M < 6.5. For these, rupture tops are equally distributed 
 c               at ztor+0,2,4,and 6 km. Revised so that AspectRatio>=1 for all rups,
 c            even those associated with M6.0 sources.
-c Whats in a name?
+c What's in a name?
 c   Some of the downdip rupture branching is triggered or not triggered by
 c a match to part of a filename. This feature definitely needs a more failsafe
 c logic approach. For example, filename containing 'aFault_unseg' is a trigger to
@@ -228,7 +232,7 @@ c NGA. If this code is to work with old subroutines, need to revisit...
 c
 c Some older relations are in the nga-style subroutine format with coeffs 
 c      explicitly included as statements. These are:
-c iatten=0 Truth. This one hasnt been programmed. It is the oldest but least accessible
+c iatten=0 Truth. This one hasn't been programmed. It is the oldest but least accessible
 c iatten=1 Spudich ea, 2000 Extensional-tectonics regions, with BJF97 site amp
 c iatten=2 Toro ea; CEUS 7 periods and BC rock geotech. M has to be Mw. finite fault
 c iatten=-2 Toro ea; CEUS 7 periods and A rock geotech. New 11/06: finite fault
@@ -493,7 +497,7 @@ c      real, dimension (22):: Percb13,PerIMIdriss
       integer, dimension (nfltmx) :: itype,npts,npts1,iftype,ibtype
       logical, dimension(npmx,iamx) :: nga,wus02,ceus02,ceus11     
 c logical variables for subsets of attenuation models should help narrow
-c the search more efficiently.   CEUS11 added mar 18 2011: Gail Atkinsons 3 new
+c the search more efficiently.   CEUS11 added mar 18 2011: Gail Atkinson's 3 new
 C CENA models, with indexes 25, 26, and 27. 
 c Benioff or deep-seismicity relations n/a here: see gridded hazard code hazgridXnga2.f      
 c new 6/06: potentially variable a and b values for up to 12 branches for each fault
@@ -512,12 +516,6 @@ c value. The customary 0.1 dM wont work when M precision is carried to 2 dec. pl
       real, dimension(nfltmx):: dip,dip0,width,depth0,tlen,cDPP
 c      integer iargc,numarg,hwflag,vs30_class
       integer iargc,numarg,hwflag
-c logicals
-      byeca=.false. 
-      byenv=.false.
-      byenv=.false.
-      byeext=.false.
-      byeoreg=.false.
 c Below, the array constructor business. No repeat (8*.01) unlike data statement.
 c gfortran required replacement of "data" statements in our Linux PC system. 10/06. SH.
 c abper is the set of spectral periods for the AB2006 CEUS model. -1 => PGV
@@ -538,7 +536,7 @@ c abper is the set of spectral periods for the AB2006 CEUS model. -1 => PGV
      + 5.500000, 6.000000, 6.500000, 7.000000, 7.500000, 8.000000, 8.500000, 9.000000, 9.50,10.0/)
 
        a11fr =(/0.20,    0.33, 0.50, 1.00, 2.00, 3.33, 5.00,10.00,20.,33.00,50.00,99.00,89.00/)
-c Somerville IMW period set (5 of em). pga is 0.0
+c Somerville IMW period set (5 of 'em). pga is 0.0
        prdsom=(/0.000,0.200,0.300,1.000,5.000/)
 c Abrahamson Silva 2012 model 22 perios
       data perAS13 /0, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3,
@@ -591,7 +589,7 @@ c 0.0=pga here, equiv to 0.01 in their report. -1=pgv, -2=pgd set. -3  = CAV add
      9              1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.2, 2.4, 2.5, 2.6, 2.8, 
      1              3.0, 3.2, 3.4, 3.5, 3.6, 3.8, 4.0, 4.2, 4.4, 4.6, 4.8, 
      1              5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0 /)
-c prd is the C&Y period set, 106 of em, jan 2009. Same, Oct 2007. PGA=0.0s in our code. 
+c prd is the C&Y period set, 106 of 'em, jan 2009. Same, Oct 2007. PGA=0.0s in our code. 
       prd= (/0.0,0.020,0.022,0.025,0.029,0.030,0.032,0.035,0.036,0.040,0.042,0.044,0.045,0.046,
      10.048,0.050,0.055,0.060,0.065,0.067,0.070,0.075,0.080,0.085,0.090,0.095,0.100,0.110,0.120,
      10.130,0.133,0.140,0.150,0.160,0.170,0.180,0.190,0.200,0.220,0.240,0.250,0.260,0.280,0.290,
@@ -754,7 +752,7 @@ c adum could be sa(g) or pgv (cm/s). need flexible format
             endif
       endif
       write (6,61)date,time,name
-61      format('# *** hazFXnga13l 05/20/2013 log file. Pgm run on ',a,' at ',a,/,
+61      format('# *** hazFXnga13l 06/11/2013 log file. Pgm run on ',a,' at ',a,/,
      +'# *** Input control file: ',a)
       if(poly)write(6,*)'hazFXnga13l: Polygon file &npts: ',polygon,npmax
 c Below bypasses are based on file name. Bypass wont work if file names change
@@ -777,6 +775,7 @@ c      write(6,*)'Enter a zero for grid of sites 1 to 30 for list: '
       read(1,*)nrec
       if(nrec.lt.0)then
       determ=.true.
+      if(determ)open(80,file='F'//name,status='unknown')
       deagg=.false.      ! determ trumps deagg
       if(nrec.lt.-35)then
       nrec=0
@@ -842,10 +841,11 @@ c replace whatever was in the file with the command line location
       slist=.true.
       endif
 c **** Enter soil Vs30 condition  ******NEW*******
-c      write(6,*)"For sites, enter Vs30(m/s) and basin depth(km)"
-      read(1,*)vs30,dbasin
-c       				2.5 km/s isosurface.
-      if(override_vs)vs30=vs30d
+c      write(6,*)"For sites, enter Vs30(m/s). Z25 will be computed internally"
+      read(1,*)vs30	!,dbasin
+c       		dbasin =		2.5 km/s isosurface depth (km).
+       dbasin = exp(7.089 - 1.144*alog(vs30) )	!New Campbell default depth Z25 may 22 2013
+       if(override_vs)vs30=vs30d
 c the below Z1 is defined so we do not need to rewrite input files with a Z1 value.
 c Units m. Z1cal was modified to equal the CY report eqn 2. Mar 11 2013.
         Z1cal = exp(-7.15/4 *
@@ -1109,7 +1109,7 @@ c routinely used. Added for special studies Jan 19 2007. SHarmsen.
      1 abs(ipia).eq.6.or.abs(ipia).eq.7.or.abs(ipia).eq.10
        ceus11(ip,ia)=ipia.gt.24.and.ipia.lt.28  !new mar 2011.
       nga(ip,ia)=(ipia.gt.12.and.ipia.lt.19).or.ipia.gt.30
-c kanno et. al. is included with NGA even though its not. But is modern.
+c kanno et. al. is included with NGA even though it's not. But is modern.
 c prepare look-up tables for certain CEUS relations.
         if(ceus11(ip,ia))then
         kf=1
@@ -1544,6 +1544,8 @@ ccc-------read fault data
       write(6,*) ift
 c      write(6,*) "enter 1 for char. 2 for G-R; 1 for SS, 2 for reverse; nmagep"
       read(1,900,end=999) adum
+      if(determ)write(80,2108)ift,adum(1:80)
+2108	format(i4,1x,a)
       write (6,900)adum
 c blank lines at end of file are ok. should not cause hiccough below.
 c nmagf (ift) is a new required field 6-06. Number of mag branches. Used for
@@ -1685,11 +1687,8 @@ c---- But first, check that dmag(ift,imag) is valid. If not valid, fix it.
        write(6,*)"Code reset this fault's dmag to 0.1"
        dmag(ift,imag)=0.1
        endif
-c        if(magmin(ift,imag).eq.magmax(ift,imag))nmag0(ift,imag)=1
-        if(abs(magmin(ift,imag)-magmax(ift,imag)).le.0.01) then
-          nmag0(ift,imag)=1
-c        if(magmin(ift,imag).ne.magmax(ift,imag)) then
-        else if(abs(magmin(ift,imag)-magmax(ift,imag)).gt.0.01) then
+        if(magmin(ift,imag).eq.magmax(ift,imag))nmag0(ift,imag)=1
+        if(magmin(ift,imag).ne.magmax(ift,imag)) then
           magmin(ift,imag)= magmin(ift,imag)+dmag(ift,imag)/2.
           magmax(ift,imag)= magmax(ift,imag)-dmag(ift,imag)/2.+.0001      !small delta may be
         if(lb0)then
@@ -1708,7 +1707,6 @@ c        if(magmin(ift,imag).ne.magmax(ift,imag)) then
 c needed to insure that magmax(ift,imag) > magmin(ift,imag)          
           endif      !magmin.ne.magmax
         nmag0(ift,imag)= int((magmax(ift,imag)-magmin(ift,imag))/dmag(ift,imag) + 1.4)
-c        write(*,*) 'nmag0 = ', nmag0(ift,imag)
       if(lb0)nmag0(ift,imag+nmg)=nmag0(ift,imag)
         itest(ift)=0
         test= magmax(ift,imag)+dmbranch(1)
@@ -1718,14 +1716,14 @@ c if one of the mag branches yields test < 6.5, then all branches will have ites
 c this is going to give a different answer than if each mag branch is run separately.
 c May want to take another look at this. SHarmsen. Feb 5 2007.
           write(6,*) "test.lt.6.5", ift, itest(ift)
-        endif
+          endif
         if(nmag0(ift,imag).eq.1) then
            test= magmax(ift,imag)+dmbranch(1)-mwid*dma
            if(test.lt.6.5) then
               itest(ift)=1
               write(6,*) "test.lt.6.5 for fault #", ift, ' itest ',itest(ift)
            endif
-        endif
+           endif
 c---- calculate moment rate
 c initialize to nonzero because a log will be taken
         xmorate=1.0e-10
@@ -1748,7 +1746,6 @@ c xmo2 can be different for each "imag" branch. Needs dimension corresponding
 c to this potential variation. SH Nov 2006.
         xmo2(ift,imag)= xmorate
         write(6,*) xmorate,' moment rate J/yr'
-        write(*,*) 'nmag0 = ', nmag0(ift,imag)
 c----- find rates for epistemic uncertainty
        if(nmag0(ift,imag).gt.1) then
          do 603 ilt= 1, nbranch
@@ -1767,7 +1764,7 @@ c----- find rates for epistemic uncertainty
 c         write(6,*) "sum2=",sum2
 c         read(5,*) idum
   603    continue
-       endif      !nmag0(ift,imag).gt.1
+         endif      !nmag0(ift,imag).gt.1
 c added below aug 28 2007
 c----- find rates for epistemic uncertainty, b=0 branch
        if(lb0.and.nmag0(ift,imag+nmg).gt.1) then
@@ -1817,7 +1814,7 @@ c      write(6,*) "enter number of segment points"
 c      write(6,*) "enter lat,lon for each point"
       tlen(ift)= 0.
 c nodowndip new Oct 17 2007. Include downdip rupture scenarios only if original
-c top of fault is at or near Earth surface. Deep blind thrusts dont need this.
+c top of fault is at or near Earth surface. Deep blind thrusts don't need this.
       nodowndip(ift)=depth0(ift).gt.1.      !km. 
 c Non-daylighting faults will not have additional downdip tops, just 1 at depth0.
 c Below is new apr 3 2007.
@@ -1990,7 +1987,6 @@ c store other run-specific info. extra(9) and (10)
       elseif(grid)then
       do ifn=1,nfi(ip)
       headr%name(5)=pithy(ifn)
-c      write(6,*), 'ifp, header = ', ifp(ip,1,ifn)
       call puthead(ifp(ip,1,ifn),headr,ndata,readn)
 c      print *, "PP: puthead 2 ",ifp(ip,1,ifn)
       enddo
@@ -2007,7 +2003,7 @@ ccccccccccccccccccccccccccccccccccc
       enddo
       write(6,*)'jsegmin jsegmax ',jsegmin,jsegmax
       endif      !write out group weight * rate. added diagnostic june 5 2007
-c---Heres the guts
+c---Here's the guts
 c
 c---loop through receiver sites
       do 100 i=1,nrec
@@ -2040,9 +2036,8 @@ c find nearest gridpoint in vs30 array to the site with coords rx,ry
       enddo
       endif
 c following lines omit several site checks for ca and/or extensional faults.
-c      write(*,*) byeca, byenv, byenv, byeext, byeoreg
       if(byeca.and.ry.gt.43.9) goto 860
-c      if(byewg.and.rx.gt.-118.)goto 860      !wg faults 120.5+
+c      if(byewg99.and.rx.gt.-118.)goto 860      !wg faults 120.5+
       if(byenv.and.(rx.gt.-111.1.or.rx.lt.-122.5))goto 860
       if(byenv.and.(ry.lt.32.1.or.ry.gt.44.1))goto 860
       if(byeext.and.ry.lt.38..and.rx.lt.-121.)goto 860
@@ -2096,7 +2091,6 @@ c oblique thrust currently assumed. If transtensional, consider -135.
       F_RV=0.5      !intuitive choice. May require colleagues OK.
       F_NM=0.0
       endif
-c      write(*,*) '2086, itype/nmag0/itest',itype(ift),nmag0(ift,1),itest(ift)
       xdiff=1.e6
       ydiff=1.e6
       do ii=1,npts(ift)
@@ -2105,7 +2099,6 @@ c      write(*,*) '2086, itype/nmag0/itest',itype(ift),nmag0(ift,1),itest(ift)
       enddo
       xdmax= (dmax+200.)/(111.11*cos(ymax*coef))
       ydmax= (dmax+200.)/111.11
-c     write(*,*) 'xdiff,xdmax,ydiff,ydmax', xdiff,xdmax,ydiff,ydmax
       if(xdiff.gt.xdmax) go to 850
       if(ydiff.gt.ydmax) go to 850
       do 35 iatype=1,5
@@ -2134,7 +2127,6 @@ c azm and azb are azimuths to a seg boundary not to nearest place on the segment
 c choice (when deaggregating).
 c Zeng code mindist1 uses a continuous fault surface rather than series of rectangles
 c added R_x, distance to top of fault, oct 22 2007
-c      write(*,*) '2135, itype/nmag0/itest',itype(ift),nmag0(ift,1),itest(ift)
       call mindist1(rcd,azm,rjb,azb,R_x,ry,rx,y(1,ift),x(1,ift),npts(ift),
      +                   dip0(ift),width(ift),depth0(ift))
 c       if(rcd.gt.100.)print *,rcd,azm,ift,dip0(ift),width(ift),depth0(ift),rx,ry,
@@ -2302,7 +2294,6 @@ c-----------------------------------------
 c----  GR with nmag0>1 with Mmax uncertainties
       if((itype(ift).eq.2).and.(nmag0(ift,1).gt.1).and.
      &   (itest(ift).eq.0)) then
-      write(*,*) 'GR, nmag0>1, itype/nmag0/itest',itype(ift),nmag0(ift,1),itest(ift)
       do imag=1,nmagf(ift)      !can have two or more distributions often
 c with diffrent Mmax.
       dtor= depth0(ift)
@@ -2372,7 +2363,7 @@ c new, possible downdip top surface of rupture. nrupd can be 1, 2 or 3
         cyhwfac=atan(W_rup*0.5*cosDELTA/(dtor1+1.0))/(pi*0.5)
 c--- loop through floating rupture zones
         do 284 irup=1,nrups(m,ift)
-c report rate of eqs * weight applied to logic-tree branch, R,M,rate
+c report rate of eqs * weight applied to logic-tree branch, R,M,rate'
         rjb=dmin2(m,irup,jrup,1)
         isclose=abs(rjb-dmin(1)).lt.0.95
           if(rjb.lt.dcut(1))then
@@ -2427,7 +2418,7 @@ c     1      dtor1, srcSiteA, F_RV, F_NM,gnd,sigmaf)
       indx1=indbssa(ip)
       mech = ibtype(ift)
       iregion=1	!CA-Taiwan version
-      call bssa2013drv(ip,indx_pga,indx1,xmag,rjb,vs30,z1km,mech,iregion,alny,sigmaf)
+      call bssa2013drv(ip,indx_pga,indx1,xmag,rjb,vs30,z1cal,mech,iregion,alny,sigmaf)
 c skip the 2nd period for now assume the period of interest was tabulated.
       gnd(1)=alny
          if(l_gnd_ep(ip))then
@@ -2501,7 +2492,7 @@ c hanging-wall flag for as08 model added dec 7 2012.
       hwflag=0
       endif
 
-c Although iflag makes a token appearance in SR code, it isnt used. So I dropped iflag (SH).
+c Although iflag makes a token appearance in SR code, it isn't used. So I dropped iflag (SH).
        call AS_072007 ( ip,ipera(ip),xmag, dip0(ift), F_NM,F_RV, W_rup, rRup, rjb,R_x,
      1                     vs30, hwflag, gnd(1), sigma1, dtor1,  vs30_class,
      3                     z1km )
@@ -2552,16 +2543,16 @@ c CEUS pre-nga (2002 atten models) added 3 new CENA models defined by tables. Ma
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
        elseif(ipia.eq.26)then
-       rkm=rrup
+       rkm=max(rrup,1.8)	!keep source at least 1.8 km away. Atkinson model Can blow up. SH June27 
        jf=ia06(ip)
        ka=2
              sigma = 0.3*2.303
        gnd(1) = amean11(xmag,rkm,rjbp,vs30,ip,jf,ka)
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
-c     print *,gnd,rkm,ip,jf,ka
+       if(gnd(1).gt.1.79)print *,exp(gnd(1)),rkm,ip,jf,ka,rx,ry
        sigmaf = 1./sqrt2/sigma
        elseif(ipia.eq.27)then
-       rkm=rrup
+       rkm=max(rrup,1.)	!keep source at least 1km away. Pez model Can blow up. SH June27 
        jf=ip11(ip)
 c 2nd variable in sigPez11 is the frequency index according to the GailA set 2011.
       sigma = sigPez11(xmag,jf)	!new 10/30/2012. SH.
@@ -2631,12 +2622,14 @@ c for deterministic calcs write the largest M cases from GR distributions.
         if(determ.and.isbig.and.isclose.and.norpt(ip,ia))then
         write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,ift,xmag,rjb,rrup,
      +     wttmp,dtor1,iftype(ift), ifn
-
+c	print *,ipia,ift,' ****** CHAR ipia ift *******'
 c there is now a report dont tell it again, Sam. (you could have more than one
 c that is big and close but these are all the same w.r.t. saved params)
       if(ifn .eq. nfi(ip)) norpt(ip,ia)=.false.
       endif
-679      format(e11.5,1x,e11.5,1x,i2,1x,i3,1x,f6.2,1x,f7.1,1x,f7.1,1x,e11.5,
+c679      format(e11.5,1x,e11.5,1x,i2,1x,i3,1x,f6.2,1x,f7.1,1x,f7.1,1x,e11.5,
+c     + f5.1,1x,i2,1x,i1)
+679      format(e11.5,1x,e11.5,1x,i5,1x,i7,1x,f6.2,1x,f7.1,1x,f7.1,1x,e11.5,
      + f5.1,1x,i2,1x,i1)
       do  k=1,nlev(ip)
        pr=(gnd(ifn) - xlev(k,ip))*sigmaf
@@ -2691,16 +2684,11 @@ c Below keeps the books on epsilon distribution for e0<2. if e0>2 dont bother.
         go to 850
         endif
 ccccccccccccccccccccccccccccc
-ccc eg, Wasatch74 
 ccc---- GR with nmag0=1, one magnitude floated, with uncertainties,
 c       used for some faults outside of CA and in 2002 Maacama northern CA
 ccc--- for very long faults when Mmmax set to 7.5. In 2007 Maacama char has itype 1 
       if((itype(ift).eq.2).and.(nmag0(ift,1).eq.1).and.
      &  (itest(ift).eq.0)) then
-      write(*,*) 'Wasatch74, itype/nmag0/itest',itype(ift),nmag0(ift,1),itest(ift)
-      
-c      write(*,*) 'entered itype/nmag0/itest loop'
-c      write(*,*) nmagf(ift)
       do imag=1,nmagf(ift)      !can have two or more distributions often
 c with different Mmax.
         totmo=0.
@@ -2725,7 +2713,7 @@ c relative rate, nov 2006
         rate= rate/float(nrups(1,ift))
         do 1403 idis= -mwid, mwid
         xmag2= xmag+ idis*dma      !note change from 0.05 to the variable dma
-      print *,idis,xmag2,rate
+c      print *,idis,xmag2,rate
           if(xmag2.lt.mcut(1))then
           ime=1
           elseif(xmag2.lt.mcut(2))then
@@ -2801,7 +2789,7 @@ c these particular floating ruptures always rupture to top of fault, dtor.
       indx1=indbssa(ip)
       mech=ibtype(ift)
       iregion=1	!CA-Taiwan version
-      call bssa2013drv(ip,indx_pga,indx1,xmag2,rjb,vs30,z1km,mech,iregion,alny,sigmaf)
+      call bssa2013drv(ip,indx_pga,indx1,xmag2,rjb,vs30,z1cal,mech,iregion,alny,sigmaf)
 c skip the 2nd period for now assume the period of interest was tabulated.
       gnd(1)=alny
          if(l_gnd_ep(ip))then
@@ -2809,8 +2797,7 @@ c skip the 2nd period for now assume the period of interest was tabulated.
          gnd(3)= gnd(1)-gnd_ep(ide,ime,ip)
          endif
           if(ift.eq.-1)then
-          print *,'ip/y1/rjb/xmag2/sigmaf'
-          print *,ip,alny,rjb,xmag2,sigmaf
+          print *,ip,y1,rjb,xmag2,sigmaf
           print *, per1, xmag2, rjb, r1,' per1, xmag, rjb, r1'
         print *,  mech,vs30,y1,expsiglny,' mech,vs30,y1,expsiglny'
       endif
@@ -2879,7 +2866,7 @@ c hanging-wall flag for as08 model added dec 7 2012.
       hwflag=0
       endif
 
-c Although iflag makes a token appearance in SR code, it isnt used. So I dropped iflag (SH).
+c Although iflag makes a token appearance in SR code, it isn't used. So I dropped iflag (SH).
        call AS_072007 ( ip,ipera(ip),xmag2, dip0(ift), F_NM,F_RV, Width(ift), rRup, rjb,R_x,
      1                     vs30, hwflag, gnd(1), sigma1, dtor,  vs30_class,
      3                     z1km )
@@ -2929,16 +2916,16 @@ c added 3 new CENA models defined by tables. Mar 2011. 25&26 are Gail Atkinson. 
 c     print *,gnd,rkm,ip,jf,ka
       sigmaf = 1./sqrt2/sigma
        elseif(ipia.eq.26)then
-       rkm=rrup
+       rkm=max(rrup,1.8)	!keep source at least 1.8 km away. Atkinson model Can blow up. SH June27 
        jf=ia06(ip)
        ka=2
              sigma = 0.3*2.303
        gnd(1) = amean11(xmag2,rkm,rjbp,vs30,ip,jf,ka)
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
-c     print *,gnd,rkm,ip,jf,ka
+       if(gnd(1).gt.1.79)print *,exp(gnd(1)),rkm,ip,jf,ka,rx,ry
       sigmaf = 1./sqrt2/sigma
        elseif(ipia.eq.27)then
-       rkm=rrup
+       rkm=max(rrup,1.)	!keep source at least 1km away. Pez model Can blow up. SH June27 
        jf=ip11(ip)
       sigma = sigPez11(xmag2,jf)
        ka=3
@@ -3005,7 +2992,6 @@ c deaggregation for the special case. not prepared oct 30 2007.
       call getDahle95(iperdahl(ip),isoild,xmag2,rjb,gnd,sigmaf)
       endif
       wttmp=wt1wt2*weight*rate
-c      write(*,*) 'wt1wt2,weight,rate, wttmp: ', wt1wt2,weight,rate, wttmp
         do ifn=1,nfi(ip)
         if(determ.and.isbig.and.isclose.and.norpt(ip,ia))then
        write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,ift,xmag2,rjb,rrup,
@@ -3023,7 +3009,6 @@ c      write(*,*) 'wt1wt2,weight,rate, wttmp: ', wt1wt2,weight,rate, wttmp
        endif
       cfac=wttmp*p(ipr)
         prob(icnt,k,ip,ifn,kg)= prob(icnt,k,ip,ifn,kg)+cfac
-c        if(ip.eq.1.AND.k.eq.10.AND.ifn.eq.1) write(*,*) 'prob = ',prob(icnt,k,ip,ifn,kg)
        if(deagg)then
 c for individual fault
       frbar(ift,ifn,ip)=frbar(ift,ifn,ip)+cfac*rrup
@@ -3064,15 +3049,13 @@ c  *prlr       this factor is not present now. Why?
 1403    continue
 1406      continue      !added outer loop 8/2007, for goto if rate<tiny
       enddo      !imag new index 6/2006. Multiple mmax rate per fault.
-        write(6,*) totmo,(xmo2(ift,j),j=1,nmagf(ift))
+c        write(6,*) totmo,(xmo2(ift,j),j=1,nmagf(ift))
 c        read(5,*) idum
-c        write(*,*), 'going to 850, prob= ', prob(icnt,10,1,1,1), prob(icnt,10,2,1,1), prob(icnt,10,3,1,1), icnt
         go to 850
         endif
 c---------------------
 c------ all GR without uncertainties, with possible downdip ruptures, z=dtor1
       if((itype(ift).eq.2).and.(itest(ift).eq.1)) then
-      write(*,*) 'GR without uncertainties, nmag0>1, itype/nmag0/itest',itype(ift),nmag0(ift,1),itest(ift)
 c-- loop through magnitudes
 c        iftype2= iftype(ift)
         dtor = depth0(ift)      !depth to top of fault
@@ -3173,7 +3156,7 @@ c     1      dtor1, srcSiteA, F_RV, F_NM,gnd,sigmaf)
       indx1=indbssa(ip)
       mech=ibtype(ift)
       iregion=1	!CA-Taiwan version
-      call bssa2013drv(ip,indx_pga,indx1,xmag,rjb,vs30,z1km,mech,iregion,alny,sigmaf)
+      call bssa2013drv(ip,indx_pga,indx1,xmag,rjb,vs30,z1cal,mech,iregion,alny,sigmaf)
 c skip the 2nd period for now assume the period of interest was tabulated.
       gnd(1)=alny
          if(l_gnd_ep(ip))then      !additional epistemic uncert.
@@ -3252,7 +3235,7 @@ c hanging-wall flag for as08 model added dec 7 2012.
       else
       hwflag=0
       endif
-c Although iflag makes a token appearance in SR code, it isnt used. So I dropped iflag (SH).
+c Although iflag makes a token appearance in SR code, it isn't used. So I dropped iflag (SH).
        call AS_072007 ( ip,ipera(ip),xmag, dip0(ift), F_NM,F_RV, W_rup, rRup, rjb,R_x,
      1                     vs30, hwflag, gnd(1), sigma1, dtor1,  vs30_class,
      3                     z1km )
@@ -3301,16 +3284,16 @@ c added 3 new CENA models defined by tables. Mar 2011
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
       elseif(ipia.eq.26)then
-       rkm=rrup
+       rkm=max(rrup,1.8)	!keep source at least 1.8 km away. Atkinson model Can blow up. SH June27 
        jf=ia06(ip)
        ka=2
              sigma = 0.3*2.303
        gnd(1) = amean11(xmag,rkm,rjbp,vs30,ip,jf,ka)
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
-c     print *,gnd,rkm,ip,jf,ka
+       if(gnd(1).gt.1.79)print *,exp(gnd(1)),rkm,ip,jf,ka,rx,ry
        sigmaf = 1./sqrt2/sigma
        elseif(ipia.eq.27) then
-       rkm=rrup
+       rkm=max(rrup,1.)	!keep source at least 1km away. Pez model Can blow up. SH June27 
        jf=ip11(ip)
       sigma = sigPez11(xmag,jf)
        ka=3
@@ -3359,7 +3342,7 @@ c not work for this case because truncation is no longer at mu+3sig
       probgt3= (erf(tempgt3)+1.)*0.5
       prr=1./(1.-probgt3)
         if(determ.and.isbig.and.isclose.and.norpt(ip,ia))then
-c write deterministic median if its big and close and you havent written but should
+c write deterministic median if it's big and close and you havent written but should
       write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,
      + ift,xmag,rjb,rrup,wttmp,
      + dtor1,iftype(ift),ifn
@@ -3385,7 +3368,7 @@ c fault segment.
       wttmp=weight*rate
         do ifn=1,nfi(ip)
         if(determ.and.isbig.and.isclose.and.norpt(ip,ia))then
-c write home to mom if its big and close and you havent written but should
+c write home to mom if it's big and close and you havent written but should
       write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,
      + ift,xmag,rjb,rrup,wttmp,
      + dtor1,iftype(ift),ifn
@@ -3413,7 +3396,7 @@ c for individual fault
       fhaz(ift,ifn,ip)=fhaz(ift,ifn,ip)+cfac
 c ifn index is present: 2nd to last frontier. ieps is  an explicit dimension, recomm. by Bazzuro
 c Some attn. models will say a given M,R is a low eps0 combination, others will say a higher eps0.
-c store separate ifn in different records. Why? to give em diff. weights when combining.
+c store separate ifn in different records. Why? to give 'em diff. weights when combining.
       if(eps.lt.emax)then
       ieps=max(1,min(int((eps+2.)*2.),10))
       rbar(ir,im,ieps,ifn,ip)=rbar(ir,im,ieps,ifn,ip)+cfac*rrup
@@ -3452,7 +3435,6 @@ c be repeating some mag uncertainty here.
 c characteristic events fill the fault by definition. no variation in top of rup.
 c discuss with colleagues? nov 15 2006
       if((itype(ift).eq.1).and.(itest(ift).eq.0)) then
-      write(*,*) 'Char with uncertainties, nmag0>1, itype/nmag0/itest',itype(ift),nmag0(ift,1),itest(ift)
       do imag=1,nmagf(ift)      !new 6/06 consolidate mag variation for each fault
         xmag= cmag(ift,imag)
         xmo= 1.5*xmag +9.05
@@ -3549,7 +3531,7 @@ c     1      dtor, srcSiteA, F_RV, F_NM,gnd,sigmaf)
       indx1=indbssa(ip)
       mech=ibtype(ift)
       iregion=1	!CA-Taiwan version
-      call bssa2013drv(ip,indx_pga,indx1,xmag2,rjb,vs30,z1km,mech,iregion,alny,sigmaf)
+      call bssa2013drv(ip,indx_pga,indx1,xmag2,rjb,vs30,z1cal,mech,iregion,alny,sigmaf)
 c skip the 2nd period for now assume the period of interest was tabulated.
       gnd(1)=alny
 c      if(xmag2.ge.8)print *,rjb,exp(alny),xmag2,1./sigmaf/sqrt2
@@ -3679,16 +3661,16 @@ c CEUS pre-nga (2002 atten models)
 c     print *,gnd,rkm,ip,jf,ka
             sigmaf = 1./sqrt2/sigma
        elseif(ipia.eq.26)then
-             rkm=rrup
+             rkm=max(rrup,1.8)	!blows up for small R
              jf=ia06(ip)
              ka=2
                sigma = 0.3*2.303
             gnd(1) = amean11(xmag2,rkm,rjbp,vs30,ip,jf,ka)
            if(lceus_sigma)sigma=ceus_sigma     !for special study 3/2011
-c     print *,gnd,rkm,ip,jf,ka
+       if(gnd(1).gt.1.79)print *,exp(gnd(1)),rkm,ip,jf,ka,rx,ry
             sigmaf = 1./sqrt2/sigma
        elseif(ipia.eq.27)then
-            rkm=rrup
+       rkm=max(rrup,1.)	!keep source at least 1km away. Pez model Can blow up. SH June27 
              jf=ip11(ip)
       sigma = sigPez11(xmag2,jf)
             ka=3
@@ -3755,7 +3737,7 @@ c Deterministic output has to occur whether special clamping is in effect or not
         endif
 c mx_index is  the index of the maximum magnitude in the set 1,...,nmagf(ift)
        if(mx_index(ift).eq.imag.and.(isbig.or.isclose))
-     + write(idet,679)exp(gnd(1)),rrup,xmag,1./sigmaf/sqrt2,ipia,ift,xmag2,rjb,
+     + write(idet,679)exp(gnd(1)),1./sigmaf/sqrt2,ipia,ift,xmag2,rjb,
      + rrup,wttmp,dtor1,iftype(ift),1
       endif      !if determ
       do  k=1,nlev(ip)
@@ -3859,7 +3841,6 @@ c        read(5,*) idum
 ccccccccccccccccc
 cc-- characteristic without uncertainties
       if((itype(ift).eq.1).and.(itest(ift).eq.1)) then
-      write(*,*) 'Char with uncertainties, nmag0>1, itype/nmag0/itest',itype(ift),nmag0(ift,1),itest(ift)
       do imag=1,nmagf(ift)      !new 6/06 consolidate mag variation for given fault
         xmag= cmag(ift,imag)
         xmag0=xmag
@@ -3942,7 +3923,7 @@ c     1      dtor, srcSiteA, F_RV, F_NM,gnd,sigmaf)
       indx1=indbssa(ip)
       mech=ibtype(ift)
       iregion=1	!CA-Taiwan version
-      call bssa2013drv(ip,indx_pga,indx1,xmag,rjb,vs30,z1km,mech,iregion,alny,sigmaf)
+      call bssa2013drv(ip,indx_pga,indx1,xmag,rjb,vs30,z1cal,mech,iregion,alny,sigmaf)
 c skip the 2nd period for now assume the period of interest was tabulated.
       gnd(1)=alny
          if(l_gnd_ep(ip))then
@@ -4025,7 +4006,7 @@ c hanging-wall flag for as08 model added dec 7 2012.
       else
       hwflag=0
       endif
-c Although iflag makes a token appearance in SR code, it isnt used. So I dropped iflag (SH).
+c Although iflag makes a token appearance in SR code, it isn't used. So I dropped iflag (SH).
        call AS_072007 ( ip,ipera(ip),xmag, dip0(ift), F_NM,F_RV, Width(ift), rRup, rjb,R_x,
      1                     vs30, hwflag, gnd(1), sigma1, dtor,  vs30_class,
      3                     z1km )
@@ -4061,7 +4042,7 @@ c WUS pre-nga (2002 atten models)
       ifn=1
 c CEUS pre-nga (2002 atten models)
 c
-c CEUS pre-nga (2002 atten models) and Gail Atkinsons latest 2011 models
+c CEUS pre-nga (2002 atten models) and Gail Atkinson's latest 2011 models
 c added 3 new CENA models defined by tables. Mar 2011
        rjbp=max(rjb,0.11)
        if(ipia.eq.25)then
@@ -4073,15 +4054,16 @@ c added 3 new CENA models defined by tables. Mar 2011
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
        sigmaf = 1./sqrt2/sigma
       elseif(ipia.eq.26)then
-      rkm=rrup
+       rkm=max(rrup,1.8)	!keep source at least 1.8 km away. Atkinson model Can blow up. SH June27 
       jf=ia06(ip)
       ka=2
             sigma = 0.3*2.303
       gnd(1) = amean11(xmag,rkm,rjbp,vs30,ip,jf,ka)
       if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
+       if(gnd(1).gt.1.79)print *,exp(gnd(1)),rkm,ip,jf,ka,rx,ry
       sigmaf = 1./sqrt2/sigma
       elseif(ipia.eq.27)then
-      rkm=rrup
+        rkm=max(rrup,1.)	!keep source at least 1km away. Pez model Can blow up. SH June27 
       jf=ip11(ip)
       sigma = sigPez11(xmag,jf)
        ka=3
@@ -4141,8 +4123,11 @@ c  Nico suggestion apr 3 2008. Can increase file size a lot. But can add reasona
 c        isbig=.true.
         endif
 c mx_index is  the index of the maximum magnitude in the set 1,...,nmagf(ift)
-       if(imag.eq.mx_index(ift).and.isclose)write(idet,679)exp(gnd(1)),rrup,xmag,1./sigmaf/sqrt2,ipia,ift,xmag,rjb,rrup,
+       if(imag.eq.mx_index(ift).and.isclose)then
+       write(idet,679)exp(gnd(1)),1./sigmaf/sqrt2,ipia,ift,xmag,rjb,rrup,
      + wttmp,dtor1,iftype(ift),1
+c       print *,ipia,ift,xmag,rjb,sigma,sigmaf,' *** char without uncert****'
+       endif	!extra print?
       endif      !if determ
       do k=1,nlev(ip)
       temp= (gnd(1) - xlev(k,ip))*sigmasq
@@ -4176,8 +4161,11 @@ c  Nico suggestion apr 3 2008
 c        isbig=.true.
         endif
 c mx_index is  the index of the maximum magnitude in the set 1,...,nmagf(ift)
-       if(imag.eq.mx_index(ift).and.isclose)write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,ift,xmag,rjb,rrup,
+       if(imag.eq.mx_index(ift).and.isclose)then
+       write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,ift,xmag,rjb,rrup,
      + wttmp,dtor1,iftype(ift),ifn
+c       print *,ipia,ift,xmag,rjb,' *** char without uncert 2nd****'
+       endif	!extra print?
       endif      !if determ
         do  k=1,nlev(ip)
        pr=(gnd(ifn) - xlev(k,ip))*sigmaf
@@ -4279,14 +4267,11 @@ c has to be dominant loop here.
         ilev= i2-irec*nlev(ip)
         irec= irec+1
         ilev= ilev+1
-c        write(*,*), 'at 850, prob= ', prob(irec,10,1,1,1), prob(irec,10,2,1,1), prob(irec,10,3,1,1), irec
         out(ii)= prob(irec,ilev,ip,ifn,1)
-c        write(*,*), 'at 850, out= ', out(ii), ii
    50   continue
         call putbufx(ifp(ip,1,ifn),out,ndata,readn)
         readn= readn/4
-c        write(6,*) ndata,readn, ifp(ip,1,ifn)
-c        write(6,*) 'ifp, buf = ', ifp(ip,1,ifn)
+c        write(6,*) ndata,readn
  115    continue
        endif
         icnt= 0
@@ -8024,7 +8009,7 @@ c wrute ti unit 94.
       if(i.gt.3)stop 'please redimension the arrays in gail1 and gail2.'
       read(3,3)header
 3     format(a)
-      i2=index(fname,'.dat')-13
+      i2=max(1,index(fname,'.dat')-13)
       i3=i2+19
       read(3,*) nm(i), nd(i), nf(i), itype(i)
       write(*,9) fname, itype(i)
@@ -9708,10 +9693,6 @@ c ip is the global period index, used in SDI calcs for example.
      :  per_max, 
      :  sigt_dummy, 
      :  v30, 
-     :  slope_logy, 
-     :  slope_phi, 
-     :  slope_tau, 
-     :  slope_sigma, 
      :  phi, tau, sigmaf,
      :  yg, 
      :  ycgs,
@@ -9719,33 +9700,6 @@ c ip is the global period index, used in SDI calcs for example.
      :  gspread,
      :  weight
 
-      real :: 
-     :  r_t1,
-     :  y_t1,
-     :  fsb_t1, 
-     :  fs_t1, 
-     :  fpb_t1,
-     :  fp_t1,
-     :  fe_t1,
-     :  amp_total_t1, 
-     :  amp_nl_t1, 
-     :  amp_lin_t1, 
-     :  phi_t1, tau_t1, sigma_t1,
-     :  gspread_t1
-     
-      real :: 
-     :  r_t2,
-     :  y_t2,
-     :  fsb_t2, 
-     :  fs_t2, 
-     :  fpb_t2,
-     :  fp_t2,
-     :  fe_t2,
-     :  amp_total_t2, 
-     :  amp_nl_t2, 
-     :  amp_lin_t2, 
-     :  phi_t2, tau_t2, sigma_t2,
-     :  gspread_t2
 c updated coeffs. May 20 2013.     
 	T=(/-1.,0.0,0.01,0.02,0.022,0.025,0.029,0.03,0.032,0.035,0.036,0.04,
      +0.042,0.044,0.045,0.046,0.048,0.05,0.055,0.06,0.065,0.067,0.07,0.075,
@@ -10016,10 +9970,6 @@ c       delta_c3 = dc3CATW      !Use CA-Taiwan version for now. Can add options 
         call y_bssa13_no_site_amps( m, r_pga4nl, mech,  c, Mref(indx_pga), 
      :           Rref(indx_pga), dc3CATW(indx_pga),
      :           e, Mh(indx_pga), pga4nl) 
-c       if(abs(m-7.).lt.0.05.and.ip.eq.2)print *,rjb,pga4nl,r_pga4nl/Rref(indx_pga),m,amh(indx_pga),' pga4nl'    
-c   pga4nl is logged in this code.
-c           if(abs(m-7.).lt.0.05.and.rjb.lt.10.)then
-c                 do indx_per=1,107
             r = sqrt(rjb**2+h(indx_per)**2)
         c(1)=c1(indx_per)
         c(2)=c2(indx_per)
@@ -10045,23 +9995,6 @@ c Set v1, v2 to values in text below equation (4.13) ("pending further study")
      :        phi1(indx_per), phi2(indx_per), 
      :        tau1(indx_per), tau2(indx_per),
      :        lny, sigmaf) 
-c       write(15,*) T(indx_per),exp(lny),1./sigmaf/sqrt2,r,m,f1(indx_per), f3(indx_per), f4(indx_per),f5(indx_per)
-c       enddo
-c       stop
-c       endif
-c       if(abs(m-7.).lt.0.05.and.ip.eq.2.and.rjb.lt.10.)then
-c       print *,rjb,exp(lny),1./sigmaf/sqrt2
-c       print *, m, r, rjb, v30, mech,  z1, pga4nl,c, Mref(indx_per), 
-c     :        Rref(indx_per), dc3CATW(indx_per),
-c     :        e, amh(indx_per)
-c      print *,clin(indx_per), vclin(indx_per), vref(indx_per),
-c     :        phi2(indx_per), phi3(indx_per),   
-c     :        f1(indx_per), f3(indx_per), f4(indx_per),f5(indx_per),
-c     :        rjb_bar(indx_per), delta_phiR(indx_per)
-c      print *,  v1, v2, delta_phiV(indx_per),
-c     :        phi1(indx_per), phi2(indx_per), 
-c     :        tau1(indx_per), tau2(indx_per)
-c       endif
        if(sdi)then
        sig=1./sigmaf/sqrt2
        sde=lny+fac_sde(ip)      !fac_sde is log(T**2/(4pisq))
@@ -10133,8 +10066,7 @@ c       endif
      :        alny, sigmaf)     
 c Note output log(SA) not SA in this version. No need for SA in downstream calcs. 
 c removed iregion: taken care of before arriving here.    
-c z1 is depth to 1 km/s Vs. Units km (?) - nope, meters. 
-c Subroutine updated by SH. June 11 2013.
+c z1 is depth to 1 km/s Vs. Units km (?). 
 c Subroutine updated by SH. May 20 2013.
 !Input arguments:
 
@@ -10224,7 +10156,8 @@ c      z1 = -9.9	!should not do this. communicates this to rest of pgm
       irelation=1
 c need to rework code with irelation some day. SH
 c        if (irelation == 1 .or. irelation == 2) then
-          delta_z1 = z1*1000 - mu1_vs30(v30, irelation)
+c z1 has to be in units m not km for this to work. SH June 11 2013.
+          delta_z1 = z1 - mu1_vs30(v30, irelation)
 c        else
 c          delta_z1 = 0.0
 c        end if
@@ -10238,6 +10171,7 @@ c      end if
           f_delta_z1 = f6*delta_z1
         end if
       end if
+c      if(per.eq.1.and.r.lt.10.)print *,r,fsb,f_delta_z1,f7,delta_z1
       
        fs = fsb + f_delta_z1
 c working in log(y) space. difference from BSSA source code.      
