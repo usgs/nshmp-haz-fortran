@@ -27,7 +27,7 @@ UTIL = $(SRC)/util
 #all: CreateBinDir hazallXL.v2 hazallXL.v4 hazFXnga7c hazFXnga13l hazgridXnga5 hazgridXnga13l hazSUBXnga hazSUBXngatest hazpoint hazinterpnga avg_dist fltrate.v2 get_avalue gethead.nga getmeanrjf getmeanrjf.v2 gutenberg
 #all: CreateBinDir hazallXL.v2 hazallXL.v4 hazallXL.v5 hazFXnga13l hazgridXnga13l hazSUBXnga hazSUBXngatest hazpoint hazinterpnga avg_dist fltrate.v2 get_avalue gethead.nga getmeanrjf getmeanrjf.v2 gutenberg
 #all: CreateBinDir hazallXL.v2 hazallXL.v4 hazFXnga13l hazgridXnga13l hazSUBXnga hazSUBXngatest hazpoint hazinterpnga avg_dist fltrate.v2 get_avalue gethead.nga getmeanrjf getmeanrjf.v2 gutenberg
-all: CreateBinDir hazallXL.v2 hazallXL.v4 hazFXnga13l hazgridXnga13l hazSUBX hazpoint hazinterpnga avg_dist fltrate.v2 get_avalue gethead.nga getmeanrjf getmeanrjf.v2 gutenberg
+all: CreateBinDir hazallXL.v2 hazallXL.v4 hazFXnga13l hazgridXnga13l hazSUBX hazpoint hazinterpnga avg_dist fltrate.v2 get_avalue gethead.nga getmeanrjf getmeanrjf.v2 gutenberg assim.2013
 
 CreateBinDir:
 	mkdir -p $(OUT)
@@ -99,6 +99,8 @@ getmeanrjf.v2: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/getmeanrjf.v2 $(UTIL)/getmeanrjf.v2.f $(SRC)/iosubs.o
 gutenberg: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/gutenberg $(UTIL)/gutenberg.f $(SRC)/iosubs.o
+assim.2013: 
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/assim.2013 $(UTIL)/assim.2013.f
 swapf: 
 	$(C_COMPILER) $(CLAGS) -o $(OUT)/swapf $(UTIL)/swapf.c
 
