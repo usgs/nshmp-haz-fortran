@@ -32,7 +32,7 @@ c sa is the median sa for a given atten model and sd is the std dev. for that mo
         wtc = (/0.25, 0.25, 0.5/)
 c        wte = (/0.09,0.09,0.09,0.1,0.09,0.09,0.1,0.25,.1/)
 c updated for current CEUS weighting scheme
-        wte = (//0.06,0.11,0.06,0.10,0.11,0.11,0.08,0.22,.15/) !revised June 28 2013
+        wte = (/0.06,0.11,0.06,0.10,0.11,0.11,0.08,0.22,.15/) !revised June 28 2013
         if(iargc().lt.2)stop'Usage: assim2013 infile outfile'
         call getarg(1,fi)
         open(1,file=fi,status='old',err=2013)
