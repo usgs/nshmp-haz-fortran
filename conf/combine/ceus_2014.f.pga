@@ -1,9 +1,11 @@
 1
-16
+17
 ../out/combine/tmp.newmad.pga
-0.475
+0.5
+../out/combine/tmp.newmad_unclustered.pga
+0
 ../out/NMFS_RLME_2014.pga
-0.475
+0.5
 ../out/combine/tmp.Charl.pga
 1.0
 ../out/combine/tmp.ERM-N.pga
