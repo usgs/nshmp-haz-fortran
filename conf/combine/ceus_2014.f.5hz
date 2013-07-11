@@ -1,9 +1,11 @@
 1
-16
+17
 ../out/combine/tmp.newmad.5hz
-0.475
+0.5
+../out/combine/tmp.newmad_unclustered.5hz
+0
 ../out/NMFS_RLME_2014.5hz
-0.475
+0.5
 ../out/combine/tmp.Charl.5hz
 1.0
 ../out/combine/tmp.ERM-N.5hz

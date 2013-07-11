@@ -1,7 +1,7 @@
 1
-20
+25
 ../out/newmad2014-500-clu.pga.g1
-0.0225          ! .5 .05 .9 .5
+0.0225          ! 1 .05 .9 .5
 ../out/newmad2014-500-clu.pga.g2
 0.045
 ../out/newmad2014-500-clu.pga.g3
@@ -11,7 +11,7 @@
 ../out/newmad2014-500-clu.pga.g5
 0.0225 
 ../out/newmad2014-750-clu.pga.g1
-0.0225          ! .5 .05 .9 .5
+0.0225          ! 1 .05 .9 .5
 ../out/newmad2014-750-clu.pga.g2
 0.045 
 ../out/newmad2014-750-clu.pga.g3
@@ -21,17 +21,17 @@
 ../out/newmad2014-750-clu.pga.g5
 0.0225 
 ../out/newmad2014-1000-clu.pga.g1
-0.005           !.5 .1 .05
+0.0025           !1 .05 .05
 ../out/newmad2014-1000-clu.pga.g2
-0.01 
-../out/newmad2014-1000-clu.pga.g3
-0.070		!.5 .1 .7
-../out/newmad2014-1000-clu.pga.g4
-0.010
-../out/newmad2014-1000-clu.pga.g5
 0.005 
+../out/newmad2014-1000-clu.pga.g3
+0.035		
+../out/newmad2014-1000-clu.pga.g4
+0.005
+../out/newmad2014-1000-clu.pga.g5
+0.0025 
 ../out/newmad2014-1500-clu.pga.g1
-0.0225  		!1500 year on central &south arms, adds to 750yr ...
+0.0225  	! 1 .9 .5 .05
 ../out/newmad2014-1500-clu.pga.g2
 0.045 
 ../out/newmad2014-1500-clu.pga.g3
@@ -40,6 +40,16 @@
 0.045 
 ../out/newmad2014-1500-clu.pga.g5
 0.0225  
+../out/newmad2014-50000-clu.pga.g1
+0.0025  		!50000 year 1 .05 .05
+../out/newmad2014-50000-clu.pga.g2
+0.005
+../out/newmad2014-50000-clu.pga.g3
+0.035
+../out/newmad2014-50000-clu.pga.g4
+0.005
+../out/newmad2014-50000-clu.pga.g5
+0.0025  
 1
 ../out/combine/tmp.newmad.pga
 0
