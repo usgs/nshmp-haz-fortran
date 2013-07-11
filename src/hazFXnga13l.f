@@ -497,7 +497,7 @@ c      real, dimension (22):: Percb13,PerIMIdriss
       integer, dimension (nfltmx) :: itype,npts,npts1,iftype,ibtype
       logical, dimension(npmx,iamx) :: nga,wus02,ceus02,ceus11     
 c logical variables for subsets of attenuation models should help narrow
-c the search more efficiently.   CEUS11 added mar 18 2011: Gail Atkinson's 3 new
+c the search more efficiently.   CEUS11 added mar 18 2011: Gail Atkinsons 3 new
 C CENA models, with indexes 25, 26, and 27. 
 c Benioff or deep-seismicity relations n/a here: see gridded hazard code hazgridXnga2.f      
 c new 6/06: potentially variable a and b values for up to 12 branches for each fault
@@ -536,7 +536,7 @@ c abper is the set of spectral periods for the AB2006 CEUS model. -1 => PGV
      + 5.500000, 6.000000, 6.500000, 7.000000, 7.500000, 8.000000, 8.500000, 9.000000, 9.50,10.0/)
 
        a11fr =(/0.20,    0.33, 0.50, 1.00, 2.00, 3.33, 5.00,10.00,20.,33.00,50.00,99.00,89.00/)
-c Somerville IMW period set (5 of 'em). pga is 0.0
+c Somerville IMW period set (5 of em). pga is 0.0
        prdsom=(/0.000,0.200,0.300,1.000,5.000/)
 c Abrahamson Silva 2012 model 22 perios
       data perAS13 /0, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3,
@@ -589,7 +589,7 @@ c 0.0=pga here, equiv to 0.01 in their report. -1=pgv, -2=pgd set. -3  = CAV add
      9              1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.2, 2.4, 2.5, 2.6, 2.8, 
      1              3.0, 3.2, 3.4, 3.5, 3.6, 3.8, 4.0, 4.2, 4.4, 4.6, 4.8, 
      1              5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0 /)
-c prd is the C&Y period set, 106 of 'em, jan 2009. Same, Oct 2007. PGA=0.0s in our code. 
+c prd is the C&Y period set, 106 of em, jan 2009. Same, Oct 2007. PGA=0.0s in our code. 
       prd= (/0.0,0.020,0.022,0.025,0.029,0.030,0.032,0.035,0.036,0.040,0.042,0.044,0.045,0.046,
      10.048,0.050,0.055,0.060,0.065,0.067,0.070,0.075,0.080,0.085,0.090,0.095,0.100,0.110,0.120,
      10.130,0.133,0.140,0.150,0.160,0.170,0.180,0.190,0.200,0.220,0.240,0.250,0.260,0.280,0.290,
@@ -1109,7 +1109,7 @@ c routinely used. Added for special studies Jan 19 2007. SHarmsen.
      1 abs(ipia).eq.6.or.abs(ipia).eq.7.or.abs(ipia).eq.10
        ceus11(ip,ia)=ipia.gt.24.and.ipia.lt.28  !new mar 2011.
       nga(ip,ia)=(ipia.gt.12.and.ipia.lt.19).or.ipia.gt.30
-c kanno et. al. is included with NGA even though it's not. But is modern.
+c kanno et. al. is included with NGA even though its not. But is modern.
 c prepare look-up tables for certain CEUS relations.
         if(ceus11(ip,ia))then
         kf=1

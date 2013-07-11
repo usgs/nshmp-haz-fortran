@@ -1,4 +1,8 @@
-c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  05/21/ 2013. Long header version.
+c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  07/09/ 2013. Long header version.
+c 7/09/2013: Include tapered GR distribution option. Invoked if magref >=6.5.
+c Magref was previously unused. Now, it is m_c of the tapered GR (Pareto distribution)
+c QA 7/10/2013: put mZ_tor inside M loop in CY2013.
+c CB13_SPEC Modified May 22 2013 to make depth to 2.5 km/s rock 0.398 km for hardrock model.
 c 5/21/2013: correct c11 definition in gk13v2.
 c 5/20/2013: Add May 18 BSSA. Correct definition of z1km used in GK13 and AS08.
 c 5/17/2013: correct some e5 coeffs in bssa2013drv. Make cDPP = 0 in CY2013. (no directivity)
@@ -48,12 +52,11 @@ c 12/24/2012: add AS2012 model index 34. As in CB12, you can vary dip of virtual
 c by using icode values in the range 0 to 9, or 0 to -9 to put all sites on footwall side
 c DEC 20 2012: iconv becomes icode to add options associated with WUS gmpes as well as CEUS gmpes
 c add Campbell-Bozorgnia 2012 GMPE for wus. Icode for CB12 set up to vary dip of random sources:
-c      icode=0 90 =>d; 1=>80 d, 2=>70 d , 3=>60 d , 4=>50 d , 5=>40 d , 6=>30 d
 c      icode=0 90 =>d; 1=>80 d, 2=>70 d, and so on. Index 32.
 c Add GK12 model with basin effect. index 39. Q_s is 435 everywhere in the initial model setup.
 c this version has the long header records (896 instead of 308 byte)
 c 11/16/2012: add NAAsub corresponding to the BCHYDRO GMPE of 2010. Index=31. For intraplate sources.
-c       we dont intend to use NAAsub for subduction sources in this code (see hazSUBXnga.test)
+c       we don't intend to use NAAsub for subduction sources in this code (see hazSUBXnga.test)
 c GetGeom  : use BA nonlinear siteamp, from AF hazgridXGT.f. 
 c GetABsub: do not modify. Use the original 2003 formulation of siteamp. Some corrections to getABsub
 c were discovered by Pengsheng and fixed in this code Jan 9, 2013. SHarmsen.
@@ -366,6 +369,7 @@ c--- period=0 indicates PGA. period = -1 indicates PGV
         parameter (nlmx=20,npmx=8,nsrcmx=200000,nzonex=15)   
       real*8 emax/3.0/,sqrt2/1.4142135623/
       real, dimension(2) :: mcut,dcut,tarray
+      real, dimension(50) :: a_fac
       real, dimension(nzonex) :: mwmaxx	!mwmaxx=the absolutely largest mag in a zone. new 4/04/2013.
 c You can raise p dim & make some minor code changes to improve accuracy (currently
 c p() has about 4 decimal place accuracy which is likely to be good enough)
@@ -388,7 +392,8 @@ c add SDI-related common block sdi feb 22 2013
       common/sdi/sdi,dy_sdi,fac_sde
       real, dimension(8) :: fac_sde
       real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10)
-      real ylev(20,8)
+      real ylev(20,8),m_c
+c m_c is the optional corner magnitude of a tapered GR distribution.
       integer nlev(8),icode(8,10)
       real, dimension(3):: dtor,wtor,wtor65,w_edge
         real, dimension(0:9):: dipbck
@@ -458,7 +463,7 @@ c CEUS, 2013: wt_mask is assigned to one of the wtmw() vectors, the one correspo
       real, dimension(13) :: pcut 
       integer, dimension(13) :: icut
       integer readn,iq_ka,iq_as,jabs,vs30_class
-      logical finite,grid,isok,m_zones/.false./      ! grid=.true. if stations form a regular grid
+      logical finite,grid,isok,m_zones/.false./,taperGR/.false./      ! grid=.true. if stations form a regular grid
 c m_zones is an indicator that magnitude zones are (are not) active
       logical lceus_sigma/.false./,wus/.false./,ceus/.false./,slab/.false./,readcb13/.true./
       logical byeca,byesoc,byeext,byepug,v30a,override_vs,l_mmax,hardrock,useRy0
@@ -511,6 +516,9 @@ c safix is for fixed-SA or fixed PGA runs, usually with deaggregation.
 c nov 14 2007: add wtgrid matrix for use if Mtaper > 5 (agrid tapering magnitude)
       real, dimension(nsrcmx) :: a,b,mmax,wtgrid,fltstrk
       integer, dimension(nsrcmx) :: mzone	!zone indicator
+c predefined functions f and tmo:
+	f(u,x,y,z)=(u/x)**y *exp (-(x-u)/z)	!complementary pareto distribution new 4/2012
+        tmo(x)=10.**(1.5*x+9.05)	!moment as fcn of mag x (N-m)
 c Spectral period -1 is reserved for pgv
 c      pcut=(/0.0062,0.0228,0.0668,0.1587,0.3085,0.5,0.6915,.8413,.9332,
 c     + 0.9772,0.9938,1.,1./)
@@ -604,7 +612,7 @@ c available periods for CB as of Mar 2008. pga=0.0 here. Displacement per is -2
      +0.25,0.30,0.35,0.40,0.45,0.50,0.60,0.70,0.80,0.90,1.00,1.10,1.20,
      +1.30,1.50,1.70,2.00,2.20,2.50,3.00,3.50,4.00,4.50,5.00/)
 c perabs: period set for ab slab-zone (deep) eqs.
-c ab06 frequencies, these dont seem to be extremely close to 1/T
+c ab06 frequencies, these don't seem to be extremely close to 1/T
       abfrq = (/2.00e-01,2.50e-01,3.20e-01,4.00e-01,5.00e-01,6.30e-01,8.00e-01,1.00e+00,
      1       1.26e+00,1.59e+00,2.00e+00,2.52e+00,3.17e+00,3.99e+00,5.03e+00,6.33e+00,
      1       7.97e+00,1.00e+01,1.26e+01,1.59e+01,2.00e+01,2.52e+01,3.18e+01,4.00e+01,
@@ -698,7 +706,7 @@ c adum could be sa(g) or pgv (cm/s). need flexi format
       endif
       call date_and_time(date,time,zone,ival)
       write (6,61)date,time,zone,namein
-61      format('hazgridXnga13l (5/20/2013) log file. Pgm run on ',a,' at ',a,1x,a,/,
+61      format('hazgridXnga13l (7/10/2013) log file. Pgm run on ',a,' at ',a,1x,a,/,
      + '# Control file:',a)
         call getarg(0,progname)
         ind=index(progname,' ')
@@ -736,6 +744,7 @@ c        enddo
       dcut(1)=10.
       dcut(2)=30.
       pr=0.
+      a_fac = 1.	!truncated GR or tapered GR? If truncated, a_fac=1
 c      call initialize()
 c End initializing the truncated normal PEx() array=p()
 c Made the indep. variable a real*8 to reduce discretization error. However,
@@ -815,12 +824,13 @@ c replace whatever was in the file with the command line location
       ss=.not.normal	!temporary testing: no reverse or oblique.
 c *** NEW 11/05 **** Enter soil Vs30 condition  ******NEW*******
       write(6,*)'Softrock has Vs<2500 m/s in below question'
-      write(6,*)"For sites, enter Vs30(m/s) and softrock max depth(km)"
-      read(1,*)vs30,dbasin
+      write(6,*)"For sites, enter Vs30(m/s). Z25 will be computed internally"
+      read(1,*)vs30	!,dbasin
+      dbasin = exp(7.089 - 1.144*alog(vs30))	!New Campbell default depth Z25 may 22 2013
       if(override_vs)vs30=vs30d
 c use Chiou-Youngs 10-2007 default depth to 1 km/s rock. Z1 Units: m.
         Z1cal = exp(-7.15/4 * log(((VS30/1000.)**4 + .57094**4)/(1.360**4 + .57094**4)))
-c     Norm Abrahamsons CA z1 reference (eq 18)
+c     Norm Abrahamson's CA z1 reference (eq 18). z1_ref is in units km.
        z1_ref = exp ( -7.67/4. * alog( (Vs30**4 + 610.**4)/(1360.**4+610.**4) ) ) / 1000.
 c      deltaZ1=0.0	!dont know use 0. from guidance in CY doc.
       z1=z1cal	!CY2013 function used until we know better for wus...
@@ -898,7 +908,7 @@ c check reasonableness of distribution
       stop 'and retry with improved weights'
       endif
 c large tormin could be associated with deep Benioff zone. For crustal
-c earthquakes, this check isnt very interesting.
+c earthquakes, this check isn't very interesting.
       if(tormin.lt.0..or.tormin.gt.202.)stop'Top of rupture distribution
      +  not reasonble. Please reenter'
       dipang1=pi/2.
@@ -953,7 +963,39 @@ c      write(6,*) "for sources: enter min lon, max lon, dlon"
       arate=0.
 c      write(6,*) "enter bval,magmin,magmax,dmag,magref"
       read(1,*) bval,magmin,magmax,dmag,magref
-      rmagmin=magmin
+c new July9 2013. If magref>=6.5 assume magref is the corner magnitude of
+c a tapered GR distribution, which replaces truncated GR distribution.
+      taperGR = magref.ge.6.5
+      if(taperGR)then
+      m_c = magref
+      dmag2 = dmag*0.5	!half step
+	print *,'A tapered GR distribution with corner',m_c,' will replace truncated GR'
+	xmag=magmin+dmag2
+	xref=tmo(m_c)
+	i=1
+	dowhile (xmag.lt.magmax+0.1)
+	xmop=tmo(xmag+dmag2)
+	xmom=tmo(xmag-dmag2)
+c density (dmag interval mass) from complementary pareto distribution function f.
+c The distribution is with respect to seismic moment. event rate at each M is prop. to morate.
+	sm_mom=tmo(4.)
+	big_mom=tmo(9.05)
+	beta=bval/1.5	
+	g9=f(sm_mom,xmom,beta,xref)-f(sm_mom,xmop,beta,xref)
+	h9=f(sm_mom,xmom,beta,big_mom)-f(sm_mom,xmop,beta,big_mom)
+	a_fac(i)=g9/h9
+	print *,a_fac(i),xmag
+	xmags=xmag
+	if(a_fac(i).lt.1.e-20)then
+	magmax=xmag
+	print *,'Due to low rate maxmag has been reset to ',xmag
+	goto 2114
+	endif
+	xmag=xmag+dmag
+	i=i+1
+	enddo
+	endif
+2114      rmagmin=magmin
 c--- iflt=1 or 10 uses finite faults for M>6.0 with random strike
 c--- iflt=2 or 20 uses finite faults and fixes strike
 c--- iflt=3 uses finite faults with Johnston mblg to Mw conv.
@@ -964,7 +1006,7 @@ c
 c--- ibmat=1 uses b-value matrix
 c--- maxmat = 1 uses Mmax matrix. mmax>1 uses zones of Mmax. New April 2013.
 c --  maxmat = -1, use min of Mmax matrix and magmax scalar value input below
-c-- set each to zero if you dont want these
+c-- set each to zero if you don't want these
 c New nov 14 07L add field Mtaper (real variable). If M>Mtaper, multiply rate by wtgrid(k)
 c to include CA
 c      write(6,*) "enter iflt,ibmat,maxmat, Mtaper"
@@ -973,7 +1015,7 @@ c New nov 14 07L add field Mtaper (real variable). If M>Mtaper, multiply rate by
 c to include CA
       read (1,*) iflt,ibmat,maxmat,Mtaper
       if(maxmat.gt.nzonex)stop'maximum number of Mmax zones is exceeded'
-c New sept 2008: Use logical variable finite to control whether its handled as a point src.
+c New sept 2008: Use logical variable finite to control whether it's handled as a point src.
       if(iflt.le.0.and.iflt.ne.-2)then
       finite=.false.
       iflt=abs(iflt)
@@ -1204,7 +1246,9 @@ c new 4/04/2013: for the multiple zones of mmax, find nmag for each source locat
            endif
       arat= 10.**rate
       if(xmag.ge.Mtaper)arat = arat * wtgrid(j)
-      arate(j,m)=arat
+c Arate may be modified for tapered GR using factor a_fac, July 9 2013.
+c If truncated GR, a_fac is identically 1.0.
+      arate(j,m)=arat * a_fac(m)
       if(arat.gt.aratemx)then
       aratemx=arat
       jp=j
@@ -1232,7 +1276,6 @@ c----Boore Atkinson 87 conversion
 c new 12/18/2006:
 c Use precalculated mean distance of random oriented source to sites up to 1000 km away
 c      write(6,*) "enter number of periods"
-c read in number of spectral periods for calculating hazard
       read(1,*) nper
       write(6,*)'Number of spectral periods ',nper
       if(nper.gt.npmx)stop'number exceeds npmx'
@@ -1301,7 +1344,7 @@ c      write(6,*) "enter name of output file for this period"
 c if ascii put each curve in same output file
       open(9+ip,file=nameout,status='unknown')      !ascii
       write(9+ip,402)date,trim(namein)
-402      format('#hazgridXnga13l(7/07/2009) run on ',a9,' input fi ',a)
+402      format('#hazgridXnga13l(6/24/2013) run on ',a9,' input fi ',a)
       if(deagg)then
 c  Determinie if Safe to use 20+ip unit number.
 c First try: deagg. epistemic gm uncert & depth of top for WUS uncert will get combined into
@@ -3875,7 +3918,10 @@ c--- loop through atten. relations for each period
 c-- gnd for SS; gnd2 for thrust; gnd3 for normal
 c remove the possible mag conversion. Assume Mw coming in.
 c added Oct 22 2008. Limit magnitude to 8.0 (see AB03 bSSA p 1703). "saturation effect" 
-      xmag=min(8.0,xmag0)       
+c Limit M to 7.8 new July 9 2013. From steering committee recommendation to include
+c more M scaling
+c      xmag=min(8.0,xmag0)       
+       xmag=min(7.8,xmag0)
           delta= 0.00724*(10.**(0.507*xmag))
           if(slab)then
           g= 10.**(0.301-0.01*xmag)
@@ -7136,7 +7182,8 @@ c mag loop
       do im=1,nmag
       xmag = magmin +(im-1)*dmag
 c For Zhao as others, limit magnitude to 8.0 (see AB03 bSSA p 1703). "saturation effect" 
-      xmag=min(8.0,xmag)       
+c New July 8, 2013: Limit mag of intraplate events to 7.8 (M saturation)
+      xmag=min(7.8,xmag)       
 c--- mag term with magnitude square term correction
       gndm= gnd0+a(iq)*xmag +pst*(xmag-xmagc) +qst*(xmag-xmagc)**2
       xmfac=c(iq)*exp(d(iq)*xmag)
@@ -7495,6 +7542,7 @@ c Fixed sigma_aleatory all spectral periods & all M.
        sigmaf=1.0/sigma/sqrt2
       do 104 m=1,nmag
       xmag0= magmin + (m-1)*dmag
+c      if(ip.eq.1)print *,' '
 c  First convert mb_Lg to Mw if called on to do so.
         if(icode(ip,ia).eq.1) THEN
         xmag= 1.14 +0.24*xmag0+0.0933*xmag0*xmag0
@@ -8185,6 +8233,7 @@ c      print *,c14(iper),c15(iper),phi_lnAF(iper), rho(iper),'c14(iper),c15(iper
       SUBROUTINE CB13_NGA_SPEC  (ip,iper,ia,ndist,di,nmag,magmin,dmag,DIP,SJ,rxsign)
 c     +(Mw,Rrup,Rjb,Rx, Frv,Fnm,Ztor,Hhyp,W,Dip,Vs30,Z25,SJ, 
 c     &Per,Y,Phi,Tau,Sigmatot,icase)
+c Modified May 22 2013 to make depth to 2.5 km/s rock 0.398 km for hardrock model.
 c Modified May 13 2013 to include an anelastic atten for R>80. Bozorgnia email of May 2013
 c call this subroutine after calling CB13_NGA_SPEC_IN
 c  Includes PGV (index 23). PGA is index 22
@@ -8214,7 +8263,7 @@ c output
        real, dimension(0:9) :: rxfac
 c lines from hazgrid. table production
       common/epistemic/nfi,e_wind,gnd_ep,mcut,dcut
-       real gnd_ep(3,3,8),mcut(2),dcut(2),gndout(3),gndx
+       real gnd_ep(3,3,8),mcut(2),dcut(2),gndout(3),gndx,F_sedp,Z25rock
        logical, dimension (8):: e_wind
 c add SDI-related common block sdi feb 22 2013
        common/sdi/sdi,dy_sdi,fac_sde
@@ -8270,6 +8319,8 @@ C.....f_HW_dip
       cosdip = cos(DIP*d2r)
         wmax = 14./sinedip	!maximum seismogenic width.
 C*****Shallow sediment depth and 3-D basin term
+	Z25rock = 0.398	!from campbell email may 21 2013.
+        F_sedp = (c11(22) + c11J(22)*SJ)*(Z25rock - 1.0)
       IF (Z25 .LT. 1.0) THEN
         F_sed = (c11(iper) + c11J(iper)*SJ)*(Z25 - 1.0)
       ELSEIF (Z25 .LE. 3.0) THEN
@@ -8423,7 +8474,7 @@ C........Shallow site conditions term for ROCK PGA (i.e., Vs30 = 1100 m/s)
 C........Rock PGA
 c	if(kk.eq.1.and.jj.ge.10)print *,F_atn,Mw
          A1100(ii,jj,kk) = EXP(F_mag + F_dis + F_flt + F_HW + 
-     +               F_site_1100 + F_sed + F_Hhyp + F_Dip + F_atn)
+     +               F_site_1100 + F_sedp + F_Hhyp + F_Dip + F_atn)
       ENDIF
 
 C*****Site term for other iper values 
@@ -8539,7 +8590,7 @@ c------------------------------------------------------------------------------
 * -1 if it cannot find one.
 
 * Dates -- 05/19/98 - Written by D. Boore, following
-*                     Larry Bakers suggestion
+*                     Larry Baker's suggestion
 
       logical isopen
       do i = 99,10,-1
@@ -9857,23 +9908,6 @@ c        d2r = pi/180.0
 	c8 = 2.154	!from table 3.1
 	c8a = 0.2695	!from table 3.1
 	c11 = 0.0
-c Center Z_TOR on the Z_TOR-M relation in Chiou and Youngs (2013)
-        if (F_RV.EQ.1) then
-          if (M .le. 5.849) then	!corrected from 5.869 May 16 2013
-              mZ_TOR = 2.704*2.704
-          else
-              mZ_TOR = max(2.704-1.226*(M-5.849), 0.)
-              mZ_TOR = mZ_TOR * mZ_TOR
-          endif
-        else
-          if (M .le. 4.970) then
-              mZ_TOR = 2.673*2.673
-          else
-              mZ_TOR = max(2.673-1.136*(M-4.970), 0.)
-              mZ_TOR = mZ_TOR * mZ_TOR
-          endif
-        endif
-        if (Z_TOR .EQ. -999) Z_TOR = mZ_TOR
       F_measured=1.0
       F_inferred=0.0	!Chiou recommendation Nov 2012.
       fd=0.0
@@ -9896,10 +9930,26 @@ c rkdepth loses a 2nd term in may update.
 c loop on depth to top of rupture.
        do kk=1,ntor
       Z_tor=dtor(kk)
-        deltaZ_TOR = Z_tor - mZ_TOR
 c loop on magnitude
       M=magmin
       do jj=1,nmag
+c Center Z_TOR on the Z_TOR-M relation in Chiou and Youngs (2013)
+        if (F_RV.EQ.1) then
+          if (M .le. 5.849) then	!corrected from 5.869 May 16 2013
+              mZ_TOR = 2.704*2.704
+          else
+              mZ_TOR = max(2.704-1.226*(M-5.849), 0.)
+              mZ_TOR = mZ_TOR * mZ_TOR
+          endif
+        else
+          if (M .le. 4.970) then
+              mZ_TOR = 2.673*2.673
+          else
+              mZ_TOR = max(2.673-1.136*(M-4.970), 0.)
+              mZ_TOR = mZ_TOR * mZ_TOR
+          endif
+        endif
+        deltaZ_TOR = Z_tor - mZ_TOR
        if(e_wind(ip))then
           if(M.lt.mcut(1))then
           ime=1
@@ -10550,7 +10600,7 @@ c avoid passing fe etc back and forth. New version of Apr 8 2013.
       subroutine bssa13_gm_sub4y(per,
      :        m, rjb, r, v30, mech, z1, pga4nl,c, amref, rref, delta_c3,e, amh,
      :        clin, vclin, vref, f1, f3, f4, f5,f6,f7,r1,r2, delta_phiR, 
-     :        v1, v2, delta_phiV,phi1, phi2, tau1, tau2,lny, sigmaf)
+     :        v1, v2, delta_phiV,phi1, phi2, tau1, tau2, lny, sigmaf)
 c version ofmay 18 2013     
  
 !Input arguments:
@@ -10644,10 +10694,10 @@ c modified f2 to eqn (3.11)
 c      z1 = -9.9
       delta_z1 = 0.0
       irelation=1
-c need to rework code with irelation some day. SH
+c need to rework code with irelation some day. SH. z1 must be in units m below.
 c        if (irelation == 1 .or. irelation == 2) then
           delta_z1 = z1 - mu1_vs30(v30, irelation)
-c          print *,delta_z1,' delta_z1', z1,mu1_vs30(v30, irelation)
+c          if(per.eq.1..and.rjb.lt.10.)print *,r,delta_z1,' r,delta_z1', z1,mu1_vs30(v30, irelation)
 c        else
 c          delta_z1 = 0.0
 c        end if
