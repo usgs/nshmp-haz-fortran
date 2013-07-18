@@ -85,7 +85,7 @@
       41.76606     -112.55952
       41.69922     -112.59357
       41.67361     -112.61729
- 2 3 1 1    2369a Great Salt Lake fault zone, Promontory secti
+ 2 3 1 1    2369a Great Salt Lake fault zone, Promontory section
  1.793224 0.8 6.5 7.09 0.09833336 0.6
  50.0 19.58112 0.0E+0 53.80311
  13
@@ -102,7 +102,7 @@
       41.23700     -112.50211
       41.21498     -112.48944
       41.19190     -112.45800
- 2 3 1 1    2369b Great Salt Lake fault zone, Fremont Island s
+ 2 3 1 1    2369b Great Salt Lake fault zone, Fremont Island section
  1.8456042 0.8 6.5 6.83 0.08249998 0.6
  50.0 19.58112 0.0E+0 31.996004
  11
@@ -337,7 +337,7 @@
       41.76606     -112.55952
       41.69922     -112.59357
       41.67361     -112.61729
- 2 3 1 1    2369a Great Salt Lake fault zone, Promontory secti
+ 2 3 1 1    2369a Great Salt Lake fault zone, Promontory section
  1.9455969 0.8 6.5 7.09 0.09833336 0.2
  40.0 23.33587 0.0E+0 53.80311
  13
@@ -354,7 +354,7 @@
       41.23700     -112.50211
       41.21498     -112.48944
       41.19190     -112.45800
- 2 3 1 1    2369b Great Salt Lake fault zone, Fremont Island s
+ 2 3 1 1    2369b Great Salt Lake fault zone, Fremont Island section
  1.9979771 0.8 6.5 6.83 0.08249998 0.2
  40.0 23.33587 0.0E+0 31.996004
  11
@@ -524,7 +524,7 @@
       37.40374     -113.22775
       37.33483     -113.26620
       37.29701     -113.28227
- 2 3 1 2    2455 Joes Valley fault zone, fixed rate
+ 2 3 1 2    2455 Joes Valley fault zone !, fixed rate
  1.6202512 0.8 6.5 7.0 0.125 0.2
  40.0 23.33587 0.0E+0 46.790504
  9
@@ -589,7 +589,7 @@
       41.76606     -112.55952
       41.69922     -112.59357
       41.67361     -112.61729
- 2 3 1 1    2369a Great Salt Lake fault zone, Promontory secti
+ 2 3 1 1    2369a Great Salt Lake fault zone, Promontory section
  1.6866705 0.8 6.5 7.09 0.09833336 0.2
  60.0 17.320515 0.0E+0 53.80311
  13
@@ -606,7 +606,7 @@
       41.23700     -112.50211
       41.21498     -112.48944
       41.19190     -112.45800
- 2 3 1 1    2369b Great Salt Lake fault zone, Fremont Island s
+ 2 3 1 1    2369b Great Salt Lake fault zone, Fremont Island section
  1.7390506 0.8 6.5 6.83 0.08249998 0.2
  60.0 17.320515 0.0E+0 31.996004
  11
@@ -776,7 +776,7 @@
       37.40374     -113.22775
       37.33483     -113.26620
       37.29701     -113.28227
- 2 3 1 2    2358 Hansel Valley fault, fixed Mmax
+ 2 3 1 2    2358 Hansel Valley fault !, fixed Mmax
  1.2615063 0.8 6.5 6.6000 0.10 0.2
  60.0 17.320515 0.0E+0 13.132711
  5
@@ -785,7 +785,7 @@
       41.73938     -112.73273
       41.78097     -112.72842
       41.79813     -112.72060
- 2 3 1 2    2455 Joes Valley fault zone; fixed Mmax 
+ 2 3 1 2    2455 Joes Valley fault zone !; fixed Mmax 
  1.3613247 0.8 6.5 7.0 0.125 0.2
  60.0 17.320515 0.0E+0 46.790504
  9

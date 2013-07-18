@@ -41,8 +41,8 @@
 3
 -0.2 0. 0.2
 0.2 0.6 0.2
-0.0 1  no aleatory dM for Wasatch gr
- 2 3 1 0    2351d Wasatch fault, Brigham City section, 50d dip
+0.0 1  !no aleatory dM for Wasatch gr
+ 2 3 1 0    2351d Wasatch fault, Brigham City section !, 50d dip
  2.29257  0.80  6.500  6.900 0.1000 0.108 0.43818E+17
  50.0 19.58112 0.0E+0 40.81485
  15

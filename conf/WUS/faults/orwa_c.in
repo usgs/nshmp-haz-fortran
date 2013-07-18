@@ -43,7 +43,7 @@
 .2 .6 .2
 0.12 5
  1 1 1 1    797 Alvin Canyon fault                            
- 7.23 2.6125321E-3 0.05   Relatively high rate but low weight. 
+ 7.23 2.6125321E-3 0.05   !Relatively high rate but low weight. 
  90.0 15.0 0.0E+0 71.23108
  7
       44.60956     -125.42260
@@ -54,7 +54,7 @@
       44.41011     -124.64540
       44.39170     -124.58063
  1 1 1 1    798 Daisy Bank fault                              
- 7.3 2.0829648E-3 0.05	Also Relatively high rate but low weight.
+ 7.3 2.0829648E-3 0.05	!Also Relatively high rate but low weight.
  90.0 15.0 0.0E+0 81.207214
  12
       44.87566     -125.51397
@@ -206,7 +206,7 @@
       45.34678     -122.99695
       45.41694     -123.05328
       45.48172     -123.11284
- 1 1 1 1    571 Strawberry Point fault, back to SS AF
+ 1 1 1 1    571 Strawberry Point fault !, back to SS AF
  6.73 2.1119526E-4 1.0
  90.0 15.0 0.0E+0 26.213926	!subvertical in Sam Johnson documentation
  4
@@ -214,7 +214,7 @@
       48.34175     -122.72518
       48.31839     -122.61486
       48.29719     -122.45629
- 1 1 1 1    573 Utsalady Point fault, back to SS AF                          
+ 1 1 1 1    573 Utsalady Point fault !, back to SS AF                          
  6.69 1.3633845E-4 1.0
  90.0 15.0 0.0E+0 24.564823
  5
@@ -346,7 +346,7 @@
       45.88833     -118.46105
       45.86362     -118.42700
       45.81987     -118.39979
- 1 2 1 1    newWA1 Lake Creek-Boundary Creek fault, event from .43 mm/yr slip rate AF.
+ 1 2 1 1    newWA1 Lake Creek-Boundary Creek fault !, event from .43 mm/yr slip rate AF.
  6.79 4.4579174E-4 1.0
  60.0 17.320515 0.0E+0 29.683672
  7
@@ -365,7 +365,7 @@
       44.60211     -124.49915
       44.66658     -124.53199
       44.74411     -124.55374
- 1 2 1 1    572n Southern Whidbey Island fault dip 60 sep 10  
+ 1 2 1 1    572n Southern Whidbey Island fault !dip 60 sep 10  
  7.42 8.251E-5 1.0 1.2488403E+16
  -60.0 17.320515 0.0E+0 104.06994
  83
@@ -452,7 +452,7 @@
       47.81530     -122.06210
       47.81060     -122.05070
       47.76560     -122.00000
- 1 2 1 1    572m Southern Whidbey Island fault, rev slipev
+ 1 2 1 1    572m Southern Whidbey Island fault !, rev slipev
  7.44 8.0337325E-5 1.0
  -60.0 17.320515 0.0E+0 108.57625
  85
@@ -630,7 +630,7 @@
       47.76330     -122.14410
       47.75600     -122.13630
       47.70830     -122.08330
- 1 3 1 1    844 Sky Lakes fault zone, in Cascade block wuscmp
+ 1 3 1 1    844 Sky Lakes fault zone !, in Cascade block wuscmp
  7.08 2.452856E-4 1.0
  50.0 19.58112 0.0E+0 53.432937
  11
@@ -1033,7 +1033,7 @@
       45.34678     -122.99695
       45.41694     -123.05328
       45.48172     -123.11284
- 2 1 1 1    571 Strawberry Point fault, return to SS AF                        
+ 2 1 1 1    571 Strawberry Point fault !, return to SS AF                        
  1.4862921 0.8 6.5 6.73 0.11500001 1.0
  90.0 15.0 0.0E+0 26.213926
  4
@@ -1041,7 +1041,7 @@
       48.34175     -122.72518
       48.31839     -122.61486
       48.29719     -122.45629
- 2 1 1 1    573 Utsalady Point fault, return to SS AF                          
+ 2 1 1 1    573 Utsalady Point fault !, return to SS AF                          
  1.2508161 0.8 6.5 6.69 0.09500003 1.0
  90.0 15.0 0.0E+0 24.564823
  5
@@ -1160,8 +1160,8 @@
       45.88833     -118.46105
       45.86362     -118.42700
       45.81987     -118.39979
- 2 2 1 1    572n Southern Whidbey Island fault dip 60 sept 10
- 1.23295  0.80  6.500  7.420 0.1150 1.00000 0.12488E+17  about 1/3 of rate to N trace
+ 2 2 1 1    572n Southern Whidbey Island fault !dip 60 sept 10
+ 1.23295  0.80  6.500  7.420 0.1150 1.00000 0.12488E+17  !about 1/3 of rate to N trace
  -60.0 17.320515 0.0E+0 104.60656
  83
       48.24300     -122.89600
@@ -1247,7 +1247,7 @@
       47.81530     -122.06210
       47.81060     -122.05070
       47.76560     -122.00000
- 2 2 1 1    572m Southern Whidbey Island fault dip 60                
+ 2 2 1 1    572m Southern Whidbey Island fault !dip 60                
  1.24270  0.80  6.500  7.440 0.1175 1.00000 0.13029E+17
  -60.0 17.320515 0.0E+0 108.57625
  85
@@ -1336,7 +1336,7 @@
       47.78641     -122.10766
       47.78027     -122.09825
       47.71570     -122.01610
- 2 2 1 1    572s Southern Whidbey Island fault dip60                
+ 2 2 1 1    572s Southern Whidbey Island fault !dip60                
  1.23519  0.80  6.500  7.420 0.1150 1.00000 0.12553E+17
  -60.0 17.320515 0.0E+0 104.60656
  85
@@ -1425,7 +1425,7 @@
       47.76330     -122.14410
       47.75600     -122.13630
       47.70830     -122.08330
- 2 2 1 1    newWA1 Lake Creek-Boundary Creek fault, gr rate from .43 mmyr slip
+ 2 2 1 1    newWA1 Lake Creek-Boundary Creek fault !, gr rate from .43 mmyr slip
  1.8786485 0.8 6.5 6.79 0.145 1.0
  60.0 17.320515 0.0E+0 29.683672
  7
@@ -1486,7 +1486,7 @@
       45.48828     -122.47085
       45.47812     -122.49762
       45.47624     -122.54281
- 1 2 1 1    885 Yaquina faults, half-wt
+ 1 2 1 1    885 Yaquina faults !, half-wt
  6.14 1.6189321E-3 1.0
  60.0 17.320515 0.0E+0 8.183252
  3
@@ -1501,7 +1501,7 @@
       44.42179     -124.06396
       44.45135     -124.06020
       44.46635     -124.05067
- 1 2 1 1    890 South Slough thrust and reverse faults        
+ 1 2 1 1    890 South Slough !thrust and reverse faults        
  6.29 1.3347851E-3 2.0
  60.0 17.320515 0.0E+0 10.961466
  3
@@ -1514,7 +1514,7 @@
  2
       45.54631     -122.38145
       45.43931     -122.23296
- 1 2 1 1    newWA3 Boulder Creek fault, Kendall scarp. Mag from Frankel
+ 1 2 1 1    newWA3 Boulder Creek fault, Kendall scarp !. Mag from Frankel
  6.8 3.24E-4 2.0		!Rate from later Frankel email of Nov 13, 2007
  60.0 17.320515 0.0E+0 10.8
  4

@@ -41,7 +41,7 @@
 3
 -.2 0. .2 
 .2 .6 .2
-0.0 1 Don't incl the aleatory dM for gr in this file.  GR is ALEATORY
+0.0 1   !Don't incl the aleatory dM for gr in this file.  GR is ALEATORY
  2 3 1 1    805 Juniper Mountain fault                        
  0.52264785 0.8 6.5 6.5300006 0.0300 0.6
  50.0 19.58112 0.0E+0 17.719221
@@ -111,7 +111,7 @@
       42.39976     -119.91251
       42.43090     -119.92029
       42.45284     -119.92454
- 2 3 1 1    1508ab Santa Rosa fault system, constrained Mmax
+ 2 3 1 1    1508ab Santa Rosa fault system !, constrained Mmax
  1.3327227 0.8 6.5 7.5 0.125 0.6
  50.0 19.58112 0.0E+0 170.78998
  53
@@ -168,9 +168,9 @@
       41.44255     -117.76821
       41.40329     -117.74899
       41.35846     -117.69455
- 2 3 2 1    828 Goose Lake, with CA rates from M(A). weigh each 0.5
-0.6248984       0.8     6.5     7.1     0.1     0.3     2.00596005E15 Ells
-0.8521325       0.8     6.5     6.9     0.1     0.3     2.00596005E15 HB
+ 2 3 2 1    828 Goose Lake !, with CA rates from M(A). weigh each 0.5
+0.6248984       0.8     6.5     7.1     0.1     0.3     2.00596005E15 !Ells
+0.8521325       0.8     6.5     6.9     0.1     0.3     2.00596005E15 !HB
  50.0 19.58112 0.0E+0 59.951053
  8
       42.28607     -120.34656

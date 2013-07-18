@@ -42,7 +42,7 @@
 0
 1
 0.0 1		!No additional aleatory Muncert
-  2  1  1  Elsinore                     combine HB and EllB  combined w/merge3.f
+  2  1  1  Elsinore                     !combine HB and EllB  combined w/merge3.f
 -3.5627840 0.0000  6.500  7.800 0.100000 2.0000 0.43838E+18
    83.8    15.00   0.0      241.0
   37
@@ -177,8 +177,8 @@
    36.92600 -121.65200
    36.87010 -121.56450
    36.80590 -121.48160
-  2  1  1 SAF - creeping segment (jl0.sa-creep, modified)
-   3.929 0.91 6.0 6.7 .1 2.0 new AF  model; collective rate 0.01079. arate: 10-fac
+  2  1  1 SAF - creeping segment !(jl0.sa-creep, modified)
+   3.929 0.91 6.0 6.7 .1 2.0 !new AF  model; collective rate 0.01079. arate: 10-fac
      90.0000    12.0000  0.    124.854
    4
      36.8059 -121.4816          !revised this x,y pair

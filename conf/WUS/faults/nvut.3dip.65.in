@@ -42,7 +42,7 @@
 -.2 0. .2 
 .2 .6 .2
 0.12 5     !long aleatory tails
- 1 3 1 1    1116 Black Hills fault; corr slip rate dec 3
+ 1 3 1 1    1116 Black Hills fault !; corr slip rate dec 3
  6.18 3.2281715E-4 0.6 6.744601E+14
  50.0 19.58112 0.0E+0 8.795311
  3
@@ -130,7 +130,7 @@
       40.82104     -118.24310
       40.78178     -118.24562
  1 3 1 1    1644 Peavine Peak fault zone     
- 6.36 8.333E-4 0.6          rate constrained to 1/1200 Haller email aug
+ 6.36 8.333E-4 0.6          !rate constrained to 1/1200 Haller email aug
  50.0 19.58112 0.0E+0 12.67903
  7
       39.58710     -119.90989
@@ -197,7 +197,7 @@
       39.88635     -119.94367
       39.89812     -119.93972
  1 3 1 1    1733 Eglington fault             
- 6.29 7.1E-5 0.6 constrained rate
+ 6.29 7.1E-5 0.6    !constrained rate
  50.0 19.58112 0.0E+0 10.99656
  6
       36.23080     -115.21983
@@ -206,7 +206,7 @@
       36.26664     -115.18723
       36.28955     -115.15453
       36.30294     -115.14823
- 1 3 1 1    1116 Black Hills fault; correct slip rate to 0.1 dec 3 2007
+ 1 3 1 1    1116 Black Hills fault !; correct slip rate to 0.1 dec 3 2007
  6.18 4.5848966E-4 0.2 9.5792E+14
  40.0 23.33587 0.0E+0 8.795311
  3
@@ -370,7 +370,7 @@
       36.26664     -115.18723
       36.28955     -115.15453
       36.30294     -115.14823
- 1 3 1 1    1116 Black Hills fault; corr slip rate to 0.1     
+ 1 3 1 1    1116 Black Hills fault !; corr slip rate to 0.1     
  6.18 2.5258242E-4 0.2 5.2771907E+14
  60.0 17.320515 0.0E+0 8.795311
  3
@@ -558,7 +558,7 @@
       40.73400     -111.98800
       40.74500     -111.98800
       40.79700     -112.01700
- 1 3 1 1    W50G60 West Valley Granger sec; Intersec z=8.47 km
+ 1 3 1 1    W50G60 West Valley Granger sec !; Intersec z=8.47 km
  6.5 3.5821055E-4 0.12 2.260152E+15
  60.0 9.780318 0.0E+0 16.67761
  8
