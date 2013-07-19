@@ -1,4 +1,6 @@
 c--- program  hazFXnga13l.f; 06/27/2013; Use  with NGA relations, or others.
+c July 16, 2013: Increase the number of clustered-event groups from 5 to 8. To handle
+c		NMSZ SSC clustered-event models
 c 6/27/2013: For the Pezeshk 2012 relation, force rkm to be max(1., rkm). Very
 c              close hypocenters will cause Pezeshk GMPE to issue NaN median value.
 c		For the AB06' GMPE(index 26), force rkm to be max(1.8,rkm)
@@ -352,7 +354,7 @@ c--- PGA & SA ground motion levels should be in units of g
 c--- period=0 indicates PGA
 c --- PGV ground motions are in units cm/s (BA and CB as of feb07)
 c --- PGD units cm (CB only, oct 2006)
-      parameter ( pi=3.14159265,fourpisq=39.4784175,tiny=1e-12)
+      parameter ( pi=3.14159265,fourpisq=39.4784175,tiny=1e-12,ngpmx=8)
 c Prob. calcs associated with fault rates less than tiny will be omitted.
 c Some of the Aug 2007 AFault segmodels have rates of 0 and of 1e-20 for example.
       parameter (nfltmx=1000, nlvmx=20, npmx=8,iamx=10)  
@@ -363,7 +365,7 @@ c You can raise p dim & make some minor code changes to improve accuracy. Curren
 c p() has about 4 or 5 decimal place accuracy which is likely good enough.
       real, dimension(nfltmx):: xaz,xlen
       real, dimension(800,nfltmx):: x,y
-      real prob_s(3,8,5,20,8)
+      real prob_s(3,8,ngpmx,20,8)
       real, dimension(8):: dmin,rate_cl,pdSilva2
       real, dimension(11) :: pdSilva
 c wind used to determine if additional epistemic uncert will be added to
@@ -383,7 +385,7 @@ c  array of station coordinates if using list option
       integer, dimension(nfltmx):: igroup,jseg,nmagf,itest,mx_index
       integer, dimension (50,nfltmx) :: nrupd,nrups
 c add some arrays for storing information related to downdip ruptures
-      real rupln(50,nfltmx),dmin2(20,1000,6,6),wtscene(8,5)
+      real rupln(50,nfltmx),dmin2(20,1000,6,6),wtscene(8,8)
       integer nmag0(nfltmx,12),immax/1/,indtmp(npmx),Vs30_class
 
       real ratenew(nfltmx,12,6),xmo2(nfltmx,12),relwt(nfltmx,12)
@@ -391,10 +393,10 @@ c add some arrays for storing information related to downdip ruptures
        real perb(23),abper(26),tpper(16),xdiff,ydiff
 c abper atkinson boore ceus2006 tp=tabakoli & pezeshk
 c Deagg array storage: rbar,mbar,ebar,haz indexed by R,M,epsilon,GMuncert, and spectral period
-      real, dimension (16,30,10,5,npmx):: rbar,mbar,ebar,haz
+      real, dimension (16,30,10,8,npmx):: rbar,mbar,ebar,haz
 c Fault deagg array storage, indexed by fault number (ift), GMuncert, and spectral period
-      real, dimension (300,5,npmx):: frbar,fmbar,febar,fhaz
-      real prob5(16,30,10,npmx,5,5)      !30 possible M bins M5.8 to M8.7 by 0.1 dM. 4megabyte storage
+      real, dimension (300,8,npmx):: frbar,fmbar,febar,fhaz
+      real prob5(16,30,10,npmx,8,5)      !30 possible M bins M5.8 to M8.7 by 0.1 dM. 4megabyte storage
       integer ip,nft_out,nrupdd,ii,igpmax/0/,isoild
 c isoild is a soil indicator for the Dahle95 relation, 1 if Vs30<550 m/s.
 c           
@@ -438,10 +440,10 @@ c
       real, dimension (5) :: prdsom
       integer nmag,readn,ix,ix0,ix1,iy,iy0,jsegmin/10/,jsegmax/0/
       character nameout*78,name*60,adum*80,date*8,time*10,zone*5
-      character*12 pithy(3),g_name(5),cmt
+      character*12 pithy(3),g_name(8),cmt
 c cluster group names, currently g1,g2,g3,g4,g5. Could be more geographic such as w1, w2, c0, e1, e2.
 c Could be input
-      character*3 gname(5)      !grouped cluster file-name extensions, .g1, .g2, ... 
+      character*3 gname(8)      !grouped cluster file-name extensions, .g1, .g2, ... 
        common/gail3/freq(13)
        common/fix_sigma/fix_sigma,sigma_fx
        common/sdi/sdi,dy_sdi,fac_sde
@@ -477,10 +479,10 @@ c for footwall, same is true but code not altered for this case.
       real, dimension (990,4,nfltmx) :: u,v      
       real, dimension (10) :: dmbranch,wtbranch,grp_rate
 c not using testhw3(1000,50)
-      real prd(106),prob(1000,20,npmx,3,5),out(800000),wt(8,iamx,2),wtdist(8,iamx)
+      real prd(106),prob(1000,20,npmx,3,8),out(800000),wt(8,iamx,2),wtdist(8,iamx)
       real, dimension(80):: px,py 
       real, dimension(0:35) :: pdgk      !graizer and kalkan
-      integer ival(8),icc(8,5)
+      integer ival(8),icc(8,8)
       integer, dimension(8,iamx):: iatten,irab
 c ipertp = map to tabakoli-pezeshsk;iperb = map from input file to boore set of per
 c irab is an index for 4 possible varieties of the AB06 model. 2 for 140 bar & 2 for 200 bar stress
@@ -493,11 +495,11 @@ c      real, dimension (22):: Percb13,PerIMIdriss
       real, dimension (22):: PerIMIdriss
       real, dimension (23):: perAS13
       integer ifn,isz,ipia,nscene
-      integer, dimension(npmx,5,3) :: ifp
+      integer, dimension(npmx,8,3) :: ifp
       integer, dimension (nfltmx) :: itype,npts,npts1,iftype,ibtype
       logical, dimension(npmx,iamx) :: nga,wus02,ceus02,ceus11     
 c logical variables for subsets of attenuation models should help narrow
-c the search more efficiently.   CEUS11 added mar 18 2011: Gail Atkinsons 3 new
+c the search more efficiently.   CEUS11 added mar 18 2011: Gail Atkinson's 3 new
 C CENA models, with indexes 25, 26, and 27. 
 c Benioff or deep-seismicity relations n/a here: see gridded hazard code hazgridXnga2.f      
 c new 6/06: potentially variable a and b values for up to 12 branches for each fault
@@ -536,7 +538,7 @@ c abper is the set of spectral periods for the AB2006 CEUS model. -1 => PGV
      + 5.500000, 6.000000, 6.500000, 7.000000, 7.500000, 8.000000, 8.500000, 9.000000, 9.50,10.0/)
 
        a11fr =(/0.20,    0.33, 0.50, 1.00, 2.00, 3.33, 5.00,10.00,20.,33.00,50.00,99.00,89.00/)
-c Somerville IMW period set (5 of em). pga is 0.0
+c Somerville IMW period set (5 of 'em). pga is 0.0
        prdsom=(/0.000,0.200,0.300,1.000,5.000/)
 c Abrahamson Silva 2012 model 22 perios
       data perAS13 /0, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3,
@@ -589,7 +591,7 @@ c 0.0=pga here, equiv to 0.01 in their report. -1=pgv, -2=pgd set. -3  = CAV add
      9              1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.2, 2.4, 2.5, 2.6, 2.8, 
      1              3.0, 3.2, 3.4, 3.5, 3.6, 3.8, 4.0, 4.2, 4.4, 4.6, 4.8, 
      1              5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0 /)
-c prd is the C&Y period set, 106 of em, jan 2009. Same, Oct 2007. PGA=0.0s in our code. 
+c prd is the C&Y period set, 106 of 'em, jan 2009. Same, Oct 2007. PGA=0.0s in our code. 
       prd= (/0.0,0.020,0.022,0.025,0.029,0.030,0.032,0.035,0.036,0.040,0.042,0.044,0.045,0.046,
      10.048,0.050,0.055,0.060,0.065,0.067,0.070,0.075,0.080,0.085,0.090,0.095,0.100,0.110,0.120,
      10.130,0.133,0.140,0.150,0.160,0.170,0.180,0.190,0.200,0.220,0.240,0.250,0.260,0.280,0.290,
@@ -601,7 +603,8 @@ c prd is the C&Y period set, 106 of em, jan 2009. Same, Oct 2007. PGA=0.0s in ou
       wtsum = (/0.,0.,0.,0.,0.,0.,0.,0./)
        ptail = (/0.9772499,.8413447,0.5,.1586553,.022750139, 0.0013499/)
       pithy = (/'Using Median','Median+EpUnc','Median-EpUnc'/)
-      g_name =(/'Cluster GRP1','Cluster GRP2','Cluster GRP3','Cluster GRP4','Cluster GRP5'/)
+      g_name =(/'Cluster GRP1','Cluster GRP2','Cluster GRP3','Cluster GRP4','Cluster GRP5',
+     +'Cluster GRP6','Cluster GRP7','Cluster GRP8'/)
       att_typ =  (/ 'CampH CEUS A','Space Unoccu','Space Unoccu',
      1 'Somervill HR','FeaHard CEUS','AB-hard CEUS','A&BHR CEUS06',
      1 'Somervil IMW','TORO-CEUS HR','Space Unoccu','Truth -  N/A',
@@ -618,17 +621,13 @@ c prd is the C&Y period set, 106 of em, jan 2009. Same, Oct 2007. PGA=0.0s in ou
      3 'Space Unoccu','BSSA 03/2013','C&B04/13 NGA',
      3 'ChiouY 03/13','Ab-Silva2013','IIdriss 2013','GraizKalkn13',
      4 'GrazKalkan09'/)
-       gname=(/'.g1','.g2','.g3','.g4','.g5'/)
-      do ia=1,8
-      do ip=1,npmx
-      nga(ip,ia)=.false.
-      wus02(ip,ia)=.false.
-      ceus02(ip,ia)=.false.
-       ceus11(ip,ia)=.false.
-c      benioff02(ip,ia)=.false.
-      enddo
-      enddo      !ia
-      noas97 = .true.
+       gname=(/'.g1','.g2','.g3','.g4','.g5','.g6','.g7','.g8'/)
+      nga=.false.
+      wus02=.false.
+      ceus02=.false.
+       ceus11=.false.
+c      benioff02=.false.
+       noas97 = .true.
       mcut(1)=6.0
       mcut(2)=7.0
       dcut(1)=10.
@@ -1109,7 +1108,7 @@ c routinely used. Added for special studies Jan 19 2007. SHarmsen.
      1 abs(ipia).eq.6.or.abs(ipia).eq.7.or.abs(ipia).eq.10
        ceus11(ip,ia)=ipia.gt.24.and.ipia.lt.28  !new mar 2011.
       nga(ip,ia)=(ipia.gt.12.and.ipia.lt.19).or.ipia.gt.30
-c kanno et. al. is included with NGA even though its not. But is modern.
+c kanno et. al. is included with NGA even though it's not. But is modern.
 c prepare look-up tables for certain CEUS relations.
         if(ceus11(ip,ia))then
         kf=1
@@ -1602,8 +1601,8 @@ c mod of aug 28 2007 to study sensitivity of rate to b=0 (half relative wt)
       jsegmax=max(jsegmax,jseg(ift))
 c checks associated with clustering
       igpmax=max(igpmax,igroup(ift))
-      if(igroup(ift).lt.1.or.igpmax.gt.5)then
-      write(6,*)'igroup outside of acceptable range (1 to 5).'
+      if(igroup(ift).lt.1.or.igpmax.gt.ngpmx)then
+      write(6,*)'igroup outside of acceptable range (1 to ngpmx).',ngpmx
       write(6,*)'Please check input file near ',adum
       stop'hazFXnga13l: fatal error.'
       endif      !igroup bound check
@@ -7294,12 +7293,12 @@ c There are nper periods, nlev(ip) ground motion levels per period, ngroup=1 to 
 c This subroutine was written to solve the current model space for NMSZ only. There could easily be
 c different sets to consider for other sources, but because of time constraints and limits to my imagination,
 c I kept the solution focussed on this source. Steve Harmsen, May 17 2007
-      parameter (nlvmx=20, npmx=8)  
+      parameter (nlvmx=20, npmx=8,ngpmx=8)  
       integer, dimension(npmx) :: ngroup,nlev
       integer i_anom/0/      !keep tract of anomalous rates. hope this is zero
-      real   prob(1000,20,npmx,3,5)
+      real   prob(1000,20,npmx,3,ngpmx)
       real*8 p,q(4)
-       real prob_s(3,8,5,20,8), wtscene(8,5)
+       real prob_s(3,8,ngpmx,20,8), wtscene(8,8)
 c prob_s: dim1= segment #, 1 to 3, dim2=ks=scenario, dim3=kg=group, dim4=gm level, dim5=period indx
 c convert for groups, for scenarios, for each gm level, for each spectral period
        nseg_c=j2-j1+1
