@@ -2,10 +2,10 @@
 24.6 50. 0.1     Creeping Section SAF, background. Azimuthal anisotropy 
 -125. -100. 0.1	!pure strike slip aug 13 from meeting with Art,Ned,Mark aug10
 760. 2.
-2 1. 0.0 1.0 5. 1.0 0.0  2 depths, no uncert
+2 1. 0.0 1.0 5. 1.0 0.0  !2 depths, no uncert
 1.0 0. 0.0
 1. 200.
-24.6 51. 0.1     source grid 
+24.6 51. 0.1     !source grid 
 -126.5 -100. 0.1
 0.9 5.0 6.0 0.1 3.
 2 0 0 0

@@ -1,8 +1,8 @@
 0	!California deep, should work with hazgridXnga4 (rev sept 25 NGA)
 24.6 50. 0.1   standard WUS site grid    
 -125. -100. 0.1
-760 2. the 2 is a depth to 2.5 km/s bedrock. not used with intrapl GMPEs
-1 50. 1 1	dtor 50 km
+760 2. !the 2 is a depth to 2.5 km/s bedrock. not used with intrapl GMPEs
+1 50. 1 1	!dtor 50 km
 1. 0 0 		!wts to ss, rev, normal (shouldnt affect deep)
 1. 200.
 24.6 51. .1	!extended source grid sept 20 NGA
