@@ -81,6 +81,8 @@ hazinterpnga: iosubs
 #	utility
 avg_dist: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/avg_dist $(UTIL)/avg_dist.f $(SRC)/iosubs.o
+bin2xyzX.v2: iosubs
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/bin2xyzX.v2 $(UTIL)/bin2xyzX.v2.f $(SRC)/iosubs.o
 fltrate.v2: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/fltrate.v2 $(UTIL)/fltrate.v2.f $(SRC)/iosubs.o
 fltrate.2013: iosubs

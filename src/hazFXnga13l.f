@@ -1,6 +1,13 @@
-c--- program  hazFXnga13l.f; 06/27/2013; Use  with NGA relations, or others.
+c--- program  hazFXnga13l.f; 07/30/2013; Use  with NGA relations, or others.
+c 07/30/2013: Incorporate CY2013 vers of July 29.
+c 07/25/2013: Incorporate ASK_NGA_2013_V11.f which is the July 24 version of A S &Kamai. Uses Ry0 distance.
+c
+c July 22, 2013: Not using latest BSSA coeffs. clin and Vclin for soil site computations.
+c		These postdate the Eq Spectra coeffs.
 c July 16, 2013: Increase the number of clustered-event groups from 5 to 8. To handle
-c		NMSZ SSC clustered-event models
+c		NMSZ SSC clustered-event models. The M-uncertainty density function
+c		read in in relwt() has to be the same for all eqs in a group. This is a 
+c		fundamental coding limitation. It is not checked internally.
 c 6/27/2013: For the Pezeshk 2012 relation, force rkm to be max(1., rkm). Very
 c              close hypocenters will cause Pezeshk GMPE to issue NaN median value.
 c		For the AB06' GMPE(index 26), force rkm to be max(1.8,rkm)
@@ -438,7 +445,7 @@ c
       real dbasin,vs30,pr,rx,ry,dy_sdi
 	real Q,Q_CA, Q_BR	!some Q estimates for the Graizer&Kalkan model
       real, dimension (5) :: prdsom
-      integer nmag,readn,ix,ix0,ix1,iy,iy0,jsegmin/10/,jsegmax/0/
+      integer nmag,readn,ix,ix0,ix1,iy,iy0,jsegmin/10/,jsegmax/0/,iReg
       character nameout*78,name*60,adum*80,date*8,time*10,zone*5
       character*12 pithy(3),g_name(8),cmt
 c cluster group names, currently g1,g2,g3,g4,g5. Could be more geographic such as w1, w2, c0, e1, e2.
@@ -537,7 +544,7 @@ c abper is the set of spectral periods for the AB2006 CEUS model. -1 => PGV
      + 3.400000, 3.500000, 3.600000, 3.800000, 4.000000, 4.200000, 4.400000, 4.600000, 4.80, 5.0,
      + 5.500000, 6.000000, 6.500000, 7.000000, 7.500000, 8.000000, 8.500000, 9.000000, 9.50,10.0/)
 
-       a11fr =(/0.20,    0.33, 0.50, 1.00, 2.00, 3.33, 5.00,10.00,20.,33.00,50.00,99.00,89.00/)
+       a11fr =(/0.20,  0.33, 0.50, 1.00, 2.00, 3.33, 5.00,10.00,20.,33.00,50.00,99.00,89.00/)
 c Somerville IMW period set (5 of 'em). pga is 0.0
        prdsom=(/0.000,0.200,0.300,1.000,5.000/)
 c Abrahamson Silva 2012 model 22 perios
@@ -709,8 +716,8 @@ c lceus_sigma lower all CEUS GMPE sigmas to 0.4 (natural log sigma) for sens. st
               open(unit=2,file=polygon,status='old')
               do i=1,80
               read(2,*,end=53)px(i),py(i)
-53            enddo
-            npmax=i-1
+             enddo
+53            npmax=i-1
              else
              write(6,*)'hazFXnga13l: Polygon file not found: ',polygon
        	     stop 'Put in working dir and retry'
@@ -751,7 +758,7 @@ c adum could be sa(g) or pgv (cm/s). need flexible format
             endif
       endif
       write (6,61)date,time,name
-61      format('# *** hazFXnga13l 06/11/2013 log file. Pgm run on ',a,' at ',a,/,
+61      format('# *** hazFXnga13l 07/30/2013 log file. Pgm run on ',a,' at ',a,/,
      +'# *** Input control file: ',a)
       if(poly)write(6,*)'hazFXnga13l: Polygon file &npts: ',polygon,npmax
 c Below bypasses are based on file name. Bypass wont work if file names change
@@ -850,9 +857,9 @@ c Units m. Z1cal was modified to equal the CY report eqn 2. Mar 11 2013.
         Z1cal = exp(-7.15/4 *
      1      log(((VS30/1000.)**4 + .57094**4)/(1.360**4 + .57094**4)))
 
-c     Norm Abrahamson's CA z1 reference (eq 18)
+c     Norm Abrahamson's CA z1 reference (eq 18). Same in July 2013 update.
        z1_ref = exp ( -7.67/4. * alog( (Vs30**4 + 610.**4)/(1360.**4+610.**4) ) ) / 1000.
-      z1=z1cal	!CY2013 function used until we know better for wus...
+       z1=z1cal	!CY2013 function used until we know better for wus...
       z1km=Z1*0.001	!for AS need units km
 c from B Chiou email of Apr 15 2013.
         deltaZ1 = z1cal -
@@ -1032,7 +1039,7 @@ c if ascii put each curve in same output file. Slight repair May 1 2008. SH.
       open(icc(ip,1),file=nameout,status='unknown')      !ascii
        write(6,895)nameout
        write(icc(ip,1),402)date,headr%name(1)
-402      format('#hazFXnga13l(1/29/2009) run on ',a9,' with file ',a)
+402      format('#hazFXnga13l(7/25/2013) run on ',a9,' with file ',a)
 895      format('Ascii output file: ',a)
       endif
       if(deagg.and.kg.eq.1)then
@@ -1367,10 +1374,12 @@ c!pga or other?
       ipas13(ip)=k
       	endif
       write(6,*)'Calling AS2013 NGA-W revision with z1=',z1km,' period index ',ipas13(ip)
-      useRy0(ip)=.false.
+      useRy0(ip)=.true.
       print *,'Using Ry0 metric for this spectral period?',useRy0(ip)
-        vs30_rock = 1100.
+        vs30_rock = 1180.	!changed from 1100 to 1180 July 2013.
+        iReg=1	!USA
         z10_rock = 0.006
+        vs30_class=1
 c above coefficients are needed by the AS2013 model      
       elseif(ipia.eq.34)then
       if(readcb13)then
@@ -1632,6 +1641,7 @@ c of recurrence, to fault dip, or other issues.
         endif
         if(cluster)then
         wtscene(imag,igroup(ift))=relwt(ift,imag)
+c        write(92,*)imag,igroup(ift),wtscene(imag,igroup(ift)),ift
         if(rate_cl(igroup(ift)).eq.0.)then
         rate_cl(igroup(ift))=crate(ift,imag)
         elseif(crate(ift,imag).ne.rate_cl(igroup(ift)))then
@@ -2262,20 +2272,8 @@ c how far away is the moon?
         dminr(2,jrup)=rcd
         dminr(3,jrup)=rcd
         dminr(4,jrup)= R_x      !used in CY NGA 11/07
-        dminr(5,jrup)=R_x*tan(azb*coef)         !used in AS12. Dec 2012.   
-c index 5: wings were clipped, winged metric no longer available. SH Mar 2007.
+        dminr(5,jrup)=R_x*tan(azb*coef)         !used in in ASK13. july 2013.  
       endif
-c----- Hanging wall test for AS97. Skip it if as97 is not invoked. Skip it.
-c        if(dip0(ift).eq.90..or.noas97) go to 304
-c        if(nyy2.le.(nyy+2)) go to 304
-c        do 3031 iy=nyy+2, nyy2
-c        dist= fdist(ix,iy,5)
-c        if(dist.lt.dminr(5,jrup)) then
-c         dminr(5,jrup)= dist
-c         dhy= (iy-(nyy+2))*dlen*cos(abs(dip(ift)))
-c         testhw3(irup,m)= dhy*angtest+ 2.
-c         endif
-c 3031   continue
 c-----------------------
   304   continue
         do 39 iatype=1,4      !type 4 added oct 23 2007
@@ -2294,7 +2292,7 @@ c----  GR with nmag0>1 with Mmax uncertainties
       if((itype(ift).eq.2).and.(nmag0(ift,1).gt.1).and.
      &   (itest(ift).eq.0)) then
       do imag=1,nmagf(ift)      !can have two or more distributions often
-c with diffrent Mmax.
+c with different Mmax.
       dtor= depth0(ift)
       if(cluster)then
       ks=imag
@@ -2447,16 +2445,13 @@ c from BChiou email use fmeasured=1. dtor1 is top of floating rupture may be dow
       F_Measured=1.
       F_Inferred=0.0	!could change these. Reference rock.
 c cDpp new predictor variable 3/2013: 
-c      call  CY2012_NGA(ip,icy12(ip), xmag, rrup, rjb, R_x, vs30,
-c     1                   F_Measured, F_Inferred, z1, dip0(ift), dtor1,
-c     1                   F_RV, F_NM,
-c     1                   psa_ref, gnd, tau, sigma_NL0, sigmaf)
+c below is the July 30 2013 version CY2013
        call CY2013_NGA(ip,icy13(ip), xmag, rrup, rjb, R_x, vs30,
      1                   F_Measured, F_Inferred, deltaZ1, dip0(ift), dtor1,
      1                   F_RV, F_NM, cDPP(ift), gnd, tau, sigma_NL0, sigmaf)
 c      print *,gnd(1),ift
       elseif(ipia.eq.36)then
-c     Compute SA1100 for AS2013. New Mar 1 2013. @W_rup is the rupture width (km). Downdip ruptures.
+c     Compute SA1180 for AS2013. New July 25 2013. @W_rup is the rupture width (km). Downdip ruptures.
       SA_rock = 0.
 c hanging-wall flag for as12 model added dec 7 2012.
       if(dip0(ift).eq.90.)then
@@ -2466,13 +2461,13 @@ c hanging-wall flag for as12 model added dec 7 2012.
       else
       hwflag=0
       endif
-      call AS2013_v5_model ( ipas13(ip),xmag,dip0(ift), W_rup, dtor1, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,lnSa, phi, tau )
-      Sa1100 = exp(lnSa)
+      call ASK13_v11_model ( ipas13(ip),xmag,dip0(ift), W_rup, dtor1, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
+     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,iReg,lnSa, phi, tau )
+      Sa1180 = exp(lnSa)
 c 
 c     Compute Sa at spectral period for given Vs30
-      call AS2013_v5_model ( ipas13(ip),xmag, dip0(ift), W_rup, dtor1, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30, SA1100, z1km, z1_ref, hwflag, vs30_class,lnSa, phi, tau )
+      call ASK13_v11_model ( ipas13(ip),xmag, dip0(ift), W_rup, dtor1, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
+     1                     vs30, SA1180, z1km, z1_ref, hwflag, vs30_class,iReg,lnSa, phi, tau )
       gnd(1)=lnSa
 c      print *,exp(lnSa),phi,tau,width(ift)
          if(l_gnd_ep(ip))then
@@ -2752,7 +2747,7 @@ c  dip rupture on these smaller sources.
         R_x = dmin2(1,irup,1,4)      !new signed distance oct 2007
         do 1282 ia=1,nattn(ip)
         rrup= dmin2(1,irup,1,3)
-        Ry0= dmin2(1,irup,1,5)      !type 5 new dec 2012.
+        Ry0= dmin2(1,irup,1,5)      !type 5 new dec 2012. Ry0 is used in ASK1307
         weight= wt(ip,ia,1)
         if(rjb.gt.wtdist(ip,ia)) weight=wt(ip,ia,2)
         if(rjb.gt.dmax) go to 1282
@@ -2825,7 +2820,7 @@ c from BChiou email use fmeasured=1.
 
 c       print *,gnd(1),ift
       elseif(ipia.eq.36)then
-c     Compute SA1100 for AS2013. New Mar 1 2013.W_rup
+c     Compute SA1180 for AS2013. New July 25 2013.W_rup
       SA_rock = 0.
 c hanging-wall flag for as12 model added dec 7 2012.
       if(dip0(ift).eq.90.)then
@@ -2835,13 +2830,13 @@ c hanging-wall flag for as12 model added dec 7 2012.
       else
       hwflag=0
       endif
-      call AS2013_v5_model ( ipas13(ip),xmag2,dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,lnSa, phi, tau )
-      Sa1100 = exp(lnSa)
+      call ASK13_v11_model ( ipas13(ip),xmag2,dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
+     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,iReg,lnSa, phi, tau )
+      Sa1180 = exp(lnSa)
 c 
 c     Compute Sa at spectral period for given Vs30
-      call AS2013_v5_model ( ipas13(ip),xmag2, dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30, SA1100, z1km, z1_ref, hwflag, vs30_class,lnSa, phi, tau )
+      call ASK13_v11_model ( ipas13(ip),xmag2, dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
+     1                     vs30, SA1180, z1km, z1_ref, hwflag, vs30_class,iReg,lnSa, phi, tau )
       gnd(1)=lnSa
 c      print *,exp(lnSa),phi,tau,width(ift),xmag2,Width(ift)
          if(l_gnd_ep(ip))then
@@ -3205,13 +3200,13 @@ c hanging-wall flag for as12 model added dec 7 2012.
       hwflag=0
       endif
       SA_rock = 0.
-      call AS2013_v5_model ( ipas13(ip),xmag,dip0(ift), W_rup, dtor1, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,lnSa, phi, tau )
-      Sa1100 = exp(lnSa)
+      call ASK13_v11_model ( ipas13(ip),xmag,dip0(ift), W_rup, dtor1, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
+     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,iReg,lnSa, phi, tau )
+      Sa1180 = exp(lnSa)
 c 
 c     Compute Sa at spectral period for given Vs30
-      call AS2013_v5_model ( ipas13(ip),xmag, dip0(ift), W_rup, dtor1, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30, SA1100, z1km, z1_ref, hwflag, vs30_class,lnSa, phi, tau )
+      call ASK13_v11_model ( ipas13(ip),xmag, dip0(ift), W_rup, dtor1, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
+     1                     vs30, SA1180, z1km, z1_ref, hwflag, vs30_class,iReg,lnSa, phi, tau )
 c      print *,exp(lnSa),phi,tau,w_rup
       gnd(1)=lnSa
          if(l_gnd_ep(ip))then
@@ -3584,13 +3579,13 @@ c hanging-wall flag for as12 model added dec 7 2012.
       endif
       dippy=max(dip0(ift),65.)
       Ry0=dmin(5)      !new dec 10
-      call AS2013_v5_model ( ipas13(ip),xmag2,dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,lnSa, phi, tau )
-      Sa1100 = exp(lnSa)
+      call ASK13_v11_model ( ipas13(ip),xmag2,dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
+     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,iReg,lnSa, phi, tau )
+      Sa1180 = exp(lnSa)
 c 
 c     Compute Sa at spectral period for given Vs30
-      call AS2013_v5_model ( ipas13(ip),xmag2, dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30, SA1100, z1km, z1_ref, hwflag, vs30_class,lnSa, phi, tau )
+      call ASK13_v11_model ( ipas13(ip),xmag2, dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
+     1                     vs30, SA1180, z1km, z1_ref, hwflag, vs30_class,iReg,lnSa, phi, tau )
       gnd(1)=lnSa
       sig=sqrt( phi**2 + tau**2 )
 c      print *,exp(lnSa),xmag2,rrup,rjb,r_x,Sa1100,sig,period(ip)
@@ -3974,14 +3969,13 @@ c hanging-wall flag for as12 model added dec 7 2012.
       else
       hwflag=0
       endif
-      call AS2013_v5_model ( ipas13(ip),xmag,dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,lnSa, phi, tau )
-      Sa1100 = exp(lnSa)
-c      print *,rx,ry,xmag,rRup,r_x,Sa1100,period(ip),' AS12 '
+      call ASK13_v11_model ( ipas13(ip),xmag,dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
+     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,iReg,lnSa, phi, tau )
+      Sa1180 = exp(lnSa)
 c 
 c     Compute Sa at spectral period for given Vs30
-      call AS2013_v5_model ( ipas13(ip),xmag, dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30, SA1100, z1km, z1_ref, hwflag, vs30_class,lnSa, phi, tau )
+      call ASK13_v11_model ( ipas13(ip),xmag, dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
+     1                     vs30, SA1180, z1km, z1_ref, hwflag, vs30_class,iReg,lnSa, phi, tau )
       gnd(1)=lnSa
       sig=sqrt( phi**2 + tau**2 )
 c      print *,exp(lnSa),sig,Sa1100,period(ip),xmag,rRup
@@ -6171,7 +6165,7 @@ c
         parameter (mxnprd=106)
       parameter (pi=3.14159265,d2r=0.0174533,sqrt2=1.414213562)
       common/cyinit/a,b,c,rkdepth
-        real V_S30, Z1
+      real V_S30, Z1
       real, dimension(8) :: a,b,c,rkdepth
       real, dimension(mxnprd) :: phi1,phi2,phi3,phi4,phi5,phi6,phi7,phi8
       phi1= (/-.4417,-.4340,-.4313,-.4267,-.4196,-.4177,
@@ -7334,7 +7328,7 @@ c Flow should not arrive here, but if so, assume 10 events a year. That should b
       enddo      !scenarios 8?
       prob(isite,k,ip,1,igp)=ps
       enddo      !nlev gm levels
-      enddo      !ngroup 5 or less
+      enddo      !ngroup (8 or less 2014 model)
       enddo      !spectral period up to 7
       if(i_anom.gt.0)then
       write(*,*)'Cluster_me had ',i_anom, ' high rates. Should be 0'
@@ -9234,7 +9228,7 @@ c      print *,b1,b2,b3,b4,b5,b6,a,b
         sdi = sige
         elseif(rhat.lt.0.3)then
         sdi_ratio=g1(rhat,M,b1,b2,b3,b4,b5) - g1(0.2,M,b1,b2,b3,b4,b5)
-c because in this interval g2 is zero we don't see it ablove
+c because in this interval g2 is zero we dont see it ablove
         elseif(0.3.le. rhat .and. rhat .lt. 3.0)then
         sdi_ratio=g1(rhat,M,b1,b2,b3,b4,b5) - g1(0.2,M,b1,b2,b3,b4,b5)+
      +  g2(rhat,b6)*(M-6.5)
@@ -9253,10 +9247,419 @@ c        print *,c3,c4
         endif      
         return
         end     function sdi_ratio   
+
 c-----------------------------------------------------------------------
-c May 15 2013 verswion CY2013. Updated sigma coeffs.
+c July 30 2013 version. CY2013
+        subroutine CY2013_NGA(ip, iprd, M, R_Rup, R_JB, R_x, V_S30,
+     1                   F_Measured, F_Inferred, deltaZ1, DELTA, Z_TOR,
+     1                   F_RV, F_NM, cDPP,gndout, tau, sigma_NL0, sigmaf)
+
+        implicit none
+c Input predictor variables
+c input deltaZ1 for NSHMP maps.  Base on CY2013 Z1 model. deltaZ1 will be zero f0r the 760 rock case.
+c  ip = global period index
+c  iprd = local period index corresponding to below coeff. vectors.
+        real PERIOD, M, Width, R_rup, R_JB, R_x, V_S30, F_Measured,
+     1       F_Inferred, Z1, DELTA, Z_TOR, F_RV, F_NM, cDPP,sqrt2,pi,d2r
+c Model cofficients
+        integer nprd,ip
+        parameter (nprd=24,pi=3.14159265,d2r=17.45329252e-3,sqrt2=1.414213562)
+        common/epistemic/l_gnd_ep,gnd_ep,ide,ime
+        integer ide,ime
+        common/fix_sigma/fix_sigma,sigma_fx
+        common/sdi/sdi,dy_sdi,fac_sde
+       real gnd_ep(3,3,8),gndout(3), sigmaf,sigma_fx
+      logical l_gnd_ep(8),fix_sigma,sdi
+      real fac_sde(8)
+      real cc, gamma, cosDELTA, coshM
+      real a, b, c, fd, hw, r1, r2, r3, r4, rkdepth
+      real psa, psa_ref, NL0, tau, sigma_NL0, total_app
+      real mZ1, mZ_TOR, deltaZ1, deltaZ_TOR,dy_sdi,rhat,sdisd,sde,sdi_ratio
+      integer iprd, sa
+        real prd(nprd),
+     1       c1(nprd), c1a(nprd), c1b(nprd), c1c(nprd), c1d(nprd),
+     1       c2(nprd), c3(nprd),  cn(nprd),  cM(nprd),
+     1       c4(nprd), c5(nprd),  c6(nprd),  c4a(nprd), cRB(nprd),
+     1       cHM(nprd),c7(nprd),  c7b(nprd),
+     1       c8(nprd), c8a(nprd), c8b(nprd),
+     1       c9(nprd), c9a(nprd), c9b(nprd), c11(nprd), c11b(nprd),
+     1       cgamma1(nprd), cgamma2(nprd), cgamma3(nprd),
+     1       phi1(nprd), phi2(nprd), phi3(nprd), phi4(nprd),
+     1       phi5(nprd), phi6(nprd),
+     1       tau1(nprd), tau2(nprd),
+     1       sigma1(nprd), sigma2(nprd), sigma3(nprd)
+      data prd     /
+     1              0.0100, 0.0200, 0.0300, 0.0400, 0.0500,
+     1              0.0750, 0.1000, 0.1200, 0.1500, 0.1700,
+     1              0.2000, 0.2500, 0.3000, 0.4000, 0.5000,
+     1              0.7500, 1.0000, 1.5000, 2.0000, 3.0000,
+     1              4.0000, 5.0000, 7.5000,10.0000/
+      data c1      /
+     1             -1.5065, -1.4798, -1.2972, -1.1007, -0.9292,
+     1             -0.6580, -0.5613, -0.5342, -0.5462, -0.5858,
+     1             -0.6798, -0.8663, -1.0514, -1.3794, -1.6508,
+     1             -2.1511, -2.5365, -3.0686, -3.4148, -3.9013,
+     1             -4.2466, -4.5143, -5.0009, -5.3461/
+      data c1a     /
+     1             0.1650,  0.1650,  0.1650,  0.1650,  0.1650,
+     1             0.1650,  0.1650,  0.1650,  0.1650,  0.1650,
+     1             0.1650,  0.1650,  0.1650,  0.1650,  0.1650,
+     1             0.1650,  0.1650,  0.1650,  0.1645,  0.1168,
+     1             0.0732,  0.0484,  0.0220,  0.0124/
+      data c1b     /
+     1             -0.2550, -0.2550, -0.2550, -0.2550, -0.2550,
+     1             -0.2540, -0.2530, -0.2520, -0.2500, -0.2480,
+     1             -0.2449, -0.2382, -0.2313, -0.2146, -0.1972,
+     1             -0.1620, -0.1400, -0.1184, -0.1100, -0.1040,
+     1             -0.1020, -0.1010, -0.1010, -0.1000/
+      data c1c     /
+     1             -0.1650, -0.1650, -0.1650, -0.1650, -0.1650,
+     1             -0.1650, -0.1650, -0.1650, -0.1650, -0.1650,
+     1             -0.1650, -0.1650, -0.1650, -0.1650, -0.1650,
+     1             -0.1650, -0.1650, -0.1650, -0.1645, -0.1168,
+     1             -0.0732, -0.0484, -0.0220, -0.0124/
+      data c1d     /
+     1              0.2550,  0.2550,  0.2550,  0.2550,  0.2550,
+     1              0.2540,  0.2530,  0.2520,  0.2500,  0.2480,
+     1              0.2449,  0.2382,  0.2313,  0.2146,  0.1972,
+     1              0.1620,  0.1400,  0.1184,  0.1100,  0.1040,
+     1              0.1020,  0.1010,  0.1010,  0.1000/
+      data c2      /
+     1              1.06, 1.06, 1.06, 1.06, 1.06,
+     1              1.06, 1.06, 1.06, 1.06, 1.06,
+     1              1.06, 1.06, 1.06, 1.06, 1.06,
+     1              1.06, 1.06, 1.06, 1.06, 1.06,
+     1              1.06, 1.06, 1.06, 1.06/
+      data cn      /
+     1             16.0875, 15.7118, 15.8819, 16.4556, 17.6453,
+     1             20.1772, 19.9992, 18.7106, 16.6246, 15.3709,
+     1             13.7012, 11.2667,  9.1908,  6.5459,  5.2305,
+     1              3.7896,  3.3024,  2.8498,  2.5417,  2.1488,
+     1              1.8957,  1.7228,  1.5737,  1.5265/
+      data cM      /
+     1             4.9993,  4.9993,  4.9993,  4.9993,  4.9993,
+     1             5.0031,  5.0172,  5.0315,  5.0547,  5.0704,
+     1             5.0939,  5.1315,  5.1670,  5.2317,  5.2893,
+     1             5.4109,  5.5106,  5.6705,  5.7981,  5.9983,
+     1             6.1552,  6.2856,  6.5428,  6.7415/
+      data c3      /
+     1             1.9636,  1.9636,  1.9636,  1.9636,  1.9636,
+     1             1.9636,  1.9636,  1.9795,  2.0362,  2.0823,
+     1             2.1521,  2.2574,  2.3440,  2.4709,  2.5567,
+     1             2.6812,  2.7474,  2.8161,  2.8514,  2.8875,
+     1             2.9058,  2.9169,  2.9320,  2.9396/
+      data c4      /
+     1              -2.1, -2.1, -2.1, -2.1, -2.1,
+     1              -2.1, -2.1, -2.1, -2.1, -2.1,
+     1              -2.1, -2.1, -2.1, -2.1, -2.1,
+     1              -2.1, -2.1, -2.1, -2.1, -2.1,
+     1              -2.1, -2.1, -2.1, -2.1/
+      data c4a     /
+     1              -0.5, -0.5, -0.5, -0.5, -0.5,
+     1              -0.5, -0.5, -0.5, -0.5, -0.5,
+     1              -0.5, -0.5, -0.5, -0.5, -0.5,
+     1              -0.5, -0.5, -0.5, -0.5, -0.5,
+     1              -0.5, -0.5, -0.5, -0.5/
+      data cRB     /
+     1               50, 50, 50, 50, 50,
+     1               50, 50, 50, 50, 50,
+     1               50, 50, 50, 50, 50,
+     1               50, 50, 50, 50, 50,
+     1               50, 50, 50, 50/
+      data c5      /
+     1             6.4551, 6.4551, 6.4551, 6.4551, 6.4551,
+     1             6.4551, 6.8305, 7.1333, 7.3621, 7.4365,
+     1             7.4972, 7.5416, 7.5600, 7.5735, 7.5778,
+     1             7.5808, 7.5814, 7.5817, 7.5818, 7.5818,
+     1             7.5818, 7.5818, 7.5818, 7.5818/
+      data cHM     /
+     1             3.0956, 3.0963, 3.0974, 3.0988, 3.1011,
+     1             3.1094, 3.2381, 3.3407, 3.4300, 3.4688,
+     1             3.5146, 3.5746, 3.6232, 3.6945, 3.7401,
+     1             3.7941, 3.8144, 3.8284, 3.8330, 3.8361,
+     1             3.8369, 3.8376, 3.8380, 3.8380/
+      data c6      /
+     1             0.4908,  0.4925,  0.4992,  0.5037, .5048,
+     1             0.5048,  0.5048,  0.5048,  0.5045, .5036,
+     1             0.5016,  0.4971,  0.4919,  0.4807, .4707,
+     1             0.4575,  0.4522,  0.4501,  0.4500, .4500,
+     1             0.4500,  0.4500,  0.4500,  0.4500/
+      data c7      /
+     1             0.0352, 0.0352, 0.0352, 0.0352, 0.0352,
+     1             0.0352, 0.0352, 0.0352, 0.0352, 0.0352,
+     1             0.0352, 0.0352, 0.0352, 0.0352, 0.0352,
+     1             0.0352, 0.0352, 0.0352, 0.0352, 0.0160,
+     1             0.0062, 0.0029, 0.0007, 0.0003/
+      data c7b     /
+     1             0.0462,  0.0472,  0.0533,  0.0596,  0.0639,
+     1             0.0630,  0.0532,  0.0452,  0.0345,  0.0283,
+     1             0.0202,  0.0090, -0.0004, -0.0155, -0.0278,
+     1            -0.0477, -0.0559, -0.0630, -0.0665, -0.0516,
+     1            -0.0448, -0.0424, -0.0348, -0.0253/
+      data c8      /
+     1             0.2154,  0.2154,  0.2154,  0.2154,  0.2154,
+     1             0.2154,  0.2154,  0.2154,  0.2154,  0.2154,
+     1             0.2154,  0.2154,  0.2154,  0.2154,  0.2154,
+     1             0.2154,  0.2154,  0.2154,  0.2154,  0.2154,
+     1             0.2154,  0.2154,  0.2154,  0.2154/
+      data c8a      /
+     1             0.2695,  0.2695,  0.2695,  0.2695,  0.2695,
+     1             0.2695,  0.2695,  0.2695,  0.2695,  0.2695,
+     1             0.2695,  0.2695,  0.2695,  0.2695,  0.2695,
+     1             0.2695,  0.2695,  0.2695,  0.2695,  0.2695,
+     1             0.2695,  0.2695,  0.2695,  0.2695/
+      data c8b     /
+     1             0.4833,  1.2144,  1.6421,  1.9456,  2.1810,
+     1             2.6087,  2.9122,  3.1045,  3.3399,  3.4719,
+     1             3.6434,  3.8787,  4.0711,  4.3745,  4.6099,
+     1             5.0376,  5.3411,  5.7688,  6.0723,  6.5000,
+     1             6.8035,  7.0389,  7.4666,  7.7700/
+      data c9      /
+     1             0.9228,  0.9296,  0.9396,  0.9661,  0.9794,
+     1             1.0260,  1.0177,  1.0008,  0.9801,  0.9652,
+     1             0.9459,  0.9196,  0.8829,  0.8302,  0.7884,
+     1             0.6754,  0.6196,  0.5101,  0.3917,  0.1244,
+     1             0.0086,  0.0000,  0.0000,  0.0000/
+      data c9a     /
+     1             0.1202,  0.1217,  0.1194,  0.1166,  0.1176,
+     1             0.1171,  0.1146,  0.1128,  0.1106,  0.1150,
+     1             0.1208,  0.1208,  0.1175,  0.1060,  0.1061,
+     1             0.1000,  0.1000,  0.1000,  0.1000,  0.1000,
+     1             0.1000,  0.1000,  0.1000,  0.1000/
+      data c9b     /
+     1             6.8607,  6.8697,  6.9113,  7.0271,  7.0959,
+     1             7.3298,  7.2588,  7.2372,  7.2109,  7.2491,
+     1             7.2988,  7.3691,  6.8789,  6.5334,  6.5260,
+     1             6.5000,  6.5000,  6.5000,  6.5000,  6.5000,
+     1             6.5000,  6.5000,  6.5000,  6.5000/
+      data c11     /
+     1                0.0,     0.0,     0.0,     0.0,     0.0,
+     1                0.0,     0.0,     0.0,     0.0,     0.0,
+     1                0.0,     0.0,     0.0,     0.0,     0.0,
+     1                0.0,     0.0,     0.0,     0.0,     0.0,
+     1                0.0,     0.0,     0.0,     0.0/
+      data c11b    /
+     1            -0.4536, -0.4536, -0.4536, -0.4536, -0.4536,
+     1            -0.4536, -0.4536, -0.4536, -0.4536, -0.4536,
+     1            -0.4440, -0.3539, -0.2688, -0.1793, -0.1428,
+     1            -0.1138, -0.1062, -0.1020, -0.1009, -0.1003,
+     1            -0.1001, -0.1001, -0.1000, -0.1000/
+      data cgamma1 /
+     1            -0.007146, -0.007249, -0.007869, -0.008316, -0.008743,
+     1            -0.009537, -0.009830, -0.009913, -0.009896, -0.009787,
+     1            -0.009505, -0.008918, -0.008251, -0.007267, -0.006492,
+     1            -0.005147, -0.004277, -0.002979, -0.002301, -0.001344,
+     1            -0.001084, -0.001010, -0.000964, -0.000950/
+      data cgamma2 /
+     1            -0.006758, -0.006758, -0.006758, -0.006758, -0.006758,
+     1            -0.006190, -0.005332, -0.004732, -0.003806, -0.003280,
+     1            -0.002690, -0.002128, -0.001812, -0.001274, -0.001074,
+     1            -0.001115, -0.001197, -0.001675, -0.002349, -0.003306,
+     1            -0.003566, -0.003640, -0.003686, -0.003700/
+      data cgamma3 /
+     1             4.2542,  4.2386,  4.2519,  4.2960,  4.3578,
+     1             4.5455,  4.7603,  4.8963,  5.0644,  5.1371,
+     1             5.1880,  5.2164,  5.1954,  5.0899,  4.7854,
+     1             4.3304,  4.1667,  4.0029,  3.8949,  3.7928,
+     1             3.7443,  3.7090,  3.6632,  3.6230/
+      data phi1    /
+     1             -0.5210, -0.5055, -0.4368, -0.3752, -0.3469,
+     1             -0.3747, -0.4440, -0.4895, -0.5477, -0.5922,
+     1             -0.6693, -0.7766, -0.8501, -0.9431, -1.0044,
+     1             -1.0602, -1.0941, -1.1142, -1.1154, -1.1081,
+     1             -1.0603, -0.9872, -0.8274, -0.7053/
+      data phi2    /
+     1             -0.1417, -0.1364, -0.1403, -0.1591, -0.1862,
+     1             -0.2538, -0.2943, -0.3077, -0.3113, -0.3062,
+     1             -0.2927, -0.2662, -0.2405, -0.1975, -0.1633,
+     1             -0.1028, -0.0699, -0.0425, -0.0302, -0.0129,
+     1             -0.0016,  0.0000,  0.0000,  0.0000/
+      data phi3    /
+     1             -0.007010,-0.007279,-0.007354,-0.006977,-0.006467,
+     1             -0.005734,-0.005604,-0.005696,-0.005845,-0.005959,
+     1             -0.006141,-0.006439,-0.006704,-0.007125,-0.007435,
+     1             -0.008120,-0.008444,-0.007707,-0.004792,-0.001828,
+     1             -0.001523,-0.001440,-0.001369,-0.001361/
+      data phi4    /
+     1              0.102151, 0.108360, 0.119888, 0.133641, 0.148927,
+     1              0.190596, 0.230662, 0.253169, 0.266468, 0.265060,
+     1              0.255253, 0.231541, 0.207277, 0.165464, 0.133828,
+     1              0.085153, 0.058595, 0.031787, 0.019716, 0.009643,
+     1              0.005379, 0.003223, 0.001134, 0.000515/
+      data phi5    /
+     1              0.0000, 0.0000, 0.0000, 0.0000, 0.0000,
+     1              0.0000, 0.0000, 0.0000, 0.0000, 0.0000,
+     1              0.0000, 0.0000, 0.0010, 0.0040, 0.0100,
+     1              0.0340, 0.0670, 0.1430, 0.2030, 0.2770,
+     1              0.3090, 0.3210, 0.3290, 0.3300/
+      data phi6    /
+     1              300.00, 300.00, 300.00, 300.00, 300.00,
+     1              300.00, 300.00, 300.00, 300.00, 300.00,
+     1              300.00, 300.00, 300.00, 300.00, 300.00,
+     1              300.00, 300.00, 300.00, 300.00, 300.00,
+     1              300.00, 300.00, 300.00, 300.00/
+      data tau1    /
+     1               0.4000,  0.4026,  0.4063,  0.4095,  0.4124,
+     1               0.4179,  0.4219,  0.4244,  0.4275,  0.4292,
+     1               0.4313,  0.4341,  0.4363,  0.4396,  0.4419,
+     1               0.4459,  0.4484,  0.4515,  0.4534,  0.4558,
+     1               0.4574,  0.4584,  0.4601,  0.4612/
+      data tau2    /
+     1               0.2600,  0.2637,  0.2689,  0.2736,  0.2777,
+     1               0.2855,  0.2913,  0.2949,  0.2993,  0.3017,
+     1               0.3047,  0.3087,  0.3119,  0.3165,  0.3199,
+     1               0.3255,  0.3291,  0.3335,  0.3363,  0.3398,
+     1               0.3419,  0.3435,  0.3459,  0.3474/
+      data sigma1  /
+     1               0.4912,  0.4904,  0.4988,  0.5049,  0.5096,
+     1               0.5179,  0.5236,  0.5270,  0.5308,  0.5328,
+     1               0.5351,  0.5377,  0.5395,  0.5422,  0.5433,
+     1               0.5294,  0.5105,  0.4783,  0.4681,  0.4617,
+     1               0.4571,  0.4535,  0.4471,  0.4426/
+      data sigma2  /
+     1               0.3762,  0.3762,  0.3849,  0.3910,  0.3957,
+     1               0.4043,  0.4104,  0.4143,  0.4191,  0.4217,
+     1               0.4252,  0.4299,  0.4338,  0.4399,  0.4446,
+     1               0.4533,  0.4594,  0.4680,  0.4681,  0.4617,
+     1               0.4571,  0.4535,  0.4471,  0.4426/
+      data sigma3  /
+     1               0.8000,  0.8000,  0.8000,  0.8000,  0.8000,
+     1               0.8000,  0.8000,  0.8000,  0.8000,  0.8000,
+     1               0.8000,  0.7999,  0.7997,  0.7988,  0.7966,
+     1               0.7792,  0.7504,  0.7136,  0.7035,  0.7006,
+     1               0.7001,  0.7000,  0.7000,  0.7000/
+
+
+c        pi = atan(1.0)*4.0
+c        d2r = pi/180.0
+c For national maps with fixed Vs_30, input deltaZ1 rather than recompute at each entry.
+c Center Z1 on the Z1-M relation in Chiou and Youngs (2013)
+c        mZ1 = exp(-7.15/4 *
+c     1         log(((V_S30/1000)**4 + .57094**4)/(1.360**4 + .57094**4))
+c     1        )
+c        if (Z1 .EQ. -999) Z1 = mZ1
+c        deltaZ1 = Z1 - mZ1
+
+c Center Z_TOR on the Z_TOR-M relation in Chiou and Youngs (2013)
+        if (F_RV.EQ.1) then
+          if (M .le. 5.849) then
+              mZ_TOR = 2.704*2.704
+          else
+              mZ_TOR = max(2.704-1.226*(M-5.849), 0.)
+              mZ_TOR = mZ_TOR * mZ_TOR
+          endif
+        else
+          if (M .le. 4.970) then
+              mZ_TOR = 2.673*2.673
+          else
+              mZ_TOR = max(2.673-1.136*(M-4.970), 0.)
+              mZ_TOR = mZ_TOR * mZ_TOR
+          endif
+        endif
+        if (Z_TOR .EQ. -999) Z_TOR = mZ_TOR
+        deltaZ_TOR = Z_TOR - mZ_TOR
+
+
+
+c Magnitude scaling
+        r1 = c1(iprd) + c2(iprd) * (M-6.0) +
+     1       (c2(iprd)-c3(iprd))/cn(iprd) *
+     1             log(1.0 + exp(cn(iprd)*(cM(iprd)-M)))
+
+c Near-field magnitude and distance scaling
+        cc = c5(iprd) * cosh(c6(iprd)*max(M-cHM(iprd),0.))
+        r2 = c4(iprd) * log(R_Rup + cc)
+
+c Far-field distance scaling
+        gamma = cgamma1(iprd) +
+     1          cgamma2(iprd)/cosh(max(M-cgamma3(iprd),0.))
+        r3 = (c4a(iprd)-c4(iprd)) *
+     1            log(sqrt(R_Rup*R_Rup+cRB(iprd)*cRB(iprd))) +
+     1       R_Rup * gamma
+
+c Scaling with other source variables (F_RV, F_NM, deltaZ_TOR, and Dip)
+        coshM = cosh(2*max(M-4.5,0.0))
+        cosDELTA = cos(DELTA*d2r)
+        r4 = (c1a(iprd)+c1c(iprd)/coshM) * F_RV +
+     1       (c1b(iprd)+c1d(iprd)/coshM) * F_NM +
+     1       (c7(iprd) +c7b(iprd)/coshM) * deltaZ_TOR +
+     1       (c11(iprd)+c11b(iprd)/coshM)* cosDELTA**2
+
+c HW effect
+        if (R_x .lt. 0.) then
+         hw = 0.0
+        else
+         hw = c9(iprd) * cosDELTA *
+     1        (c9a(iprd)+(1-c9a(iprd)) *tanh(R_x/c9b(iprd))) *
+     1        (1.0 - sqrt(R_JB**2+Z_TOR**2)/(R_Rup + 1.0))
+        endif
+
+c Directivity effect
+        fd = c8(iprd) *
+     1       max(1.-max(R_Rup-40.0,0.)/30.0, 0.) *
+     1       min(max(M-5.5,0.)/0.8, 1.) *
+     1       exp(-c8a(iprd)*(M-c8b(iprd))**2) * cDPP
+
+        psa_ref = r1+r2+r3+r4+hw+fd
+
+c       write (*,'(7f10.4)') r1, r2, r3, r4, hw, fd, psa_ref
+
+c Soil effect: linear response
+        a = phi1(iprd) * min(log(V_S30/1130.), 0.)
+
+c Soil effect: nonlinear response
+        b = phi2(iprd) *
+     1(exp(phi3(iprd)*(min(V_S30,1130.)-360.))-exp(phi3(iprd)*(1130.-360.)))
+
+        c = phi4(iprd)
+
+c Soil effect: sediment thickness
+        rkdepth = phi5(iprd) * ( 1.0 - exp(-deltaZ1/phi6(iprd)) )
+
+c        write (*,'(7f10.4)') a, b, c, rkdepth, deltaZ1,
+c     1  (a + b * log((exp(psa_ref)+c)/c)) + rkdepth
+
+c....... Polulation mean of ln(psa) (eta=0).
+c Keep psa in logged units. No need to exponentiate here.
+
+        psa = psa_ref + (a + b * log((exp(psa_ref)+c)/c)) + rkdepth
+	gndout(1)=psa
+c....... Total variance of ln(psa) about the population mean:
+c          The approximate method (Equation 3.9)
+
+        psa_ref = exp(psa_ref)
+        NL0 = b * psa_ref/(psa_ref+c)
+
+        tau = tau1(iprd) +
+     1           (tau2(iprd)-tau1(iprd))/1.5*(min(max(M,5.),6.5)-5.)
+
+        sigma_NL0 = sigma1(iprd) +
+     1           (sigma2(iprd)-sigma1(iprd))/1.5*(min(max(M,5.),6.5)-5.)
+
+        sigma_NL0 = sigma_NL0 *
+     1        sqrt(0.7*F_Measured+F_Inferred*sigma3(iprd)+(1.0+NL0)**2)
+
+        total_app = sqrt((tau*(1.0+NL0))**2+sigma_NL0**2)
+       if(sdi)then
+       sde=gndout(1)+fac_sde(ip)      !fac_sde is log(T**2/(4pisq))
+       rhat = min(10.,exp(sde)/dy_sdi)      !10 is an upper bound for rhat.
+       gndout(1) = sdi_ratio(prd(iprd),M,rhat,total_app,sdisd) + sde
+       sigmaf=1./sdisd/sqrt2      !use sdi for all gnd_ep branches
+         else
+      sigmaf=1./sqrt2/total_app
+         endif      !if(sdi)
+         if(l_gnd_ep(ip))then
+         gndout(2)= gndout(1)+gnd_ep(ide,ime,ip)
+         gndout(3)= gndout(1)-gnd_ep(ide,ime,ip)
+         endif
+
+        return
+        end subroutine CY2013_NGA
+
+
+c May 15 2013 verswion CY2013. Updated sigma coeffs. As of July 30 the below is out of date. Use CY2013_NGA
 c-----------------------------------------------------------------------
-        subroutine CY2013_NGA(ip,iprd, M, R_Rup, R_JB, R_x, V_S30,
+        subroutine CY201305_NGA(ip,iprd, M, R_Rup, R_JB, R_x, V_S30,
      1            F_Measured, F_Inferred, deltaZ1, DELTA, Z_TOR,
      1            F_RV, F_NM, cDPP,gndout, tau, sigma_NL0, sigmaf)
 c input deltaZ1 for NSHMP maps.  Base on CY2013 Z1 model. deltaZ1 will be zero f0r the 760 rock case.
@@ -9647,7 +10050,7 @@ c         if(ip.eq.1)print *,exp(gndout(1)),total_app,sigmaf,M,R_rup
 
         return
 
-        end subroutine CY2013_NGA
+        end subroutine CY201305_NGA
 
       subroutine bssa2013drv(ip,indx_pga,indx_per,m,rjb,v30,z1,mech,iregion,lny,sigmaf)
 c updated with new coeffs. May 20 2013. SH.
@@ -9855,6 +10258,30 @@ c updated coeffs. May 20 2013.
      +966.44,968.24,969.94,971.24,971.65,970.45,966.44,959.61,950.34,939.03,926.85,914.07,900.07,885.63,871.15,
      +856.21,840.97,826.47,812.92,799.72,787.55,776.05,765.55,756.97,735.74,728.14,726.30,728.24,731.96,735.81,
      +739.50,743.07,746.55,750.00/)
+c clin and Vclin updated July 2013. 
+c      clin=(/ -0.8400, -0.6000, -0.6037, -0.5739, -0.5668, -0.5552, -0.5385, -0.5341, -0.5253, -0.5119,
+c     + -0.5075, -0.4906, -0.4829, -0.4757, -0.4724, -0.4691, -0.4632, -0.4580, -0.4479, -0.4419,
+c     + -0.4395, -0.4395, -0.4404, -0.4441, -0.4502, -0.4581, -0.4673, -0.4772, -0.4872, -0.5063,
+c     + -0.5244, -0.5421, -0.5475, -0.5603, -0.5796, -0.6005, -0.6225, -0.6449, -0.6668, -0.6876,
+c     + -0.7243, -0.7565, -0.7718, -0.7870, -0.8161, -0.8295, -0.8417, -0.8618, -0.8773, -0.8838,
+c     + -0.8896, -0.9004, -0.9109, -0.9224, -0.9346, -0.9408, -0.9469, -0.9586, -0.9693, -0.9892,
+c     + -1.0012, -1.0078, -1.0093, -1.0117, -1.0154, -1.0210, -1.0282, -1.0360, -1.0436, -1.0500,
+c     + -1.0573, -1.0584, -1.0554, -1.0504, -1.0454, -1.0421, -1.0404, -1.0397, -1.0395, -1.0392,
+c     + -1.0368, -1.0323, -1.0294, -1.0262, -1.0190, -1.0112, -1.0032, -0.9951, -0.9910, -0.9868,
+c     + -0.9783, -0.9694, -0.9601, -0.9505, -0.9405, -0.9302, -0.9195, -0.8918, -0.8629, -0.8335,
+c     + -0.8046, -0.7766, -0.7503, -0.7254, -0.7016, -0.6785, -0.655800/)
+c  
+c      Vclin =(/ 1300.00, 1500.00, 1500.20, 1500.36, 1500.68, 1501.04, 1501.26, 1502.95, 1503.12, 1503.24,
+c     +   1503.32, 1503.35, 1503.34, 1503.13, 1502.84, 1502.47, 1502.01, 1501.42, 1500.71, 1499.83,
+c     +   1498.74, 1497.42, 1495.85, 1494.00, 1491.82, 1489.29, 1486.36, 1482.98, 1479.12, 1474.74,
+c     +   1469.75, 1464.09, 1457.76, 1450.71, 1442.85, 1434.22, 1424.85, 1414.77, 1403.99, 1392.61,
+c     +   1380.72, 1368.51, 1356.21, 1343.89, 1331.67, 1319.83, 1308.47, 1297.65, 1287.50, 1278.06,
+c     +   1269.19, 1260.74, 1252.66, 1244.80, 1237.03, 1229.23, 1221.16, 1212.74, 1203.91, 1194.59,
+c     +   1184.93, 1175.19, 1165.69, 1156.46, 1147.59, 1139.21, 1131.34, 1123.91, 1116.83, 1109.95,
+c     +   1103.07, 1096.04, 1088.67, 1080.77, 1072.39, 1061.77, 1049.29, 1036.42, 1023.14, 1009.49,
+c     +    995.52,  981.33,  966.94,  952.34,  937.52,  922.43,  908.79,  896.15,  883.16,  870.05,
+c     +    857.07,  844.48,  832.45,  821.18,  810.79,  801.41,  793.13,  785.73,  779.91,  775.60,
+c     +    772.68,  771.01,  760.81,  764.50,  768.07,  771.55,  775.00/)
 	Vref=760.
 	f1=0.0
 	f3=0.1	!fill out with constant value
@@ -10111,7 +10538,7 @@ c Subroutine updated by SH. May 20 2013.
      :        delta_phiV, v1, v2,
      :        tau1, tau2,
      :        alny, fsb, fs, phiM, phiMR,
-     :        phi, tau, sigmaf, sigma, delta_z1, f_delta_z1,   
+     :        phi, tau, sigmaf, sigma, delta_z1, f_delta_z1, 
      :        amp_lin, amp_nl, amp_total, bnl,
      :        fz1, mu1_vs30
      
@@ -10294,7 +10721,7 @@ c     For now, convert hwflag to an equivalent srcSiteA
 c     compute pga on rock
       period0 = 0.0
       pgaRock = 0.0
-      vs30_rock = 1100.
+      vs30_rock = 1100.	!only with AS_07; not with ASK13.
       depthvs10rock = 0.006
       call AS_072007_model (iper, mag, dip, rake, width, rRup, rjb,R_x,
      1                     vs30_rock, pgaRock,  lnSa, sigma, tau,
@@ -11080,7 +11507,478 @@ c     Set total to return
 
       return
       end subroutine AS_072007_model
-      			
+
+c ------------------------------------------------------------------            
+C *** Abrahamson Silva and Kamai Horizontal ************
+c ------------------------------------------------------------------            
+
+      subroutine ASK13_v11_model (iPer, mag, dip, FltWidth, ZTOR, Frv, Fn, rRup, rjb, Rx, Ry0, 
+     1                     vs30, Sa1180, Z1,  z1_ref, hwflag, vs30_class, Region, 
+     2                     lnSa, phi, tau)
+c from Kamai email July 24 2013. z1_ref is input rather than computed, unless Japan.
+c Steve Harmsen July 25, 2013. This version does use the Ry0 distance metric.
+c
+      implicit none
+      integer MAXPER     
+      parameter (MAXPER=23)
+      real c4(MAXPER), a1(MAXPER), a2(MAXPER), a3(MAXPER), a4(MAXPER), a5(MAXPER), a6(MAXPER)
+      real a7(MAXPER), a8(MAXPER), a9(MAXPER), a10(MAXPER), a11(MAXPER)
+      real a12(MAXPER), a13(MAXPER), a14(MAXPER), a15(MAXPER), a17(MAXPER)
+      real a43(MAXPER), a44(MAXPER), a45(MAXPER), a46(MAXPER)  
+      real a25(MAXPER), a28(MAXPER), a29(MAXPER), a31(MAXPER)
+      real a36(MAXPER), a37(MAXPER), a38(MAXPER), a39(MAXPER)
+      real a40(MAXPER), a41(MAXPER), a42(MAXPER), s5(MAXPER), s6(MAXPER)
+      real s1_e(MAXPER), s2_e(MAXPER), s1_m(MAXPER), s2_m(MAXPER), s3(MAXPER), s4(MAXPER)
+	 
+      real period(MAXPER), b(MAXPER), vLin(MAXPER)
+      real M1, M2, y1, y2, x1, x2, y1z, y2z, x1z, x2z
+      real lnSa, Sa1180, rjb, rRup, Rx, Ry0, dip, mag, vs30
+      real HW_taper1, HW_taper2, HW_taper3, HW_taper4, HW_taper5
+      real damp_dSa1180, sigAmp, fltWidth, testv1
+      real f1, f4, f5, f6, f7, f8, f10, f13, f_Reg
+      real Ry1, ZTOR, Frv, Fn, SpecT
+      real phiA_estimated, phiA_measured, phiA, phiB, tauA, tauB, phi, tau
+      integer vs30_class, hwflag, iPer, Region
+      real n, c, Z1, zhat, c4_mag,tan20/0.3639702/
+      real R, V1, Vs30Star, hw_a2, h1, h2, h3, R1, R2, z1_ref
+
+      data period / 0.0, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 
+     1              0.3, 0.4, 0.5, 0.75, 1, 1.5, 2, 3, 4, 5, 6, 7.5, 10, -1.0/
+      data Vlin/ 660,680,770,800,800,800,740,590,495,430,360,340,330,330,
+     1			 330,330,330,330,330,330,330,330,330 /
+      data b/ -1.47,-1.46,-1.39,-1.22,-1.15,-1.23,-1.59,-2.01,-2.41,-2.76,
+     1         -3.28,-3.6,-3.8,-3.5,-2.4,-1,0,0,0,0,0,0,-2.02 /
+      data c4/ 4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,
+     1     	4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5 /
+      data a1/ 0.587,0.598,0.602,0.746,1.021,1.210,1.442,1.637,1.701,1.712,
+     1     1.662,1.571,1.299,1.043,0.665,0.329,-0.060,-0.299,-0.562,-0.875,-1.303,-1.928,5.975 /
+      data a2/ -0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,
+     1      	-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,
+     2       -0.765,-0.711,-0.634,-0.529,-0.919 /
+      data a3/ 0.275,0.275,0.275,0.275,0.275,0.275,0.275,0.275,0.275,0.275,
+     1        0.275,0.275,0.275,0.275,0.275,0.275,0.275,0.275,0.275,0.275,
+     2        0.275,0.275,0.275 /
+      data a4/ -0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,
+     1		   -0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1 /
+      data a5/ -0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,
+     1     	-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41 /
+      data a6/ 2.154,2.146,2.157,2.085,2.029,2.041,2.121,2.224,2.312,2.338,2.469,
+     1       	2.559,2.682,2.763,2.836,2.897,2.906,2.889,2.898,2.896,2.870,2.843,2.366 /
+      data a7/ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 /
+      data a8/ -0.015,-0.015,-0.015,-0.015,-0.015,-0.015,-0.022,-0.03,-0.038,-0.045,
+     1        	-0.055,-0.065,-0.095,-0.11,-0.124,-0.138,-0.172,-0.197,-0.218,-0.235,
+     2        	-0.255,-0.285,-0.094 /
+      data a9/ 6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,
+     1 		   6.75,6.75,6.75,6.82,6.92,7,7.06,7.15,7.25,6.75 /
+      data a10/ 1.735,1.718,1.615,1.358,1.258,1.310,1.660,2.220,2.770,3.250,
+     1 		    3.990,4.450,4.750,4.300,2.650,0.550,-0.950,-0.950,-0.930,-0.910,
+     2 			-0.875,-0.800,2.36 /
+      data a11/ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /
+      data a12/ -0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,
+     1 			-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1 /
+      data a13/ 0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.58,0.56,0.53,
+     1 			0.50,0.42,0.35,0.20,0,0,0,0,0,0.25 /
+      data a14/ -0.30,-0.30,-0.30,-0.30,-0.30,-0.30,-0.30,-0.30,-0.24,-0.19,
+     1 		    -0.11,-0.04,0.07,0.15,0.27,0.35,0.46,0.54,0.61,0.65,0.72,0.80,0.22 /
+      data a15/ 1.10,1.10,1.10,1.10,1.10,1.10,1.10,1.10,1.10,1.03,0.92,0.84,
+     1 		    0.68,0.57,0.42,0.31,0.16,0.05,-0.04,-0.11,-0.19,-0.30,0.90 /
+      data a17/ -0.0072,-0.0073,-0.0075,-0.0080,-0.0089,-0.0095,-0.0095,-0.0086,
+     1        	-0.0074,-0.0064,-0.0043,-0.0032,-0.0025,-0.0025,-0.0022,-0.0019,-0.0015,
+     2        	-0.0010,-0.0010,-0.0010,-0.0010,-0.0010,-0.0005 /
+      data a43/ 0.10,0.10,0.10,0.10,0.10,0.10,0.10,0.10,0.10,0.10,0.10,0.10,
+     1 	        0.14,0.165,0.22,0.26,0.34,0.41,0.51,0.55,0.55,0.42,0.28 /
+      data a44/ 0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.07,
+     1 			0.10,0.14,0.165,0.21,0.25,0.30,0.32,0.32,0.32,0.29,0.22,0.15 /
+      data a45/ 0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.03,0.06,
+     1 			0.10,0.14,0.165,0.20,0.22,0.23,0.23,0.22,0.20,0.17,0.14,0.09 /
+      data a46/ -0.05,-0.05,-0.05,-0.05,-0.05,-0.05,-0.05,-0.03,0.00,0.03,
+     1 			0.06,0.09,0.13,0.14,0.16,0.16,0.16,0.14,0.13,0.10,0.08,0.08,0.07 /
+      data a25/ -0.0015,-0.0015,-0.0016,-0.0020,-0.0027,-0.0033,-0.0035,
+     1         	  -0.0033,-0.0029,-0.0027,-0.0023,-0.0020,-0.0010,-0.0005,-0.0004,
+     2         	  -0.0002,0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,-0.0001 /
+      data a28/ 0.0025,0.0024,0.0023,0.0027,0.0032,0.0036,0.0033,0.0027,
+     1         	  0.0024,0.0020,0.0010,0.0008,0.0007,0.0007,0.0006,0.0003,0.0000,
+     2         	  0.0000,0.0000,0.0000,0.0000,0.0000,0.0005 /
+      data a29/ -0.0034,-0.0033,-0.0034,-0.0033,-0.0029,-0.0025,-0.0025,
+     1         	  -0.0031,-0.0036,-0.0039,-0.0048,-0.0050,-0.0041,-0.0032,-0.0020,
+     2         	  -0.0017,-0.0020,-0.0020,-0.0020,-0.0020,-0.0020,-0.0020,-0.0037 /
+      data a31/ -0.1503,-0.1479,-0.1447,-0.1326,-0.1353,-0.1128,0.0383,
+     1         	  0.0775,0.0741,0.2548,0.2136,0.1542,0.0787,0.0476,-0.0163,-0.1203,
+     2         	  -0.2719,-0.2958,-0.2718,-0.2517,-0.1337,-0.0216,-0.1462 /
+      data a36/ 0.2650,0.2550,0.2490,0.2020,0.1260,0.0220,-0.1360,-0.0780,
+     1         	  0.0370,-0.0910,0.1290,0.3100,0.5050,0.3580,0.1310,0.1230,0.1090,
+     2         	  0.1350,0.1890,0.2150,0.1660,0.0920,0.3770 /
+      data a37/ 0.3370,0.3280,0.3200,0.2890,0.2750,0.2560,0.1620,0.2240,
+     1         	  0.2480,0.2030,0.2320,0.2520,0.2080,0.2080,0.1080,0.0680,-0.0230,
+     2         	  0.0280,0.0310,0.0240,-0.0610,-0.1590,0.2120 /
+      data a38/ 0.1880,0.1840,0.1800,0.1670,0.1730,0.1890,0.1080,0.1150,
+     1         	  0.1220,0.0960,0.1230,0.1340,0.1290,0.1520,0.1180,0.1190,0.0930,
+     2         	  0.0840,0.0580,0.0650,0.0090,-0.0500,0.1570 /
+      data a39/ 0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,
+     1         	  0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,
+     2         	  0.0000,0.0000,0.0000,0.0000,0.0000,0.0000 /
+      data a40/ 0.0880,0.0880,0.0930,0.1330,0.1860,0.1600,0.0680,0.0480,
+     1         	  0.0550,0.0730,0.1430,0.1600,0.1580,0.1450,0.1310,0.0830,0.0700,
+     2         	  0.1010,0.0950,0.1330,0.1510,0.1240,0.0950 /
+      data a41/ -0.1960,-0.1940,-0.1750,-0.0900,0.0900,0.0060,-0.1560,
+     1         	  -0.2740,-0.2480,-0.2030,-0.1540,-0.1590,-0.1410,-0.1440,-0.1260,
+     2         	  -0.0750,-0.0210,0.0720,0.2050,0.2850,0.3290,0.3010,-0.0380 /
+      data a42/ 0.0440,0.0610,0.1620,0.4510,0.5060,0.3350,-0.0840,
+     1         	  -0.1780,-0.1870,-0.1590,-0.0230,-0.0290,0.0610,0.0620,0.0370,
+     2         	  -0.1430,-0.0280,-0.0970,0.0150,0.1040,0.2990,0.2430,0.0650 /
+
+      data s1_e/ 0.754,0.760,0.781,0.810,0.810,0.810,0.801,0.789,0.770,0.740,
+     1		   0.699,0.676,0.631,0.609,0.578,0.555,0.548,0.527,0.505,0.477,
+     2		   0.457,0.429,0.662 /
+      data s2_e/ 0.520,0.520,0.520,0.530,0.540,0.550,0.560,0.565,0.570,0.580,
+     1		   0.590,0.600,0.615,0.630,0.640,0.650,0.640,0.630,0.630,0.630,
+     2		   0.630,0.630,0.51 /
+      data s3/ 0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,
+     1 		   0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.38 /
+      data s4/ 0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,
+     1 		   0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.38 /
+      data s1_m/ 0.741,0.747,0.769,0.798,0.798,0.795,0.773,0.753,0.729,
+     1         0.693,0.644,0.616,0.566,0.541,0.506,0.48,0.472,0.447,0.425,
+     2         0.395,0.378,0.359,0.66 /
+      data s2_m/ 0.501,0.501,0.501,0.512,0.522,0.527,0.519,0.514,0.513,
+     1         0.519,0.524,0.532,0.548,0.565,0.576,0.587,0.576,0.565,0.568,
+     2         0.571,0.575,0.585,0.51 /
+      data s5/ 0.540,0.5400,0.5500,0.5600,0.5700,0.5700,0.5800,0.5900,0.6100,
+     1         0.6300,0.6600,0.6900,0.7300,0.7700,0.8000,0.8000,0.8000,0.7600,
+     2         0.7200,0.7000,0.6700,0.6400,0.5800 /
+      data s6/ 0.630,0.6300,0.6300,0.6500,0.6900,0.7000,0.7000,0.7000,0.7000,
+     1         0.7000,0.7000,0.7000,0.6900,0.6800,0.6600,0.6200,0.5500,0.5200,
+     2         0.5000,0.5000,0.5000,0.5000,0.5300 /
+
+        
+      n = 1.5
+
+C     c is 2400 for PGV and 2.4 for all other periods
+      if (period(iper) .eq. -1) then	
+         c = 2400.0
+      else
+         c = 2.4
+      endif
+
+    
+c	  magnitude dependent taper for C4. (eq. 4.4)
+      if ( mag .ge. 5. ) then
+        c4_mag = c4(iper)
+      elseif ( mag .ge. 4.) then
+        c4_mag = c4(iper) - (c4(iper)-1.)*(5. - mag)
+      else
+        c4_mag = 1.
+      endif
+		
+c     Set distance (eq 4.3)
+      R = sqrt(rRup**2 + c4_mag**2)
+       	  
+C     Base Model (eq 4.2)
+      M1 = a9(iper)
+      M2 = 5.0
+      if ( mag .le. M2 ) then
+        f1 = a1(iper) + a6(iper)*(Mag-M2) + a7(iper)*(Mag-M2)**2 + a4(iper)*(M2-M1) + a8(iper)*(8.5-M2)**2 +
+     1                (a2(iper) + a3(iper)*(M2-M1)) * alog(R) + a17(iper)*rRup
+      elseif ( mag .le. M1 ) then
+        f1 = a1(iper) + a4(iper)*(Mag-M1) + a8(iper)*(8.5-Mag)**2 + (a2(iper)+ a3(iper)*(Mag-M1))*alog(R)+a17(iper)*rRup
+      else
+        f1 = a1(iper) + a5(iper)*(Mag-M1) + a8(iper)*(8.5-Mag)**2 + (a2(iper)+a3(iper)*(Mag-M1))*alog(R)+a17(iper)*rRup
+      endif
+
+c     style of faulting (eq 4.5 and 4.6) 
+      if ( mag .lt. 4. ) then
+        f7 = 0
+        f8 = 0
+      elseif ( mag .le. 5. ) then
+        f7 = Frv * a11(iper) * (mag-4.)
+        f8 = Fn * a12(iper) * (mag-4.)
+      else 
+        f7 = Frv * a11(iper)
+        f8 = Fn * a12(iper)
+      endif
+
+c     ZTOR (eq 4.16)
+      if (ZTOR .le. 20.) then 
+        f6 = a15(iper) * ZTOR/20.0
+      else
+        f6 = a15(iper)
+      endif    
+
+c     Set VS30_star (eq 4.8 and 4.9)
+      if ( period(iper) .ge. 3.0 ) then
+        V1 = 800.
+      elseif ( period(iper) .gt. 0.5 ) then
+        V1 = exp( -0.35 * alog(period(iper)/0.5)  + alog(1500.) )
+      else
+        V1=1500.
+      endif
+      if ( vs30 .lt. v1 ) then
+         vs30Star = vs30
+      else
+	vs30Star = v1
+      endif		
+
+c     Compute site amplification (Eq. 4.7)  
+      if (vs30 .lt. vLin(iPer)) then
+        f5 = a10(iper)*alog(vs30Star/vLin(iper)) - b(iper)*alog(c+Sa1180) 
+     1              + b(iper)*alog(Sa1180+c*((vs30Star/vLin(iper))**(n)) )
+      else
+     	f5 = (a10(iper) + b(iper)*n) * alog(vs30Star/vLin(iper))
+      endif
+
+c     Set CA z1 reference (eq 4.18). This z1_ref was passed in (assuming constant Vs30 for all sites in map)
+c For Variable Vs30, z1_ref should be precomputed for each site and may still be passed in.
+c      if ( Region .ne. 10 ) then
+c        z1_ref = exp ( -7.67/4. * alog( (Vs30**4 + 610.**4)/(1360.**4+610.**4) ) ) / 1000.
+      if(Region .eq.10)then
+c     Set Japan z1 reference (eq 4.19)
+        z1_ref = exp ( -5.23/2. * alog( (Vs30**2 + 412.**2)/(1360.**2+412.**2) ) ) / 1000.
+       endif
+	  
+C    if z1 is unknown, input z1<0 and then reference is used. (R.K.)
+      if (z1 .lt. 0. ) then
+		z1 = z1_ref
+      endif
+	  
+	  
+C     Soil Depth Model - Interpolate between mid Vs30 bins (eq 4.17)
+      if ( vs30 .lt. 150. ) then 
+        y1z = a43(iper) 
+        y2z = a43(iper)
+        x1z = 50. 
+        x2z = 150.
+      elseif ( vs30 .lt. 250. ) then
+        y1z = a43(iper) 
+        y2z = a44(iper)
+        x1z = 150. 
+        x2z = 250.
+      elseif ( vs30 .lt. 400. ) then
+        y1z = a44(iper) 
+        y2z = a45(iper)
+        x1z = 250. 
+        x2z = 400.
+      elseif ( vs30 .lt. 700. ) then
+        y1z = a45(iper) 
+        y2z = a46(iper)
+        x1z = 400. 
+        x2z = 700.
+      else
+        y1z = a46(iper) 
+        y2z = a46(iper)
+        x1z = 700. 
+        x2z = 1000.
+      endif        
+	  
+       f10 = (y1z + (y2z-y1z)/(x2z-x1z))*alog( (z1+0.01) /(z1_ref+0.01) )
+	  
+	  
+c     Compute HW taper1 (eq 4.11) 
+      if ( dip .lt. 30. ) then
+        HW_taper1 = 60./ 45.
+      else
+        HW_taper1 = (90.-dip)/45.
+      endif
+
+c     Compute HW taper2 (eq. 4.12)
+      hw_a2 = 0.2
+      if( mag .gt. 6.5 ) then
+        HW_taper2 = 1. + hw_a2 * (mag-6.5) 
+      elseif ( mag .gt. 5.5 ) then
+        HW_taper2 = 1. + HW_a2 * (mag-6.5) - (1-HW_a2)*(mag-6.5)**2
+      else
+        HW_taper2 = 0.
+      endif
+
+c     Compute HW taper 3 (eq. 4.13)
+C	  April 11, correction by ronnie for HW_taper3 when Rx.gt.R2
+      h1 = 0.25
+      h2 = 1.5
+      h3 = -0.75
+      R1 = fltWidth * cos(dip*3.1415926/180.)
+      R2 = 3.*R1
+      if ( Rx .le. R1 ) then
+        HW_taper3 = h1 + h2*(Rx/R1) + h3*(Rx/R1)**2
+      elseif ( Rx . lt. R2 ) then
+        HW_taper3 = 1. - (Rx-R1)/(R2-R1)
+      else
+        HW_taper3 = 0.
+      endif 
+
+c     Compute HW taper 4 (eq 4.14)
+      if ( ZTOR .lt. 10. ) then
+        HW_taper4 = 1. - (ZTOR**2) / 100.
+      else
+        HW_taper4 = 0.
+      endif
+      
+C    Input Ry0 < 0 to use the 'no Ry0' version. if Ry0 is known and input is positive, uses Ry0 version. (R.K.)
+      if (Ry0 .lt. 0 ) then
+c     Compute HW taper 5 (eq. 4.15b)  **** No Ry0 version ***     
+        if (Rjb .eq. 0. ) then
+          HW_taper5 = 1. 
+        elseif ( Rjb .lt. 30. ) then
+          HW_taper5 = 1 - Rjb/30.
+        else
+          HW_taper5 = 0.
+        endif
+      else
+C     Compute HW taper 5 (eq. 4.15a)  **** Ry0 version ***     
+        Ry1 = Rx * tan20		!tan(20.*3.1415926/180.)
+        if ( Ry0 .lt. Ry1 ) then
+          HW_taper5 = 1.
+        elseif ( Ry0-Ry1 .lt. 5. ) then
+          HW_taper5 = 1. - (Ry0-Ry1) / 5.
+        else
+          HW_taper5 = 0.
+        endif
+      endif
+
+c     Hanging wall Model (eq 4.10)
+      if ( HWFlag .eq. 1 ) then
+        f4 = a13(iper) * HW_taper1 * HW_taper2 * HW_taper3 * HW_taper4 * HW_taper5
+      else
+        f4 = 0.
+      endif
+
+C     Calcualte the Regional delta (for site response and anelastic attenuation) (R.K.)
+
+C     Japan
+      if ( Region .eq. 10 ) then
+		
+      if ( vs30 .lt. 150. ) then 
+        y1 = a36(iper) 
+        y2 = a36(iper)
+        x1 = 50. 
+        x2 = 150.
+      elseif ( vs30 .lt. 250. ) then
+        y1 = a36(iper) 
+        y2 = a37(iper) 
+        x1 = 150. 
+        x2 = 250.
+      elseif ( vs30 .lt. 350. ) then
+        y1 = a37(iper) 
+        y2 = a38(iper) 
+        x1 = 250. 
+        x2 = 350.
+      elseif ( vs30 .lt. 450. ) then
+        y1 = a38(iper) 
+        y2 = a39(iper) 
+        x1 = 350. 
+        x2 = 450.
+      elseif ( vs30 .lt. 600. ) then
+        y1 = a39(iper) 
+        y2 = a40(iper) 
+        x1 = 450. 
+        x2 = 600.
+      elseif ( vs30 .lt. 850. ) then
+        y1 = a40(iper) 
+        y2 = a41(iper) 
+        x1 = 600. 
+        x2 = 850.
+      elseif ( vs30 .lt. 1150. ) then
+        y1 = a41(iper) 
+        y2 = a42(iper) 
+        x1 = 850. 
+        x2 = 1150.
+      else 
+        y1 = a42(iper) 
+        y2 = a42(iper) 
+        x1 = 1150. 
+        x2 = 3000.
+      endif        
+      
+         f13 = y1 + (y2-y1)/(x2-x1) * (Vs30-x1)
+      
+	     f_Reg = f13 + a29(iper)*rRup
+	  
+C     Taiwan
+      elseif (Region .eq. 3) then
+        f_Reg = a31(iper)*alog(vs30Star/vLin(iper)) + a25(iper)*rRup
+C     China
+      elseif (Region .eq. 9) then
+        f_Reg = a28(iper)*rRup
+      else
+        f_Reg = 0.0
+      endif
+
+	  
+C     Set the Sigma Values
+      
+      if (region .ne. 10)  then
+c     Compute within-event term, phiA, at the surface for linear site response (eq 7.1)
+        if (mag .lt. 4.0) then
+           phiA_estimated = s1_e(iper)
+        elseif (mag .le. 6.0) then
+           phiA_estimated = s1_e(iper) + ((s2_e(iper)-s1_e(iper))/2.0)*(mag-4.0)
+        else
+           phiA_estimated = s2_e(iper)
+        endif
+
+c     Compute within-event term, phiA, for known Vs30
+        if (mag .lt. 4.0) then
+           phiA_measured = s1_m(iper)
+        elseif (mag .le. 6.0) then
+           phiA_measured = s1_m(iper) + ((s2_m(iper)-s1_m(iper))/2.0)*(mag-4.0)
+        else
+           phiA_measured = s2_m(iper)
+        endif
+	  
+	  
+C     choose phiA by Vs30 class
+        if (vs30_class .eq. 0 ) then
+	     phiA = phiA_estimated
+        elseif (vs30_class .eq. 1) then
+		 phiA = phiA_measured
+        else
+	     stop 99
+        endif
+
+      else
+	  
+
+C calculate phi_A for Japan (eq. 7.3)
+        if (Rrup .lt. 30) then
+           phiA = s5(iper)        
+        elseif (Rrup .le. 80) then
+           phiA = s5(iper) + (s6(iper)-s5(iper))/50*(Rrup-30)
+        else
+           phiA = s6(iper)
+        endif
+      endif
+	  
+c     Compute between-event term, tau (eq. 7.2)
+      if (mag .lt. 5.0) then
+         tauA = s3(iper)
+      elseif (mag .le. 7.0) then
+         tauA = s3(iper) + ((s4(iper)-s3(iper))/2.0)*(mag-5.0)
+      else
+         tauA = s4(iper)
+      endif
+      tauB = tauA
+
+c     Compute phiB, within-event term with site amp variablity removed (eq. 7.7)
+      sigAmp = 0.4
+      phiB = sqrt( phiA**2 - sigAmp**2)
+      
+c     Compute parital derivative of alog(soil amp) w.r.t. alog(Sa1180) (eq. 7.10)
+      if ( vs30 .ge. vLin(iper)) then
+        dAmp_dSa1180 = 0.
+      else
+        dAmp_dSa1180 = b(iper)*Sa1180 * ( -1. / (Sa1180+c) 
+     1              + 1./ (Sa1180 + c*(vs30/vLin(iper))**(n)) )
+      endif
+
+C     Compute phi, with non-linear effects (eq. 7.8)
+      phi = sqrt( phiB**2 * (1. + dAmp_dSa1180)**2 + sigAmp**2 )
+
+C     Compute tau, with non-linear effects (eq. 7.9)
+      tau = tauB * (1. + dAmp_dSa1180)
+      
+c     Compute median ground motion (eq. 4.1)
+      lnSa = f1 + f4 + f5 + f6 + f7 + f8 + f10 +f_Reg 
+
+      return
+      end    subroutine ASK13_v11_model  			
 
       subroutine AS2013_v5_model (iper, mag, dip, FltWidth, ZTOR, Frv, Fn, rRup, rjb, Rx, Ry0, 
      1                     vs30, Sa1100, Z1, z1_ref, hwflag, vs30_class, lnSa, phi, tau)
