@@ -1,4 +1,11 @@
-c--- program  hazFXnga13l.f; 08/02/2013; Use  with NGA relations, or others.
+c--- program  hazFXnga13l.f; 08/21/2013; Use  with NGA relations, or others.
+c 8/21/2013	CB13: Improve Zhyp further for downdip ruptures.
+c 8/20/2013 Inline CB13 coeffs. Begin standardizing Zhyp in CB13.
+c Correction Aug 15 2013: initialize PI in CB13 subroutine (previously wasn't).
+c		Also, calculate A1100 first time through CB13
+c		
+c 8/13/2013: Use the Rx0 version of ASK13. Set z1_rock = -1 for the hardrock calls of ASK
+c 8/05/2013: Minor repair in vicinity of line 1095 (some compiler subrange errors in prior vers)
 c 8/02/2013: The correlation coeff vector rho was updated in CB13. It is now
 c 	    stored as a data vector rather than being read in.
 c 08/01/2013: ASK13: Use estimated Vs30 setting if index is 36. Use measured Vs30 if index is 36.
@@ -7,7 +14,7 @@ c		Use measured Vs30 if index is -35 (new 8/01/2013).
 c 07/25/2013: Incorporate ASK_NGA_2013_V11.f which is the July 24 version of A S &Kamai. Uses Ry0 distance.
 c		
 c
-c July 22, 2013: Not using latest BSSA coeffs. clin and Vclin for soil site computations.
+c July 22, 2013: Using latest BSSA coeffs. clin and Vclin for soil site computations.
 c		These postdate the Eq Spectra coeffs.
 c July 16, 2013: Increase the number of clustered-event groups from 5 to 8. To handle
 c		NMSZ SSC clustered-event models. The M-uncertainty density function
@@ -507,6 +514,7 @@ c      real, dimension (22):: Percb13,PerIMIdriss
       real, dimension (23):: Percb13
       real, dimension (22):: PerIMIdriss
       real, dimension (23):: perAS13
+      real z1_ref, z1_refr	!z1 reference values for ASK13.
       integer ifn,isz,ipia,nscene
       integer, dimension(npmx,8,3) :: ifp
       integer, dimension (nfltmx) :: itype,npts,npts1,iftype,ibtype
@@ -562,6 +570,8 @@ c Silva period set.
 c Tavakoli periods 0 = pga. added 0.04 & 0.4 s july 8 2008 (spline interpolation)
       tpper = (/0.0,.04, 0.05, 0.08, 1.00e-01,1.50e-01,2.00e-01,
      1 0.3, 0.40, 0.5, 0.75, 1.0, 1.50, 2.0, 3.0, 4.0/)
+	PerCB13=(/0.01,0.02,0.03,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,
+     + 0.5,0.75,1.,1.5,2.,3.,4.,5.,7.5,10.,0.,-1./)
 c perka = period set for Kanno et al., BSSA 2006. 0 = pga.
         perdahl=(/0.0,0.1,0.2,0.5,1.,2.0/)
        perka=(/0.0,0.05,0.06,0.07,0.08,0.09,0.10,0.11,0.12,0.13,0.15,0.17,0.20,
@@ -866,6 +876,9 @@ c Units m. Z1cal was modified to equal the CY report eqn 2. Mar 11 2013.
 
 c     Norm Abrahamson's CA z1 reference (eq 18). Same in July 2013 update.
        z1_ref = exp ( -7.67/4. * alog( (Vs30**4 + 610.**4)/(1360.**4+610.**4) ) ) / 1000.
+	z1_refr=exp ( -7.67/4. * alog( (1180.**4 + 610.**4)/(1360.**4+610.**4) )) / 1000.
+c z1_refr added 8/13/2013. Z1 for hard rock. This value is .0028 km or 2.8 m
+c
        z1=z1cal	!CY2013 function used until we know better for wus...
       z1km=Z1*0.001	!for AS need units km
 c from B Chiou email of Apr 15 2013.
@@ -1088,12 +1101,14 @@ c convert sa to sd
       write(6,*)'Nlev ',nlev(ip),' min max ',
      1 xlev(1,ip),xlev(nlev(ip),ip)
          if(.not.deagg)write(6,*) (xlev(k,ip),k=1,nlev(ip))
-
-      do 414 k=1,nlev(ip)
+c repair aug 5 2013. Start below loop at k=2.
+	ylev(1,ip)=xlev(1,ip)
+	xlev(1,ip)=alog(xlev(1,ip))
+      do 414 k=2,nlev(ip)
       ylev(k,ip)=xlev(k,ip)
-      if(k.gt.1.and.xlev(k,ip).lt.1.05*xlev(k-1,ip))then
+      if(ylev(k,ip).lt.1.05*ylev(k-1,ip))then
       write(6,*)'*** The following ground motion progression is not good:'
-      write(6,*)xlev(k-1,ip),xlev(k,ip)
+      write(6,*)ylev(k-1,ip),ylev(k,ip)
       stop'*** Please be sure ground motion increases at next sample ***'
       endif
  414  xlev(k,ip)= alog(xlev(k,ip))
@@ -1118,7 +1133,7 @@ c     &  weight2 , mb to M conv."
 	iatten(ip,ia)=35
 	ipia=35
         elseif(ipia.eq.36)then
-        vs30_class=0
+ 	vs30_class       =0
         write(6,*)'ASK model: Using estimated Vs30 because ia was enterred as 36'
         elseif(ipia.eq.-36)then
         vs30_class=1
@@ -1396,13 +1411,14 @@ c!pga or other?
       print *,'Using Ry0 metric for this spectral period?',useRy0(ip)
         vs30_rock = 1180.	!changed from 1100 to 1180 July 2013.
         iReg=1	!USA
-        z10_rock = 0.006
+        z10_rock = -1.0	!mod 8/13/2013. 
 c above coefficients are needed by the AS2013 model      
       elseif(ipia.eq.34)then
-      if(readcb13)then
-      if(per.gt.0.01)stop'CB13 must be called with PGA as first g.m.'
-      call cb13_nga_spec_in
-      readcb13=.false.
+c      if(readcb13)then
+c      if(per.gt.0.01)stop'CB13 must be called with PGA as first g.m.'
+c      call cb13_nga_spec_in
+c      readcb13=.false.
+	if(per.le.0.01)then
       k=22
       else
       k=2
@@ -2160,8 +2176,7 @@ c     + x(1,ift),y(1,ift)
         dmin(1)=rjb
         dmin(2)=rcd; dmin(3) = rcd
         dmin(4)= R_x      !used in CY NGA 11/07
-        dmin(5)= R_x*tan(azb*coef)
-c        if(dmin(5).lt.0.)dmin(5)=1000.      !Ry0<0 means don't use the Ry0 metric. This is handled in ASK13
+        dmin(5)= -1.0	!make it negative. not used 8/13/2013. R_x*tan(azb*coef)
 c dmin(5) is the Ry0 value for the July 2013 ASK13 model.
 c        write(6,*) ry,rx,testhw,dhy,angtest,dmin(5)
 c  dmin is minimum distance from fault to receiver 
@@ -2373,7 +2388,7 @@ c new, possible downdip top surface of rupture. nrupd can be 1, 2 or 3
         aspectratio=ar(m,jrup)
         dz=dlen2*float(jrup-1)      !dlen2 is probably 2 km
         dtor1=dtor + dz      !all important depth to top of rupture.
-        W_rup=width(ift)-dz
+        W_rup=width(ift)-dz/sinedip
         cyhwfac=atan(W_rup*0.5*cosDELTA/(dtor1+1.0))/(pi*0.5)
 c--- loop through floating rupture zones
         do 284 irup=1,nrups(m,ift)
@@ -2398,7 +2413,7 @@ c not yet checked for r < dmax so this has to be done here. New May 25.
         R_x=dmin2(m,irup,jrup,4)      !type 4 for the new R_x
         do 282 ia=1,nattn(ip)
         rrup= dmin2(m,irup,jrup,3)      !type 3 supposed to be rrup
-        Ry0= dmin2(m,irup,jrup,5)      !type 5 new dec 2012.
+        Ry0= -1.      !not using Ry0 8/13/2013
         weight= wt(ip,ia,1)
         if(rjb.gt.wtdist(ip,ia)) weight=wt(ip,ia,2)
         if(rjb.gt.dmax) go to 282
@@ -2476,7 +2491,7 @@ c hanging-wall flag for as12 model added dec 7 2012.
       hwflag=0
       endif
       call ASK13_v11_model ( ipas13(ip),xmag,dip0(ift), W_rup, dtor1, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,iReg,lnSa, phi, tau )
+     1                     vs30_rock, SA_rock, Z10_rock, z1_refr, hwflag, vs30_class,iReg,lnSa, phi, tau )
       Sa1180 = exp(lnSa)
 c 
 c     Compute Sa at spectral period for given Vs30
@@ -2513,7 +2528,9 @@ c period1 is output by AS_modelXX. period1 should equal per(ip)
        sigmaf=1./sqrt2/sigma1
       elseif(ipia.eq.34)then
       SJ=0.0	!Are we in Japan? 1 = yes. 0 = california 3 = China.
-      Hhyp=min(12.,dtor1+8.)	!Take a stab at hypocenter depth.
+c      Hhyp=min(12.,dtor1+8.)	!Take a stab at hypocenter depth.
+	Hhyp = dtor1+0.5*sinedip*W_rup
+c	if(ip.eq.1)print *,ift,Hhyp,W_rup,F_RV,F_NM,dtor1,dbasin,xmag,Rrup,R_x,Rjb
       call CB13_NGA_SPEC  (ip,ipcb12(ip), xmag,Rrup,R_x,Rjb,F_RV, F_NM,dtor1,Hhyp,W_rup,dbasin,Vs30,
      +Dip0(ift),SJ,gnd,sigmaf)
 c      print *,exp(gnd(1)),ift,xmag,Rrup,period(ip)
@@ -2761,7 +2778,7 @@ c  dip rupture on these smaller sources.
         R_x = dmin2(1,irup,1,4)      !new signed distance oct 2007
         do 1282 ia=1,nattn(ip)
         rrup= dmin2(1,irup,1,3)
-        Ry0= dmin2(1,irup,1,5)      !type 5 new dec 2012. Ry0 is used in ASK1307
+        Ry0= -1.      !not using Ry0 8/13/2013
         weight= wt(ip,ia,1)
         if(rjb.gt.wtdist(ip,ia)) weight=wt(ip,ia,2)
         if(rjb.gt.dmax) go to 1282
@@ -2842,7 +2859,7 @@ c hanging-wall flag for as12 model added dec 7 2012.
       hwflag=0
       endif
       call ASK13_v11_model ( ipas13(ip),xmag2,dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,iReg,lnSa, phi, tau )
+     1                     vs30_rock, SA_rock, Z10_rock, z1_refr, hwflag, vs30_class,iReg,lnSa, phi, tau )
       Sa1180 = exp(lnSa)
 c 
 c     Compute Sa at spectral period for given Vs30
@@ -2857,7 +2874,9 @@ c      print *,exp(lnSa),phi,tau,width(ift),xmag2,Width(ift)
         sigmaf = 1./sqrt( phi**2 + tau**2 )/sqrt2
       elseif(ipia.eq.34)then
       SJ=0.0	!Are we in Japan? 1 = yes. 2 = no, but China. 0 = no, but WUS
-      Hhyp=min(12.,dtor+8.)	!Take a stab at hypocenter depth.
+c      Hhyp=min(12.,dtor+8.)	!Take a stab at hypocenter depth.
+	Hhyp = dtor + 0.5*sinedip*width(ift)
+c	if(ip.eq.1)print *,ift,Hhyp,Width(ift),F_RV,F_NM,dtor,dbasin,xmag,Rrup,R_x,Rjb
       call CB13_NGA_SPEC  (ip,ipcb12(ip), xmag2,Rrup,R_x,Rjb,F_RV, F_NM,dtor,Hhyp,Width(ift),dbasin,Vs30,
      +Dip0(ift),SJ,gnd,sigmaf)
 c      print *,exp(gnd(1)),ift,xmag2,Rrup
@@ -3124,7 +3143,7 @@ c it is easy to stumble near fault endpoints in deterministic calcs. SHarmsen fe
         iq=iper(ip)      !std period index
         idet=ip+66      !possibly writing deterministic src data
         R_x = dmin2(m,irup,jrup,4)      !new R_x signed distance 10/07
-        Ry0= dmin2(m,irup,jrup,5)      !type 5 new dec 2012.
+        Ry0= -1.      !not using Ry0 8/13/2013
         do 2282 ia=1,nattn(ip)
 c         iftype2= iftype(ift)
          rrup = dmin2(m,irup,jrup,3)
@@ -3205,7 +3224,7 @@ c hanging-wall flag for as12 model added dec 7 2012.
       endif
       SA_rock = 0.
       call ASK13_v11_model ( ipas13(ip),xmag,dip0(ift), W_rup, dtor1, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,iReg,lnSa, phi, tau )
+     1                     vs30_rock, SA_rock, Z10_rock, z1_refr, hwflag, vs30_class,iReg,lnSa, phi, tau )
       Sa1180 = exp(lnSa)
 c 
 c     Compute Sa at spectral period for given Vs30
@@ -3220,7 +3239,9 @@ c      print *,exp(lnSa),phi,tau,w_rup
         sigmaf = 1./sqrt( phi**2 + tau**2 )/sqrt2
       elseif(ipia.eq.34)then
       SJ=0.0	!Are we in Japan? 1 = yes.
-      Hhyp=min(12.,dtor1+8.)	!Take a stab at hypocenter depth.
+c      Hhyp=min(12.,dtor1+8.)	!Take a stab at hypocenter depth.
+	Hhyp = dtor1+0.5*sinedip*w_rup
+c	if(ip.eq.1)print *,ift,Hhyp,W_rup,F_RV,F_NM,dtor1,dbasin,xmag,Rrup,R_x,Rjb
       call CB13_NGA_SPEC  (ip,ipcb12(ip), xmag,Rrup,R_x,Rjb,F_RV, F_NM,dtor1,Hhyp,w_rup,dbasin,Vs30,
      +Dip0(ift),SJ,gnd,sigmaf)
 c      print *,exp(gnd(1)),ift,xmag,Rrup
@@ -3492,7 +3513,7 @@ c no cluster model has been specifically discussed
         do 204 ia=1,nattn(ip)
 c        iftype2= iftype(ift)
         rrup = dmin(3)      !type3 r_cd or rrup
-        Ry0= dmin(5)      !type 5 new dec 2012.
+        Ry0= dmin(5)      !type 5 new dec 2012. But, set to -1 8/13/2013
 c        write(6,*)rjb,rrup,ip,' rjb rrup ip'
         if(rjb.gt.dmax)goto 204      !sail on out if too far.
       ipia=iatten(ip,ia)
@@ -3578,7 +3599,7 @@ c hanging-wall flag for as12 model added dec 7 2012.
       dippy=max(dip0(ift),65.)
       Ry0=dmin(5)      !new dec 10
       call ASK13_v11_model ( ipas13(ip),xmag2,dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,iReg,lnSa, phi, tau )
+     1                     vs30_rock, SA_rock, Z10_rock, z1_refr, hwflag, vs30_class,iReg,lnSa, phi, tau )
       Sa1180 = exp(lnSa)
 c 
 c     Compute Sa at spectral period for given Vs30
@@ -3594,7 +3615,9 @@ c      print *,exp(lnSa),xmag2,rrup,rjb,r_x,Sa1100,sig,period(ip)
         sigmaf = 1./sig/sqrt2
       elseif(ipia.eq.34)then
       SJ=0.0	!Are we in Japan? 1 = yes.
-      Hhyp=min(12.,dtor+8.)	!Take a stab at hypocenter depth.
+c      Hhyp=min(12.,dtor+8.)	!Take a stab at hypocenter depth.
+	Hhyp = dtor+0.5*sinedip*width(ift)
+c	if(ip.eq.1)print *,ift,Hhyp,width(ift),F_RV,F_NM,dtor,dbasin,xmag2,Rrup,R_x,Rjb
       call CB13_NGA_SPEC  (ip,ipcb12(ip), xmag2,Rrup,R_x,Rjb,F_RV, F_NM,dtor,Hhyp,width(ift),dbasin,Vs30,
      +Dip0(ift),SJ,gnd,sigmaf)
 c      print *,exp(gnd(1)),ift,xmag2,Rrup
@@ -3962,7 +3985,7 @@ c hanging-wall flag for as12 model added dec 7 2012.
       hwflag=0
       endif
       call ASK13_v11_model ( ipas13(ip),xmag,dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
-     1                     vs30_rock, SA_rock, Z10_rock, z1_ref, hwflag, vs30_class,iReg,lnSa, phi, tau )
+     1                     vs30_rock, SA_rock, Z10_rock, z1_refr, hwflag, vs30_class,iReg,lnSa, phi, tau )
       Sa1180 = exp(lnSa)
 c 
 c     Compute Sa at spectral period for given Vs30
@@ -3978,7 +4001,9 @@ c      print *,exp(lnSa),sig,Sa1100,period(ip),xmag,rRup
         sigmaf = 1./sig/sqrt2
       elseif(ipia.eq.34)then
       SJ=0.0	!Are we in Japan? 1 = yes.
-      Hhyp=min(12.,dtor+8.)	!Take a stab at hypocenter depth.
+c      Hhyp=min(12.,dtor+8.)	!Take a stab at hypocenter depth.
+	Hhyp = dtor+0.5*sinedip*width(ift)
+c	if(ip.eq.1)print *,ift,Hhyp,width(ift),F_RV,F_NM,dtor,dbasin,xmag,Rrup,R_x,Rjb
       call CB13_NGA_SPEC  (ip,ipcb12(ip), xmag,Rrup,R_x,Rjb,F_RV, F_NM,dtor,Hhyp,width(ift),dbasin,Vs30,
      +Dip0(ift),SJ,gnd,sigmaf)
 c      print *,exp(gnd(1)),ift,xmag,Rrup,Period(ip)
@@ -8682,79 +8707,14 @@ c sense of slip sensitivity: oblique-reverse or reverse slip. Otherwise none.
          endif
         return
       end subroutine getIdriss2013
-
-c------------------------------------------------------------------------------
-      SUBROUTINE CB13_NGA_SPEC_IN
-c read in the coeffs only. Harmsen Last mod: Aug 2 2013. Additional coeffs such as phi_low
-C     This program computes 5%-damped linear elastic response spectra from the 
-C     2012 Campbell-Bozorgnia NGA-West2 Ground Motion Prediction Equation (GMPE)
-C
-C     It is Based on Campbell-Bozorgnia NGA-West2 Draft Model, November 12, 2012, Rev111
-C
-C     Written by Yousef Bozorgnia (November 25, 2012)
-
-      parameter (nper=23)
-c      parameter (nper=22)
-c should this be 23 or 22 - declared with 22 in main routine
-      common /cb13/Phi,Tau,c0,c1,c2low,c2,c3,c4,c5,c6,c7,c8,c9,c10,c10j,c10jlow,c11,c11j,
-     + c12,c13low,c13hi,c14,c15,k1,k2,k3,a2,h1,h2,h3,h4,h5,h6,phi_lny,phi_low, phi_hi,
-     + tau_lny,tau_lnyB,tau_low,tau_hi,phi_lnAF,rho
-      common/cb13p/Per
-      REAL, dimension(nper) ::  Phi, Tau, csoil,nsoil,tau_low,tau_hi
-      REAL Per(nper), c0(nper), c1(nper), c2low(nper), c2(nper)
-      REAL c3(nper), c4(nper)
-      REAL c5(nper), c6(nper), c7(nper), c8(nper), c9(nper)
-      REAL c10(nper), c10J(nper), c10Jlow(nper) 
-      REAL c11(nper), c11J(nper) 
-      REAL, dimension(nper) :: c12, c13low,c13hi, c14,c15,k1, k2, k3,a2,h1,h2,h3
-      REAL, dimension(nper) :: h4,h5,h6, phi_low, phi_hi,phi_lny,phi_lnyB,tau_lny,tau_lnyB
-      REAL phi_lnAF(nper), rho(nper)
-      character*5 dum1
-c Rho, the correlation coef vector, was changed in the July 25 Word doc. This new rho
-c replaces the one that was previously read in from CB13_Apr8_coeffs.txt
-      rho = (/1.0,0.998,0.986,0.938,0.887,0.87,0.876,0.87,0.85,0.819,
-     + 0.743,0.684,0.562,0.467,0.364,0.298,0.234,0.202,0.184,0.176,0.154,1.0,0.684/)
-C.....
-C.....READ MODEL COEFFICIENTS FROM AN EXCEL FILE (text FORMAT, csv does not work on sun workstation)
-C.....
-c      if(icase.ne.1) go to 21 
-      call get_lun(m)
-c updated input file name Apr 9 2013.
-        open (m,file='GR/CB13_Apr8_coeffs.txt',status='old',err=2012)
-c from Atten113_CB13_Feb22_23Pers_Free_All_Fix_k2c9c6_SAT_Smooth2_USGS.xlsx (april 9 2013)
-      print *,'CB coefficient file opened OK unit ',m
-      read (m,1) dum1
- 1    format(a)
- 	print *,dum1
- 	read(m,1)dum1
- 	print *,dum1
- 	read(m,1)dum1
- 	print *,dum1	!three lines
- 	
-      do 20 iper=1,nper
-        read (m,*)Per(iper),c0(iper),c1(iper),c2low(iper),c2(iper),c3(iper),
-     +c4(iper),c5(iper),c6(iper),c7(iper),c8(iper),c9(iper),c10(iper),c10Jlow(iper),
-     +c10J(iper),c11(iper),c11J(iper),c12(iper),c13low(iper),c13hi(iper),c14(iper),
-     +c15(iper),a2(iper), h1(iper),h2(iper),h3(iper),h4(iper),h5(iper),h6(iper),
-     +k1(iper), k2(iper), k3(iper),
-     +csoil(iper), nsoil(iper),
-     +phi_low(iper), phi_hi(iper),tau_low(iper), tau_hi(iper), phi_lnAF(iper), sigma_c	!, rho(iper)
-c      print *,'period ',Per(iper)
-c      print *,c14(iper),c15(iper),phi_lnAF(iper), rho(iper),'c14(iper),c15(iper),phi_lnAF(iper), rho(iper)'
- 20   CONTINUE
-c Although read in csoil and nsoil will be real variables in the actual CB_SPEC_IN
-       close(m)
-       return
-2012      print *,'CB coeff file not found ; put in GR/ folder'
-      stop
-       end SUBROUTINE CB13_NGA_SPEC_IN
-
-c add Abrahamson Silva code with no Ry_from_Rx (the simplified model).
-c Example call from above:
+c CB13_NGA_SPEC_IN has been removed and the coeff. values inlined. Aug 20 2013. SH.
+c Simplified file sharing. Also number of sigfigs has been increased.
        
       SUBROUTINE CB13_NGA_SPEC  (ip,iper, Mw,Rrup,Rx,Rjb, Frv,Fnm,Ztor,Hhyp,W,Z25,Vs30,Dip,SJ,gnd,sigmaf)
 c     +(Mw,Rrup,Rjb,Rx, Frv,Fnm,Ztor,Hhyp,W,Dip,Vs30,Z25,SJ, 
 c     &Per,Y,Phi,Tau,Sigmatot,icase)
+c Correction Aug 15 2013: initialize PI.
+c Aug 20 2013. Put coeffs into statements instead of reading them in.
 c Modified May 13 2013 to include an anelastic atten for R>80. Bozorgnia email of May 2013
 c call this subroutine after calling CB13_NGA_SPEC_IN
 c mods by  Harmsen Feb 25 2013. They added PGV index 23 this time.
@@ -8774,39 +8734,163 @@ C     Z25    = Depth to 2.5 km/s velocity horizon (km)
 C     SJ     = 1 for sites in Japan; =0 otherwise
 C     iSpec  = 0 for generating Sa(g) [Not at this point: 1 for Sv(cm/s); 2 for Sd(cm)]
 c output
-      parameter (nper=23,sqrt2=1.4142136)
+      parameter (nper=23,sqrt2=1.4142136, PI=3.1415927,d2r=0.0174533)
        real, dimension(3) ::gnd
        common/sdi/sdi,dy_sdi,fac_sde
       common/epistemic/l_gnd_ep,gnd_ep,ide,ime
       integer ide,ime,ip
        common/fix_sigma/fix_sigma,sigma_fx
       common/Dipinf/dipang,cosDELTA,cdipsq,cyhwfac,cbhwfac
-      common /cb13/Phi,Tau,c0,c1,c2low,c2,c3,c4,c5,c6,c7,c8,c9,c10,c10j,c10jlow,c11,c11j,
-     + c12,c13low,c13hi,c14,c15,k1,k2,k3,a2,h1,h2,h3,h4,h5,h6,phi_lny,phi_low, phi_hi,
-     + tau_lny,tau_lnyB,tau_low,tau_hi,phi_lnAF,rho
-c       common/cb13p/Per
+	real csoil,nsoil
        real, dimension(8) :: fac_sde
       real, dimension(nper):: Phi,Tau,Per,c0,c1,c2low,c2,c3,c4,c5,c6,c7,c8,c9,c10,c10j,c10jlow,c11,
      + c11j,c12,c13low,c13hi,c14,c15,k1,k2,k3,a2,h1,h2,h3,h4,h5,h6,phi_lny,phi_low, phi_hi,
-     + tau_lny,tau_lnyB,tau_low,tau_hi,phi_lnAF,rho,c15ca,c15j,c15_China
-       real alpha,Mw,A1100,csoil,nsoil,Sigmatot,sigma_fx,phi_lnyB
+     + tau_lnyB,tau_low,tau_hi,phi_lnAF,rho,c15ca,c15j,c15_China,sigma_c
+       real alpha,Mw,A1100,Sigmatot,sigma_fx,phi_lnyB
        logical l_gnd_ep(8),fix_sigma,sdi
 c If sdi is true, this subroutine will return inelastic spectral displ. (cm) instead
 c of pSA. Tothong&Cornell approach
        real gnd_ep(3,3,8)
        save A1100
 c T=.01,.02,.03,.05,.075,.1,.15,.2,.25,.3,0.4,0.5,.75,1,1.5,2,3,4,5,7.5,10,0,-1
-	c15ca=(/-0.0055,-0.0055,-0.0057,-0.0063,-0.007,-0.0073,-0.0069,-0.006,-0.0055,-0.0049,-0.0037,-0.0027,-0.0016,-0.0006,
-     + 0.0,0.0,0.0,0.0,0.0,0.0,0.0,-0.0055,-0.0017/)
-	c15j=(/-0.009,-0.009,-0.0091,-0.01,-0.0107,-0.0107,-0.0099,-0.0091,-0.0088,-0.0084,-0.0071,-0.0061,-0.0048,-0.0036,
-     + -0.0019,-0.0005,0.0,0.0,0.0,0.0,0.0,-0.009,-0.0023/)
-	c15_China=(/-0.0019,-0.0019,-0.002,-0.0023,-0.0031,00.0031,-0.0027,-0.0019,-0.0019,-0.0018,-0.0009,-0.0002,0.0,
-     +  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-0.0019,0.0/)
 c-----Soil model constants (not using the constant vector from Bozorgnia code)
-    
+	Per=(/0.01,0.02,0.03,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,
+     + 0.5,0.75,1.,1.5,2.,3.,4.,5.,7.5,10.,0.,-1./)
+     	c0=(/-4.29191,-4.27096,-3.96326,-3.47476,-3.29312,-3.66556,
+     + -4.86602,-5.41069,-5.96223,-6.40274,-7.56611,-8.37896,-9.84117,
+     + -11.01088,-12.46903,-12.96946,-13.30646,-14.01959,-14.55814,
+     + -15.50934,-15.97482,-4.34566,-2.89541/)
+     	c1=(/0.9767,0.97602,0.93061,0.88708,0.9018,0.99317,1.26745,1.36587,
+     + 1.45843,1.52845,1.73878,1.87232,2.02098,2.18019,2.26973,2.2711,
+     + 2.14989,2.1324,2.11557,2.22333,2.13178,0.98408,1.51014/)
+   	c2low=(/0.5333,0.54938,0.62834,0.67381,0.72577,0.69757,0.51048,0.4471,
+     + 0.27438,0.19341,-0.02008,-0.1212,-0.04173,-0.06925,0.04678,0.14935,
+     + 0.36819,0.72617,1.02702,0.16924,0.36739,0.53714,0.27/)
+     	c2=(/-1.48461,-1.48771,-1.49384,-1.38762,-1.46913,-1.57184,-1.66866,
+     + -1.74959,-1.71072,-1.77001,-1.59425,-1.57678,-1.75665,-1.70658,
+     + -1.62116,-1.51208,-1.31456,-1.50567,-1.72132,-0.75648,-0.80033,
+     + -1.49918,-1.29865/)
+     	c3=(/-0.498937453,-0.500622655,-0.516949343,-0.614846203,-0.596140959,          	
+     + -0.53615185,-0.489916175,-0.451168621,-0.40377,-0.32137,-0.42641,
+     + -0.44027,-0.44323,-0.52717,-0.62968,-0.7684,-0.88968,-0.88483,
+     + -0.87758,-1.0771,-1.28153,-0.496099731,-0.45259/)
+     	c4=(/-2.77287,-2.77184,-2.78177,-2.79116,-2.74484,-2.63321,-2.45812,
+     + -2.42082,-2.39172,-2.37647,-2.30344,-2.29568,-2.23162,-2.15751,
+     + -2.06285,-2.1042,-2.05109,-1.98623,-2.02143,-2.17893,-2.24395,
+     + -2.77308,-2.46623/)
+     	c5=(/0.24794,0.24728,0.24569,0.23957,0.22728,0.20998,0.18271,0.18236,
+     + 0.18902,0.19458,0.18548,0.18608,0.18622,0.16948,0.15776,0.15773,
+     + 0.14786,0.13543,0.13954,0.17836,0.19421,0.24792,0.20353/)
+    	c6=(/6.7526,6.50193,6.29064,6.31674,6.86079,7.29437,8.03121,8.38547,
+     + 7.53447,6.99039,7.012,6.902,5.52167,5.64974,5.795,6.63167,6.75917,
+     + 7.97765,8.53845,8.46752,6.56419,6.76761,5.83687/)
+     	c7=0.0
+     	c8=(/-0.21399,-0.20765,-0.21286,-0.24416,-0.26594,-0.22909,-0.21079,
+     + -0.16256,-0.15032,-0.131,-0.15869,-0.15259,-0.0903,-0.105,-0.05765,
+     + -0.02807,0.,0.,0.,0.,0.,-0.21192,-0.16787/)
+     	c9=(/0.72005,0.72967,0.75901,0.8263,0.81493,0.83098,0.74885,0.76413,
+     + 0.71599,0.73747,0.73848,0.71779,0.79532,0.55604,0.48038,0.40135,
+     + 0.20613,0.105,0.,0.,0.,0.72036,0.30531/)
+          c10=(/1.09423,1.14928,1.28982,1.44851,1.53508,1.61453,1.87724,2.06875,
+     + 2.20472,2.3056,2.39843,2.35519,1.99492,1.4472,0.32996,-0.51429,
+     + -0.84808,-0.79272,-0.74828,-0.66444,-0.57634,1.09034,1.71266/)
+     	c10Jlow=(/2.19076,2.18901,2.16441,2.13849,2.44588,2.96906,3.54382,
+     + 3.70687,3.34286,3.33392,3.54369,3.01604,2.61646,2.46961,2.10849,
+     + 1.32674,0.60121,0.56816,0.35563,0.0751,-0.02688,2.18598,2.6016/)
+     	c10J=(/1.41626,1.45343,1.47596,1.54867,1.77181,1.91583,2.16149,2.46523,
+     + 2.7662,3.0105,3.20302,3.33327,3.05379,2.56169,1.45264,0.65727,0.36667,
+     + 0.30608,0.26753,0.37356,0.29687,1.42048,2.45689/)
+     	c11=(/-0.00697,-0.01669,-0.04215,-0.06628,-0.07944,-0.02935,0.06424,
+     + 0.09684,0.14409,0.15969,0.14104,0.14743,0.17641,0.25934,0.28807,
+     + 0.31124,0.34781,0.37465,0.33817,0.37541,0.35056,-0.00638,0.10601/)
+     	c11J=(/-0.20736,-0.19937,-0.20208,-0.33892,-0.40355,-0.41622,-0.40719,
+     + -0.31065,-0.17151,-0.08379,0.08468,0.23288,0.41099,0.47909,0.56579,
+     + 0.5624,0.534,0.52227,0.47719,0.32092,0.1743,-0.20246,0.33242/)
+     	c12=(/0.38951,0.38713,0.37769,0.29548,0.322,0.38448,0.41653,0.40419,
+     + 0.46631,0.52831,0.53978,0.63753,0.77607,0.77071,0.7476,0.76284,
+     + 0.68565,0.69094,0.67003,0.75653,0.62149,0.39293,0.58488/)
+     	c13low=(/0.09813,0.10091,0.10948,0.12256,0.11646,0.0998,0.07595,0.05707,
+     + 0.04374,0.03232,0.0209,0.00922,-0.00821,-0.0131,-0.01865,-0.02581,
+     + -0.03106,-0.04129,-0.02814,-0.02054,0.00093,0.09766,0.05174/)
+     	c13hi=(/0.0334,0.03272,0.03312,0.02695,0.02882,0.03253,0.03884,0.04373,
+     + 0.04633,0.05084,0.04322,0.04053,0.042,0.04259,0.03798,0.02515,0.02356,
+     + 0.0102,0.00335,0.00497,0.00986,0.03334,0.03267/)
+     	c14=(/0.00755,0.00759,0.0079,0.00803,0.00811,0.00744,0.00716,0.00688,
+     + 0.00556,0.00458,0.00401,0.00388,0.0042,0.00409,0.00424,0.00448,0.00345,
+     + 0.00603,0.00805,0.0028,0.00458,0.00757,0.00613/)
+     	c15=0.0
+     	c15CA=(/-0.0055,-0.0055,-0.0057,-0.0063,-0.007,-0.0073,-0.0069,-0.006,
+     + -0.0055,-0.0049,-0.0037,-0.0027,-0.0016,-0.0006,0.,0.,0.,0.,0.,0.,0.,-0.0055,
+     + -0.0017/)
+     	c15j=(/-0.009,-0.009,-0.0091,-0.01,-0.0107,-0.0107,-0.0099,-0.0091,
+     + -0.0088,-0.0084,-0.0071,-0.0061,-0.0048,-0.0036,-0.0019,-0.0005,
+     + 0.,0.,0.,0.,0.,-0.009,-0.0023/)
+     	c15_China=(/-0.0019,-0.0019,-0.002,-0.0023,-0.0031,-0.0031,-0.0027,-0.0019,
+     + -0.0019,-0.0018,-0.0009,-0.0002,0.,0.,0.,0.,0.,0.,0.,0.,0.,-0.0019,0./)
+     	a2=(/0.168204,0.16608,0.166615,0.173208,0.198386,0.174173,0.197692,0.204389,
+     + 0.185493,0.16375,0.159991,0.183814,0.215828,0.595819,0.595819,0.595819,
+     + 0.595819,0.595819,0.595819,0.595819,0.595819,0.166756,0.595819/)
+     	h1=(/0.242491585,0.244239479,0.246102927,0.251121153,0.260215395,0.258891885,
+     + 0.253754887,0.236761836,0.205538668,0.209669285,0.225654325,0.216617007,
+     + 0.153809642,0.117400827,0.117400827,0.117400827,0.117400827,0.117400827,
+     + 0.117400827,0.117400827,0.117400827,0.241153212,0.117400827/)
+     	h2=(/1.471226463,1.467008458,1.467306208,1.449483555,1.43491017,1.448920728,
+     + 1.46101266,1.484246105,1.581051011,1.585576015,1.544360277,1.553834937,
+     + 1.626464751,1.615567127,1.615567127,1.615567127,1.615567127,1.615567127,
+     + 1.615567127,1.615567127,1.615567127,1.473962695,1.615567127/)
+     	h3=(/-0.713718048,-0.711247937,-0.713409135,-0.700604707,-0.695125566,
+     + -0.707812613,-0.714767546,-0.721007941,-0.786589679,-0.7952453,
+     + -0.770014601, -0.770451944,-0.780274394,-0.732967953,-0.732967953,
+     + -0.732967953,-0.732967953, -0.732967953,-0.732967953,-0.732967953,
+     + -0.732967953,-0.715115906,-0.732967953/)
+     	h4=1.0
+     	h5=(/-0.336344,-0.339225,-0.338487,-0.338309,-0.347476,-0.391023,-0.449387,
+     + -0.393051,-0.338954,-0.446928,-0.525278,-0.407316,-0.370885,-0.127976,
+     + -0.127976,-0.127976,-0.127976,-0.127976,-0.127976,-0.127976,-0.127976,
+     + -0.336826,-0.127976/)
+     	h6=(/-0.26972,-0.262572,-0.258835,-0.262789,-0.218517,-0.200791,-0.0994103,
+     + -0.198083,-0.210334,-0.120913,-0.0861837,-0.28051,-0.284764,-0.755608,
+     + -0.755608,-0.755608,-0.755608,-0.755608,-0.755608,-0.755608,-0.755608,
+     + -0.270212,-0.755608/)
+     	k1=(/865.,865.,908.,1054.,1086.,1032.,878.,748.,654.,587.,503.,457.,410.,400.,400.,400.,
+     + 400.,400.,400.,400.,400.,865.,400./)
+     	k2=(/-1.186,-1.219,-1.273,-1.346,-1.471,-1.624,-1.931,-2.188,-2.381,-2.518,
+     + -2.657,-2.669,-2.401,-1.955,-1.025,-0.299,0.,0.,0.,0.,0.,-1.186,-1.955/)
+     	k3=(/1.839,1.84,1.841,1.843,1.845,1.847,1.852,1.856,1.861,1.865,1.874,1.883,
+     + 1.906,1.929,1.974,2.019,2.11,2.2,2.291,2.517,2.744,1.839,1.929/)
+c     	csoil=(/1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,
+c     	     + 1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88/)
+c     	nsoil=(/1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,
+c     + 1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18/)
+     	phi_low=(/0.7336,0.7375,0.7471,0.7768,0.7821,0.7691,0.7693,0.7609,0.7439,
+     + 0.7265,0.6901,0.6632,0.6058,0.5785,0.5412,0.5286,0.5269,0.5212,0.5024,
+     + 0.4568,0.4412,0.7335,0.6552/)
+     	phi_hi=(/0.4915,0.4955,0.5034,0.5197,0.5349,0.5431,0.5427,0.5515,0.5448,
+     + 0.5684,0.5931,0.6113,0.6326,0.6278,0.6032,0.5879,0.578,0.5592,0.551,
+     + 0.5456,0.5432,0.4918,0.4944/)
+     	tau_low=(/0.4041,0.4167,0.4458,0.5076,0.504,0.4449,0.3816,0.3392,0.3401,
+     + 0.3399,0.3559,0.3792,0.4299,0.4695,0.4973,0.4985,0.4996,0.5427,0.5339,
+     + 0.5228,0.4655,0.4086,0.3171/)
+     	tau_hi=(/0.3247,0.3258,0.3437,0.3769,0.418,0.4261,0.3865,0.3381,0.316,
+     + 0.2997,0.2635,0.2632,0.3264,0.3527,0.3989,0.4004,0.4172,0.3925,0.4209,
+     + 0.4376,0.4379,0.3219,0.2969/)
+     	phi_lnAF=(/0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,
+     + 0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3/)
+c sigma_c is used to get an aleatory sigma for the random H comp instead of mean H comp.
+     	sigma_c=(/0.166,0.166,0.165,0.162,0.158,0.17,0.18,0.186,0.191,0.198,0.206,
+     + 0.208,0.221,0.225,0.222,0.226,0.229,0.237,0.237,0.271,0.29,0.166,0.19/)
+     	rho=(/1.0,0.998,0.986,0.938,0.887,0.87,0.876,0.87,0.85,0.819,0.743,0.684,0.562,
+     + 0.467,0.364,0.298,0.234,0.202,0.184,0.176,0.154,1.0,0.684/)    
        nsoil = 1.18
-      csoil = 1.88
-        if(iper.eq.1)iper=22    
+       csoil = 1.88
+        if(iper.eq.1)iper=22 
+        if(ip.eq.1)then
+        iperflag=1
+c Corr. Aug 15 2013: set iperflag = 1 on first period at entry. This calculates
+c A1100. Once calculated it is saved for the other spectral periods to use.
+        else
+        iperflag=0
+        endif   
 	if(SJ.lt.1.0)then
 	c15=c15ca	!use california Qmodel when SJ<1
 	elseif(SJ.lt.2.)then
@@ -8848,7 +8932,7 @@ C.....Note: Magnitude limits and equation have been changed
 
 C*****Hanging-wall term 
 C     Jennifer Donahue's HW Model plus CB08 distance taper 
-      R1= W * cos(Dip*PI/180.)
+      R1= W * cos(Dip*d2r)
       R2= 62.*Mw - 350.
 
       f1_Rx= h1(iper) + h2(iper)*(Rx/R1) + h3(iper)*((Rx/R1)**2)
@@ -8942,20 +9026,19 @@ C*****Anelastic attenuatin term
 C*****For the first period (loop), computer A1100 *****************************
       IF (iperflag.eq.1)THEN
 C........Shallow site conditions term for ROCK PGA (i.e., Vs30 = 1100 m/s)
-C        Note csoil and nsoil are now arrays
+C        Note csoil and nsoil are not arrays
          F_site_1100 = (c10(22) + k2(22)*nsoil)*LOG(1100.0/k1(22))
 
 C........Rock PGA
 
          A1100 = EXP(F_mag + F_dis + F_flt + F_HW + 
      +               F_site_1100 + F_sed + F_Hhyp + F_Dip + F_atn)
-         iperflag=0
-         go to 1000
-C     Note: Statment number 1000 is now at different place 
+c         go to 1000
+C     Note: Statment number 1000 is not relevant F_site has to be calculated
       ENDIF
 c******************************************************************************
 
-C*****Site term for other iper values: Note csoil and nsoil are now arrays 
+C*****Site term for other iper values: Note csoil and nsoil are not arrays 
        IF (Vs30 .LE. k1(iper)) THEN
          F_site = c10(iper)*LOG(Vs30/k1(iper))
      &             + k2(iper)*(LOG(A1100+csoil*
@@ -8967,8 +9050,6 @@ C*****Site term for other iper values: Note csoil and nsoil are now arrays
 
 c*****Ground motion parameter, logged.
 
-c       gnd(1) = EXP(F_mag + F_dis + F_flt + F_HW + 
-c     &              F_site + F_sed + F_Hhyp + F_Dip + F_atn)
        gnd(1) = F_mag + F_dis + F_flt + F_HW + F_sed + F_Hhyp + F_Dip +F_atn
 C.....check that S.P. SA>PGA. This is done before adding siteamp because
 c the only PGA available at this moment is PGA(1100 m/s rock)
@@ -8976,6 +9057,7 @@ c the only PGA available at this moment is PGA(1100 m/s rock)
       gnd(1) = max(gnd(1),alog(A1100))
       endif
 	gnd(1)=gnd(1)+F_site
+c       write(80+ip,*)rrup,exp(gnd(1)),F_site,A1100,Mw,ip
 C.....CALCULATE ALEATORY UNCERTAINTY
 C     Note: This part has been changed
 
@@ -9041,72 +9123,6 @@ C     Note: This part has been changed
       END SUBROUTINE CB13_NGA_SPEC
 
 c------------------------------------------------------------------------------
-      subroutine lin_interp(x, y, n, j, x_intrp, y_intrp)
-      
-* Computes linearly interpolated value of y
-
-* Values out of range are assigned end values
-
-* Dates: 03/16/05 - Written by D. Boore
-*        07/24/05 - Added index j for end cases
-
-      real x(*), y(*), slope, x_intrp, y_intrp
-      integer j, n
-      
-      if (x_intrp .le. x(1)) then
-        j = 1
-        y_intrp = y(1)
-        return
-      end if
-      
-      if (x_intrp .ge. x(n)) then
-        j = n
-        y_intrp = y(n)
-        return
-      end if          
-      
-      call locate(x,n,x_intrp,j)
-      
-      slope = (y(j+1) - y(j))/(x(j+1)-x(j))
-      y_intrp = y(j) + slope*(x_intrp - x(j))
-      
-      return
-      end
-      subroutine locate(x,n,y,j)
-      real x(*)
-      jp=2
-      dowhile(y.gt.x(jp).and.jp.lt.n)
-      jp=jp+1
-      enddo
-      j=jp-1
-      return
-      end subroutine locate
-      
-
-
-! --------------------------- BEGIN GET_LUN ----------------
-      subroutine get_lun(lun)
-
-* Finds a logical unit number not in use; returns
-* -1 if it cannot find one.
-
-* Dates -- 05/19/98 - Written by D. Boore, following
-*                     Larry Baker's suggestion
-
-      logical isopen
-      do i = 99,10,-1
-        inquire (unit=i, opened=isopen)
-        if(.not.isopen) then
-          lun = i
-          return
-        end if
-      end do
-      lun = -1
-
-      return
-      end
-! --------------------------- END GET_LUN ----------------
-     
 
       real function sdi_ratio(per,M,rhat,sige,sdi)
       real M,rhat,td,dt,sde,sdi
@@ -9248,18 +9264,6 @@ c F_Measured = 1 is the setting for Vs30imeasured when CY2013 is accessed with i
      1       F_Inferred, Z1, DELTA, Z_TOR, F_RV, F_NM, cDPP,sqrt2,pi,d2r
 c Model cofficients
         integer nprd,ip
-      common/epistemic/l_gnd_ep,gnd_ep,ide,ime
-      integer ide,ime
-       common/fix_sigma/fix_sigma,sigma_fx
-       common/sdi/sdi,dy_sdi,fac_sde
-      real gnd_ep(3,3,8),gndout(3), sigmaf,sigma_fx
-      logical l_gnd_ep(8),fix_sigma,sdi
-      real fac_sde(8)
-        real cc, gamma, cosDELTA, coshM
-        real psa, psa_ref, NL0, tau, sigma_NL0, total_app
-        real r1, r2, r3, r4, fw, hw, fd, a, b, c, rkdepth
-        real mZ1, mZ_TOR, deltaZ1, deltaZ_TOR,dy_sdi,rhat,sdisd,sde,sdi_ratio
-        integer iprd, sa
         parameter (nprd=24,pi=3.14159265,d2r=17.45329252e-3,sqrt2=1.414213562)
         real prd(nprd),
      1       c1(nprd), c1a(nprd), c1b(nprd), c1c(nprd), c1d(nprd),
@@ -9514,6 +9518,18 @@ c Model cofficients
      1               0.7792,  0.7504,  0.7136,  0.7035,  0.7006,
      1               0.7001,  0.7000,  0.7000,  0.7000/
 
+      common/epistemic/l_gnd_ep,gnd_ep,ide,ime
+      integer ide,ime
+       common/fix_sigma/fix_sigma,sigma_fx
+       common/sdi/sdi,dy_sdi,fac_sde
+      real gnd_ep(3,3,8),gndout(3), sigmaf,sigma_fx
+      logical l_gnd_ep(8),fix_sigma,sdi
+      real fac_sde(8)
+        real cc, gamma, cosDELTA, coshM
+        real psa, psa_ref, NL0, tau, sigma_NL0, total_app
+        real r1, r2, r3, r4, fw, hw, fd, a, b, c, rkdepth
+        real mZ1, mZ_TOR, deltaZ1, deltaZ_TOR,dy_sdi,rhat,sdisd,sde,sdi_ratio
+        integer iprd, sa
 
 c        pi = atan(1.0)*4.0
 c        d2r = pi/180.0
