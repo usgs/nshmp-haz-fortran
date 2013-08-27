@@ -31,11 +31,14 @@ c
       type(header) :: headr,head
       integer*4 readn
 c As usual, "prob" files are in general mean annual freq. of exceedance not probability
-      dimension prob(1),xlev(20)
+c      dimension prob(1),xlev(20)
+      dimension xlev(20)
+      real, dimension(:), allocatable ::  prob, prob2
+c      real, dimension(30000000) ::  prob
       character name*60,namout*60
-      character namepar*30,name2*30,pgm*30
+      character namepar*50,name2*50,pgm*50
       real pout(nout,nout,20),mat(nin,nin,20)
-      pointer (p1,prob)
+c      pointer (p1,prob)
       logical ishere,empty_hd
       call getarg(0,pgm)
       print 5,'Enter number of files to resample: '
@@ -111,7 +114,13 @@ cccc
       write(6,*) "nlev=",nlev, " ndatain ",ndata
       write(6,*) 'resampling ...'
       ymin0=ymin
-      p1 = malloc(ndata*4)
+c      p1 = malloc(ndata*4)
+      nbyte=nrec*nlev*4
+c      prob=0.0
+      write(*,*) 'allocating bytes: ', nbyte
+      allocate ( prob(nbyte), stat=ioi ) 
+      write(*,*) 'allocate status : ', ioi
+      if ( ioi/= 0 ) STOP "*** Not enough memory - allocate 1 ***"
       do 300 i=1,nlev
 300   xlev(i)= head%xlev(i)
       call getbuf2(prob,ndata,readn)
@@ -150,9 +159,16 @@ c-- fill in even rows
  105  continue
       call close(name)
       nrec= nx2*ny2
-      call free(p1)
+c      call free(p1)
+      deallocate ( prob, stat = iox )
+      write(*,*) 'deallocate status (0 is successful) = ',iox
       nbyte=nrec*nlev*4
-      p1=malloc(nbyte)
+c      prob=0.0
+c      p1=malloc(nbyte)
+      write(*,*) 'allocating bytes 2: ', nbyte
+      allocate ( prob2(nbyte), stat=ioi ) 
+      write(*,*) 'allocate status 2 : ', ioi
+      if ( ioi/= 0 ) STOP "*** Not enough memory - allocate 2 ***"
         head%extra(4)=dx*0.5      !save the change in sampling
         head%extra(7)=dy*0.5      !to header record
         head%extra(8)=float(nrec)
@@ -161,7 +177,7 @@ c-- fill in even rows
       index= (i-1)*nlev +j
       iy= (i-1)/nx2 +1
       ix= i-(iy-1)*nx2
-      prob(index) = pout(ix,iy,j)
+      prob2(index) = pout(ix,iy,j)
  50   continue
       write(6,*) namout
 c----
@@ -173,9 +189,11 @@ c 128 character name
       ndata= 896
       call puthead(ifp,head,ndata,readn)
       ndata= nrec*nlev
-      call putbufx(ifp,prob,ndata,readn)
+      call putbufx(ifp,prob2,ndata,readn)
       if(ndata.ne.readn)write(6,*) ndata,readn
 
+         deallocate ( prob2, stat = iox )
+         write(*,*) 'deallocate status 2 (0 is successful) = ',iox
        enddo      !nfiles to be modfified
        stop 'normal exit'
  299      print *,'Your control file did not have enough file names ',nf,ijk
