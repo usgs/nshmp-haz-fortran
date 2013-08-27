@@ -1648,10 +1648,13 @@ c checks associated with clustering
       write(6,*)'Please check input file near ',adum
       stop'hazFXnga13l: fatal error.'
       endif      !igroup bound check
-      if(ift.gt.1.and.nmagf(ift).ne.nmagf(ift-1))then
-      write(6,*)'Number of M-recurrence scenarios must be same on all fault segs'
-      write(6,*)'For flt ',ift,' nmagf is ',nmagf(ift),' but for previous nmagf was ',nmagf(ift-1)
-      stop'hazFXnga13l: fatal error.'
+c      if(ift.gt.1.and.nmagf(ift).ne.nmagf(ift-1))then
+      if(ift.gt.1)then
+        if(nmagf(ift).ne.nmagf(ift-1))then
+        write(6,*)'Number of M-recurrence scenarios must be same on all fault segs'
+        write(6,*)'For flt ',ift,' nmagf is ',nmagf(ift),' but for previous nmagf was ',nmagf(ift-1)
+        stop'hazFXnga13l: fatal error.'
+        endif
       elseif(ift.eq.1)then
       nscene=nmagf(1)
       endif      !incompatible nmagf
