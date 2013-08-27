@@ -1,4 +1,6 @@
-c--- program  hazFXnga13l.f; 08/21/2013; Use  with NGA relations, or others.
+c--- program  hazFXnga13l.f; 08/27/2013; Use  with NGA relations, or others.
+c 8/27/2013	CB13: Update c0 vector for PGA and several short-period SA Bozorgnia email
+c 8/27/2013	changed z1km to z1_ref in call to ASK
 c 8/21/2013	CB13: Improve Zhyp further for downdip ruptures.
 c 8/20/2013 Inline CB13 coeffs. Begin standardizing Zhyp in CB13.
 c Correction Aug 15 2013: initialize PI in CB13 subroutine (previously wasn't).
@@ -8,7 +10,7 @@ c 8/13/2013: Use the Rx0 version of ASK13. Set z1_rock = -1 for the hardrock cal
 c 8/05/2013: Minor repair in vicinity of line 1095 (some compiler subrange errors in prior vers)
 c 8/02/2013: The correlation coeff vector rho was updated in CB13. It is now
 c 	    stored as a data vector rather than being read in.
-c 08/01/2013: ASK13: Use estimated Vs30 setting if index is 36. Use measured Vs30 if index is 36.
+c 08/01/2013: ASK13: Use estimated Vs30 setting if index is 36. Use measured Vs30 if index is -36.
 c 08/01/2013: Incorporate CY2013 vers of July 29. Use estimated Vs30 if index is 35.
 c		Use measured Vs30 if index is -35 (new 8/01/2013).
 c 07/25/2013: Incorporate ASK_NGA_2013_V11.f which is the July 24 version of A S &Kamai. Uses Ry0 distance.
@@ -774,7 +776,7 @@ c adum could be sa(g) or pgv (cm/s). need flexible format
             endif
       endif
       write (6,61)date,time,name
-61      format('# *** hazFXnga13l 08/01/2013 log file. Pgm run on ',a,' at ',a,/,
+61      format('# *** hazFXnga13l 08/27/2013 log file. Pgm run on ',a,' at ',a,/,
      +'# *** Input control file: ',a)
       if(poly)write(6,*)'hazFXnga13l: Polygon file &npts: ',polygon,npmax
 c Below bypasses are based on file name. Bypass wont work if file names change
@@ -880,13 +882,13 @@ c     Norm Abrahamson's CA z1 reference (eq 18). Same in July 2013 update.
 c z1_refr added 8/13/2013. Z1 for hard rock. This value is .0028 km or 2.8 m
 c
        z1=z1cal	!CY2013 function used until we know better for wus...
-      z1km=Z1*0.001	!for AS need units km
+      z1km= z1_ref	!for AS need units km
 c from B Chiou email of Apr 15 2013.
         deltaZ1 = z1cal -
      1  exp(-7.15/4 *
      1      log(((VS30/1000.)**4 + .57094**4)/(1.360**4 + .57094**4)))
 	if(vs30.ge.600.)then
-	dgkbasin=1.1*z1km
+	dgkbasin=0.15	!Peter Powers email Aug 27 2013.
 	else
       dgkbasin=0.75 * z1km + 0.25*dbasin      !Vladimir says his basin is 1.5 km/s isosurface. Campbell is
 	endif
@@ -1648,13 +1650,13 @@ c checks associated with clustering
       write(6,*)'Please check input file near ',adum
       stop'hazFXnga13l: fatal error.'
       endif      !igroup bound check
-c      if(ift.gt.1.and.nmagf(ift).ne.nmagf(ift-1))then
+c modified aug 27 2013.
       if(ift.gt.1)then
-        if(nmagf(ift).ne.nmagf(ift-1))then
-        write(6,*)'Number of M-recurrence scenarios must be same on all fault segs'
-        write(6,*)'For flt ',ift,' nmagf is ',nmagf(ift),' but for previous nmagf was ',nmagf(ift-1)
-        stop'hazFXnga13l: fatal error.'
-        endif
+      if(nmagf(ift).ne.nmagf(ift-1))then
+      write(6,*)'Number of M-recurrence scenarios must be same on all fault segs'
+      write(6,*)'For flt ',ift,' nmagf is ',nmagf(ift),' but for previous nmagf was ',nmagf(ift-1)
+      stop'hazFXnga13l: fatal error.'
+      endif
       elseif(ift.eq.1)then
       nscene=nmagf(1)
       endif      !incompatible nmagf
@@ -8759,10 +8761,11 @@ c T=.01,.02,.03,.05,.075,.1,.15,.2,.25,.3,0.4,0.5,.75,1,1.5,2,3,4,5,7.5,10,0,-1
 c-----Soil model constants (not using the constant vector from Bozorgnia code)
 	Per=(/0.01,0.02,0.03,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,
      + 0.5,0.75,1.,1.5,2.,3.,4.,5.,7.5,10.,0.,-1./)
-     	c0=(/-4.29191,-4.27096,-3.96326,-3.47476,-3.29312,-3.66556,
+c c0 updated for several spectral periods and for PGA Bozorgnia email aug 27, 2013.
+     	c0=(/-4.365,-4.348,-4.024,-3.479,-3.29312,-3.66556,
      + -4.86602,-5.41069,-5.96223,-6.40274,-7.56611,-8.37896,-9.84117,
      + -11.01088,-12.46903,-12.96946,-13.30646,-14.01959,-14.55814,
-     + -15.50934,-15.97482,-4.34566,-2.89541/)
+     + -15.50934,-15.97482,-4.416,-2.89541/)
      	c1=(/0.9767,0.97602,0.93061,0.88708,0.9018,0.99317,1.26745,1.36587,
      + 1.45843,1.52845,1.73878,1.87232,2.02098,2.18019,2.26973,2.2711,
      + 2.14989,2.1324,2.11557,2.22333,2.13178,0.98408,1.51014/)
@@ -9037,7 +9040,7 @@ C........Rock PGA
          A1100 = EXP(F_mag + F_dis + F_flt + F_HW + 
      +               F_site_1100 + F_sed + F_Hhyp + F_Dip + F_atn)
 c         go to 1000
-C     Note: Statment number 1000 is not relevant F_site has to be calculated
+C     Note: Statment number 1000 is not relevant F_site generally has to be calculated
       ENDIF
 c******************************************************************************
 

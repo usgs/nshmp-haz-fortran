@@ -1,4 +1,11 @@
-c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  08/02/ 2013. Long header version.
+c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  08/27/ 2013. Long header version.
+c 8/27/2013: Include an mmin matrix option. Previously code just had an mmax distribution. This option
+c		is invoked if maxmat=-2. not finished
+c 8/27/2013: update c0 vector in CB13 model.
+c 8/21/2013: Inline coeffs in CB13. Do not need coeff. file any longer. Standardize
+c		Zhyp in CB13.
+c 8/13/2013: z1_rock = -1 ASK13. 
+c 8/07/2013: common/epistemic/ now same size everywhere.
 c 8/02/2013: The correlation coeff vector rho was updated in CB13. It is now
 c 	    stored as a data vector rather than being read in.
 c 8/01: New CY2013 and ASK2013 models. Both use inferred Vs30 as the default condition
@@ -401,7 +408,7 @@ c m_c is the optional corner magnitude of a tapered GR distribution.
       integer nlev(8),icode(8,10)
       real, dimension(3):: dtor,wtor,wtor65,w_edge
         real, dimension(0:9):: dipbck
-      real, dimension (3,3,8) :: gnd_ep
+      real, dimension (3,3,10) :: gnd_ep
       real, dimension(16,40,8,3,3) :: hbin,ebar,rbar,mbar
       real, dimension(40,nzonex):: mmax_ccd	!new 4/02/2013 complementary cum. distribution of mmax
 c (first dimension) in zones 1 to 10 (2nd dimension)
@@ -469,7 +476,7 @@ c CEUS, 2013: wt_mask is assigned to one of the wtmw() vectors, the one correspo
       integer readn,iq_ka,iq_as,jabs,vs30_class/0/
       logical finite,grid,isok,m_zones/.false./,taperGR/.false./      ! grid=.true. if stations form a regular grid
 c m_zones is an indicator that magnitude zones are (are not) active
-      logical lceus_sigma/.false./,wus/.false./,ceus/.false./,slab/.false./,readcb13/.true./
+      logical lceus_sigma/.false./,wus/.false./,ceus/.false./,slab/.false./
       logical byeca,byesoc,byeext,byepug,v30a,override_vs,l_mmax,hardrock,useRy0
 c override_vs becomes true if for deaggregation work user inputs a vs30 on command line.
       logical deagg,ss,rev,normal,obl,okabs,okgeo,okzhao,oktogo,e_wind(8),readbssa/.true./
@@ -501,6 +508,7 @@ c the sum will be put back into single precision array called "out" prior to wri
       real, dimension(23) :: Percb13
       real, dimension(23) ::peras13
       real arat, aratemx/0.0/,Mtaper
+      real z1_ref, z1_refr	!z1 reference values for ASK13.
       real, dimension(26):: abper, abfrq
 c above spectral period vectors are associated with various NGA and other
 c atten models. perka corresponds to Kanno et al. added Nov 8 2006.      
@@ -580,6 +588,9 @@ c june 30 2007.
      + 1.800000, 1.900000, 2.000000, 2.200000, 2.400000, 2.500000, 2.600000, 2.800000, 3.000000, 3.200000,
      + 3.400000, 3.500000, 3.600000, 3.800000, 4.000000, 4.200000, 4.400000, 4.600000, 4.800000, 5.000000,
      + 5.500000, 6.000000, 6.500000, 7.000000, 7.500000, 8.000000, 8.500000, 9.000000, 9.50,10.0/)
+c PerCB13 = period set for the CB13 NGAW(2) GMM.
+	PerCB13=(/0.01,0.02,0.03,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,
+     + 0.5,0.75,1.,1.5,2.,3.,4.,5.,7.5,10.,0.,-1./)
 
 c per_camp available spectral periods for CampCEUS (2003). PGA is 0.0 s here.
       per_camp = (/0.00,0.2,1.0,0.1,0.3,0.4,
@@ -636,6 +647,7 @@ c the size of below arrays was increased to 40 because of potentially greater Mm
       wtmab_ext=(/1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,
      +1.,1.,1.,1.,1.,1.,0.9,0.7,0.2,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0./)
       pithy = (/'Using Median','Median+EpUnc','Median-EpUnc'/)
+      coef= 3.14159/180.
 
 c      write(6,*) "enter name of input file"
  900  format(a)
@@ -836,6 +848,8 @@ c use Chiou-Youngs 10-2007 default depth to 1 km/s rock. Z1 Units: m.
         Z1cal = exp(-7.15/4 * log(((VS30/1000.)**4 + .57094**4)/(1.360**4 + .57094**4)))
 c     Norm Abrahamson's CA z1 reference (eq 18). z1_ref is in units km.
        z1_ref = exp ( -7.67/4. * alog( (Vs30**4 + 610.**4)/(1360.**4+610.**4) ) ) / 1000.
+	z1_refr=exp ( -7.67/4. * alog( (1180.**4 + 610.**4)/(1360.**4+610.**4) )) / 1000.
+c z1_refr added 8/13/2013. Z1 for hard rock. This value is .0028 km or 2.8 m
 c      deltaZ1=0.0	!dont know use 0. from guidance in CY doc.
       z1=z1cal	!CY2013 function used until we know better for wus...
       z1km=Z1cal*0.001	!for AS need units km
@@ -920,8 +934,8 @@ c earthquakes, this check isn't very interesting.
       cosDELTA=0.
       cosDELTA2=cos(dipang2)
       cdip2sq=cosDELTA2**2
-      cbhwfac=0.0	!cb factor will be zero for vertical faults.
-      cbhwfac2=1.0	!cb factor will be one for 50 degree dipping faults
+      cbhwfac=0.0	!cb08 factor will be zero for vertical faults.
+      cbhwfac2=1.0	!cb08 factor will be one for 50 degree dipping faults
       cyhwfac=0.0	!cy factor also zero for vertical faults.
       cyhwfac2=atan(13.05*0.5*cosDELTA2/6.0)/(pi*0.5)	! 50 degree dipping faults
 c      cyhwfac=atan(width(ift)*0.5*cosDELTA/(dtor+1.0))/(pi*0.5)
@@ -1262,7 +1276,6 @@ c If truncated GR, a_fac is identically 1.0.
       write(6,*)'Minimum mag for this run: ',magmin
       print *,'maximum eq rate is ',aratemx,' at j=',jp
       if(aratemx.le.0.)stop'No hazard. Nothing to calculate'
-      coef= 3.14159/180.
       ndist= dmax/di +0.5
       nmag= nmagmax
       if(nmag.gt.36)stop'nmag > 36 an array limit in pr()'
@@ -1455,10 +1468,8 @@ c      print *,nper_gmpe,' number of periods having coeffs BSSA'
       endif	!ipia.eq.29
 c
       if(ipia.eq.32)then
-      if(readcb13)then
-      if(per.gt.0.01)stop'CB13 must be called with PGA as first g.m.'
-      call cb13_nga_spec_in
-      readcb13=.false.
+
+      if(per.le.0.01)then
       k=22
       else
       k=2
@@ -2001,7 +2012,7 @@ c keep Bdepth very shallow for rock sites. new 4/4/2013.
          endif
          DIP=dipbck(icode(ip,ia))
         vs30_rock = 1180.	!raised from 1100 july 2013.
-        z10_rock = 0.006
+        z10_rock = -1.0		!change to neg. value aug 13 2013
         useRy0=.false.
         hardrock=.true.
         if(period(ip).le.0.01)then
@@ -8175,68 +8186,6 @@ c      goto 102      !skip this innermost loop for initial tests.
        end subroutine getNAAsub
 
 c------------------------------------------------------------------------------
-      SUBROUTINE CB12_NGA_SPEC_IN
-c read in the coeffs only. Harmsen Nov 30. Out of service. Feb 2013.
-C     This subr. read coeff for 5%-damped linear elastic response spectra from the 
-C     2012 Campbell-Bozorgnia NGA-West2 Ground Motion Prediction Equation (GMPE)
-C
-C     It is Based on Campbell-Bozorgnia NGA-West2 Draft Model, November 12, 2012, Rev111
-C
-C     Written by Yousef Bozorgnia (November 25, 2012)
-
-      parameter (nper=23)
-      common/geotec/vs30,dbasin
-      common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
-c wtor = weights to top of Benioff zone (km). these are applied in main, to rate matrices.
-      common /cb12/Phi,Tau,c0,c1,c2low,c2,c3,c4,c5,c6,c7,c8,c9,c10,c10j,c10jlow,c11,c11j,
-     + c12,c13low,c13hi,c14,c15,k1,k2,k3,a2,h1,h2,h3,h4,h5,h6,phi_lny,tau_lny,phi_lnAF,rho
-       common/cb12p/Per
-      REAL  Phi(nper), Tau(nper) 
-      REAL Per(nper), c0(nper), c1(nper), c2low(nper), c2(nper)
-      REAL c3(nper), c4(nper)
-      REAL c5(nper), c6(nper), c7(nper), c8(nper), c9(nper)
-      REAL c10(nper), c10J(nper), c10Jlow(nper) 
-      REAL c11(nper), c11J(nper) 
-      REAL c12(nper), c13low(nper),c13hi(nper) 
-      REAL c14(nper)
-      REAL c15(nper)
-      REAL k1(nper), k2(nper), k3(nper)
-      REAL a2(nper),h1(nper),h2(nper),h3(nper)
-      REAL h4(nper),h5(nper),h6(nper)
-      REAL phi_lny(nper), tau_lny(nper) 
-      REAL phi_lnAF(nper), rho(nper)
-      character*1 dum1
-   
-C.....
-C.....READ MODEL COEFFICIENTS FROM AN EXCEL FILE (CSV FORMAT)
-C.....
-c the correlation cofff vector was changed in the July 25 Word doc. This new rho
-c replaces the one that was previously read in from CB13_Apr8_coeffs.txt
-      rho = (/1.0,0.998,0.986,0.938,0.887,0.87,0.876,0.87,0.85,0.819,
-     + 0.743,0.684,0.562,0.467,0.364,0.298,0.234,0.202,0.184,0.176,0.154,1.0,0.684/)
-c      if(icase.ne.1) go to 21 
-      call get_lun(m)
-c _r2 mid december 2012.
-        open (m,file='GR/CB12_NGA_COEFFS_Atten111_r2.txt',status='old',err=2012)
-      print *,'CB coefficient file GR/CB12_NGA_COEFFS_Atten111_r2.txt opened OK, unit ',m
-      read (m,1) dum1
- 1    format(a1)
-
-      do 20 iper=1,nper
-        read (m,*)Per(iper),c0(iper), c1(iper),c2low(iper),c2(iper),c3(iper),c4(iper),
-     +c5(iper),c6(iper),c7(iper),c8(iper),c9(iper),c10(iper),c10Jlow(iper),c10J(iper),
-     +c11(iper),c11J(iper),c12(iper),c13low(iper),c13hi(iper),c14(iper),c15(iper),a2(iper), 
-     +h1(iper),h2(iper),h3(iper),h4(iper),h5(iper),h6(iper),k1(iper), k2(iper), k3(iper),
-     +phi_lny(iper), tau_lny(iper), phi_lnAF(iper)	!, rho(iper) Dont read in rho 8/02
-c      print *,'period ',Per(iper)
-c      print *,c14(iper),c15(iper),phi_lnAF(iper), rho(iper),'c14(iper),c15(iper),phi_lnAF(iper), rho(iper)'
- 20   CONTINUE
-       close(m)
-       return
-2012      print *,'CB coeff file not found ; put in GR/ folder'
-      stop
-       end SUBROUTINE CB12_NGA_SPEC_IN
-       
       SUBROUTINE CB13_NGA_SPEC  (ip,iper,ia,ndist,di,nmag,magmin,dmag,DIP,SJ,rxsign)
 c     +(Mw,Rrup,Rjb,Rx, Frv,Fnm,Ztor,Hhyp,W,Dip,Vs30,Z25,SJ, 
 c     &Per,Y,Phi,Tau,Sigmatot,icase)
@@ -8282,7 +8231,7 @@ c add SDI-related common block sdi feb 22 2013
      + c12,c13low,c13hi,c14,c15,k1,k2,k3,a2,h1,h2,h3,h4,h5,h6,phi_lny,phi_low, phi_hi,
      + tau_lny,tau_lnyB,tau_low,tau_hi,phi_lnAF,rho
        common/cb13p/Per
-      REAL, dimension(nper) ::  Phi, Tau, tau_low,tau_hi,c15ca,c15j,c15_China
+      REAL, dimension(nper) ::  Phi, Tau, tau_low,tau_hi,c15ca,c15j,c15_China,sigma_c
       REAL, dimension(nper) ::  Per, c0, c1, c2low, c2, c3, c4,c5, c6, c7, c8, c9,c10, c10J, c10Jlow, c11, c11J 
       REAL, dimension(nper) :: c12, c13low,c13hi, c14,c15,k1, k2, k3,a2,h1,h2,h3
       REAL, dimension(nper) :: h4,h5,h6, phi_low, phi_hi,phi_lny,tau_lny,tau_lnyB,phi_lnAF, rho
@@ -8297,12 +8246,135 @@ c lines from hazgrid. table production
        real Mw,A1100(310,31,3),csoil,nsoil,Sigmatot,di,magmin,dmag,sigma_fx,phi_lnPGAB
        save A1100
 c T=.01,.02,.03,.05,.075,.1,.15,.2,.25,.3,0.4,0.5,.75,1,1.5,2,3,4,5,7.5,10,0,-1
-	c15ca=(/-0.0055,-0.0055,-0.0057,-0.0063,-0.007,-0.0073,-0.0069,-0.006,-0.0055,-0.0049,-0.0037,-0.0027,-0.0016,-0.0006,
-     + 0.0,0.0,0.0,0.0,0.0,0.0,0.0,-0.0055,-0.0017/)
-	c15j=(/-0.009,-0.009,-0.0091,-0.01,-0.0107,-0.0107,-0.0099,-0.0091,-0.0088,-0.0084,-0.0071,-0.0061,-0.0048,-0.0036,
-     + -0.0019,-0.0005,0.0,0.0,0.0,0.0,0.0,-0.009,-0.0023/)
-	c15_China=(/-0.0019,-0.0019,-0.002,-0.0023,-0.0031,00.0031,-0.0027,-0.0019,-0.0019,-0.0018,-0.0009,-0.0002,0.0,
-     +  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-0.0019,0.0/)
+c-----Soil model constants (not using the constant vector from Bozorgnia code)
+	Per=(/0.01,0.02,0.03,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,
+     + 0.5,0.75,1.,1.5,2.,3.,4.,5.,7.5,10.,0.,-1./)
+c c0 updated for several spectral periods and for PGA Bozorgnia email aug 27, 2013.
+     	c0=(/-4.365,-4.348,-4.024,-3.479,-3.29312,-3.66556,
+     + -4.86602,-5.41069,-5.96223,-6.40274,-7.56611,-8.37896,-9.84117,
+     + -11.01088,-12.46903,-12.96946,-13.30646,-14.01959,-14.55814,
+     + -15.50934,-15.97482,-4.416,-2.89541/)
+     	c1=(/0.9767,0.97602,0.93061,0.88708,0.9018,0.99317,1.26745,1.36587,
+     + 1.45843,1.52845,1.73878,1.87232,2.02098,2.18019,2.26973,2.2711,
+     + 2.14989,2.1324,2.11557,2.22333,2.13178,0.98408,1.51014/)
+   	c2low=(/0.5333,0.54938,0.62834,0.67381,0.72577,0.69757,0.51048,0.4471,
+     + 0.27438,0.19341,-0.02008,-0.1212,-0.04173,-0.06925,0.04678,0.14935,
+     + 0.36819,0.72617,1.02702,0.16924,0.36739,0.53714,0.27/)
+     	c2=(/-1.48461,-1.48771,-1.49384,-1.38762,-1.46913,-1.57184,-1.66866,
+     + -1.74959,-1.71072,-1.77001,-1.59425,-1.57678,-1.75665,-1.70658,
+     + -1.62116,-1.51208,-1.31456,-1.50567,-1.72132,-0.75648,-0.80033,
+     + -1.49918,-1.29865/)
+     	c3=(/-0.498937453,-0.500622655,-0.516949343,-0.614846203,-0.596140959,          	
+     + -0.53615185,-0.489916175,-0.451168621,-0.40377,-0.32137,-0.42641,
+     + -0.44027,-0.44323,-0.52717,-0.62968,-0.7684,-0.88968,-0.88483,
+     + -0.87758,-1.0771,-1.28153,-0.496099731,-0.45259/)
+     	c4=(/-2.77287,-2.77184,-2.78177,-2.79116,-2.74484,-2.63321,-2.45812,
+     + -2.42082,-2.39172,-2.37647,-2.30344,-2.29568,-2.23162,-2.15751,
+     + -2.06285,-2.1042,-2.05109,-1.98623,-2.02143,-2.17893,-2.24395,
+     + -2.77308,-2.46623/)
+     	c5=(/0.24794,0.24728,0.24569,0.23957,0.22728,0.20998,0.18271,0.18236,
+     + 0.18902,0.19458,0.18548,0.18608,0.18622,0.16948,0.15776,0.15773,
+     + 0.14786,0.13543,0.13954,0.17836,0.19421,0.24792,0.20353/)
+    	c6=(/6.7526,6.50193,6.29064,6.31674,6.86079,7.29437,8.03121,8.38547,
+     + 7.53447,6.99039,7.012,6.902,5.52167,5.64974,5.795,6.63167,6.75917,
+     + 7.97765,8.53845,8.46752,6.56419,6.76761,5.83687/)
+     	c7=0.0
+     	c8=(/-0.21399,-0.20765,-0.21286,-0.24416,-0.26594,-0.22909,-0.21079,
+     + -0.16256,-0.15032,-0.131,-0.15869,-0.15259,-0.0903,-0.105,-0.05765,
+     + -0.02807,0.,0.,0.,0.,0.,-0.21192,-0.16787/)
+     	c9=(/0.72005,0.72967,0.75901,0.8263,0.81493,0.83098,0.74885,0.76413,
+     + 0.71599,0.73747,0.73848,0.71779,0.79532,0.55604,0.48038,0.40135,
+     + 0.20613,0.105,0.,0.,0.,0.72036,0.30531/)
+          c10=(/1.09423,1.14928,1.28982,1.44851,1.53508,1.61453,1.87724,2.06875,
+     + 2.20472,2.3056,2.39843,2.35519,1.99492,1.4472,0.32996,-0.51429,
+     + -0.84808,-0.79272,-0.74828,-0.66444,-0.57634,1.09034,1.71266/)
+     	c10Jlow=(/2.19076,2.18901,2.16441,2.13849,2.44588,2.96906,3.54382,
+     + 3.70687,3.34286,3.33392,3.54369,3.01604,2.61646,2.46961,2.10849,
+     + 1.32674,0.60121,0.56816,0.35563,0.0751,-0.02688,2.18598,2.6016/)
+     	c10J=(/1.41626,1.45343,1.47596,1.54867,1.77181,1.91583,2.16149,2.46523,
+     + 2.7662,3.0105,3.20302,3.33327,3.05379,2.56169,1.45264,0.65727,0.36667,
+     + 0.30608,0.26753,0.37356,0.29687,1.42048,2.45689/)
+     	c11=(/-0.00697,-0.01669,-0.04215,-0.06628,-0.07944,-0.02935,0.06424,
+     + 0.09684,0.14409,0.15969,0.14104,0.14743,0.17641,0.25934,0.28807,
+     + 0.31124,0.34781,0.37465,0.33817,0.37541,0.35056,-0.00638,0.10601/)
+     	c11J=(/-0.20736,-0.19937,-0.20208,-0.33892,-0.40355,-0.41622,-0.40719,
+     + -0.31065,-0.17151,-0.08379,0.08468,0.23288,0.41099,0.47909,0.56579,
+     + 0.5624,0.534,0.52227,0.47719,0.32092,0.1743,-0.20246,0.33242/)
+     	c12=(/0.38951,0.38713,0.37769,0.29548,0.322,0.38448,0.41653,0.40419,
+     + 0.46631,0.52831,0.53978,0.63753,0.77607,0.77071,0.7476,0.76284,
+     + 0.68565,0.69094,0.67003,0.75653,0.62149,0.39293,0.58488/)
+     	c13low=(/0.09813,0.10091,0.10948,0.12256,0.11646,0.0998,0.07595,0.05707,
+     + 0.04374,0.03232,0.0209,0.00922,-0.00821,-0.0131,-0.01865,-0.02581,
+     + -0.03106,-0.04129,-0.02814,-0.02054,0.00093,0.09766,0.05174/)
+     	c13hi=(/0.0334,0.03272,0.03312,0.02695,0.02882,0.03253,0.03884,0.04373,
+     + 0.04633,0.05084,0.04322,0.04053,0.042,0.04259,0.03798,0.02515,0.02356,
+     + 0.0102,0.00335,0.00497,0.00986,0.03334,0.03267/)
+     	c14=(/0.00755,0.00759,0.0079,0.00803,0.00811,0.00744,0.00716,0.00688,
+     + 0.00556,0.00458,0.00401,0.00388,0.0042,0.00409,0.00424,0.00448,0.00345,
+     + 0.00603,0.00805,0.0028,0.00458,0.00757,0.00613/)
+     	c15=0.0
+     	c15CA=(/-0.0055,-0.0055,-0.0057,-0.0063,-0.007,-0.0073,-0.0069,-0.006,
+     + -0.0055,-0.0049,-0.0037,-0.0027,-0.0016,-0.0006,0.,0.,0.,0.,0.,0.,0.,-0.0055,
+     + -0.0017/)
+     	c15j=(/-0.009,-0.009,-0.0091,-0.01,-0.0107,-0.0107,-0.0099,-0.0091,
+     + -0.0088,-0.0084,-0.0071,-0.0061,-0.0048,-0.0036,-0.0019,-0.0005,
+     + 0.,0.,0.,0.,0.,-0.009,-0.0023/)
+     	c15_China=(/-0.0019,-0.0019,-0.002,-0.0023,-0.0031,-0.0031,-0.0027,-0.0019,
+     + -0.0019,-0.0018,-0.0009,-0.0002,0.,0.,0.,0.,0.,0.,0.,0.,0.,-0.0019,0./)
+     	a2=(/0.168204,0.16608,0.166615,0.173208,0.198386,0.174173,0.197692,0.204389,
+     + 0.185493,0.16375,0.159991,0.183814,0.215828,0.595819,0.595819,0.595819,
+     + 0.595819,0.595819,0.595819,0.595819,0.595819,0.166756,0.595819/)
+     	h1=(/0.242491585,0.244239479,0.246102927,0.251121153,0.260215395,0.258891885,
+     + 0.253754887,0.236761836,0.205538668,0.209669285,0.225654325,0.216617007,
+     + 0.153809642,0.117400827,0.117400827,0.117400827,0.117400827,0.117400827,
+     + 0.117400827,0.117400827,0.117400827,0.241153212,0.117400827/)
+     	h2=(/1.471226463,1.467008458,1.467306208,1.449483555,1.43491017,1.448920728,
+     + 1.46101266,1.484246105,1.581051011,1.585576015,1.544360277,1.553834937,
+     + 1.626464751,1.615567127,1.615567127,1.615567127,1.615567127,1.615567127,
+     + 1.615567127,1.615567127,1.615567127,1.473962695,1.615567127/)
+     	h3=(/-0.713718048,-0.711247937,-0.713409135,-0.700604707,-0.695125566,
+     + -0.707812613,-0.714767546,-0.721007941,-0.786589679,-0.7952453,
+     + -0.770014601, -0.770451944,-0.780274394,-0.732967953,-0.732967953,
+     + -0.732967953,-0.732967953, -0.732967953,-0.732967953,-0.732967953,
+     + -0.732967953,-0.715115906,-0.732967953/)
+     	h4=1.0
+     	h5=(/-0.336344,-0.339225,-0.338487,-0.338309,-0.347476,-0.391023,-0.449387,
+     + -0.393051,-0.338954,-0.446928,-0.525278,-0.407316,-0.370885,-0.127976,
+     + -0.127976,-0.127976,-0.127976,-0.127976,-0.127976,-0.127976,-0.127976,
+     + -0.336826,-0.127976/)
+     	h6=(/-0.26972,-0.262572,-0.258835,-0.262789,-0.218517,-0.200791,-0.0994103,
+     + -0.198083,-0.210334,-0.120913,-0.0861837,-0.28051,-0.284764,-0.755608,
+     + -0.755608,-0.755608,-0.755608,-0.755608,-0.755608,-0.755608,-0.755608,
+     + -0.270212,-0.755608/)
+     	k1=(/865.,865.,908.,1054.,1086.,1032.,878.,748.,654.,587.,503.,457.,410.,400.,400.,400.,
+     + 400.,400.,400.,400.,400.,865.,400./)
+     	k2=(/-1.186,-1.219,-1.273,-1.346,-1.471,-1.624,-1.931,-2.188,-2.381,-2.518,
+     + -2.657,-2.669,-2.401,-1.955,-1.025,-0.299,0.,0.,0.,0.,0.,-1.186,-1.955/)
+     	k3=(/1.839,1.84,1.841,1.843,1.845,1.847,1.852,1.856,1.861,1.865,1.874,1.883,
+     + 1.906,1.929,1.974,2.019,2.11,2.2,2.291,2.517,2.744,1.839,1.929/)
+c     	csoil=(/1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,
+c     	     + 1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88/)
+c     	nsoil=(/1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,
+c     + 1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18/)
+     	phi_low=(/0.7336,0.7375,0.7471,0.7768,0.7821,0.7691,0.7693,0.7609,0.7439,
+     + 0.7265,0.6901,0.6632,0.6058,0.5785,0.5412,0.5286,0.5269,0.5212,0.5024,
+     + 0.4568,0.4412,0.7335,0.6552/)
+     	phi_hi=(/0.4915,0.4955,0.5034,0.5197,0.5349,0.5431,0.5427,0.5515,0.5448,
+     + 0.5684,0.5931,0.6113,0.6326,0.6278,0.6032,0.5879,0.578,0.5592,0.551,
+     + 0.5456,0.5432,0.4918,0.4944/)
+     	tau_low=(/0.4041,0.4167,0.4458,0.5076,0.504,0.4449,0.3816,0.3392,0.3401,
+     + 0.3399,0.3559,0.3792,0.4299,0.4695,0.4973,0.4985,0.4996,0.5427,0.5339,
+     + 0.5228,0.4655,0.4086,0.3171/)
+     	tau_hi=(/0.3247,0.3258,0.3437,0.3769,0.418,0.4261,0.3865,0.3381,0.316,
+     + 0.2997,0.2635,0.2632,0.3264,0.3527,0.3989,0.4004,0.4172,0.3925,0.4209,
+     + 0.4376,0.4379,0.3219,0.2969/)
+     	phi_lnAF=(/0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,
+     + 0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3/)
+c sigma_c is used to get an aleatory sigma for the random H comp instead of mean H comp.
+     	sigma_c=(/0.166,0.166,0.165,0.162,0.158,0.17,0.18,0.186,0.191,0.198,0.206,
+     + 0.208,0.221,0.225,0.222,0.226,0.229,0.237,0.237,0.271,0.29,0.166,0.19/)
+     	rho=(/1.0,0.998,0.986,0.938,0.887,0.87,0.876,0.87,0.85,0.819,0.743,0.684,0.562,
+     + 0.467,0.364,0.298,0.234,0.202,0.184,0.176,0.154,1.0,0.684/)    
        rxfac=(/0.,0.5,1.,2.,3.,4.,4.5,5.,5.5,6./)
 c-----Soil model constants. Do not switch these to vectors until they change with T
        nsoil = 1.18
@@ -8341,6 +8413,7 @@ C*****Shallow sediment depth and 3-D basin term
       do kk=1,ntor
       Mw=magmin
       Ztor=dtor(kk)
+        wmax = (14.-Ztor)/sinedip	!maximum seismogenic width.
 C.....f_HW_Z
       IF(Ztor.le.16.66) THEN
         f_HW_Z=1.0-0.06* Ztor
@@ -8355,6 +8428,7 @@ c base area on w&c formula for all sources. Update to Stirling Wesnouski 2013?
         W=sqrt(area/1.5)        !aspect ratio 1.5
         W= min (W,wmax)
       Hhyp = min(15.,Ztor +0.50*W*sinedip)	!virtual hypocentrs 1/2 of the way down dip.
+	print *,'CB mag area Hhyp',Mw,area,Hhyp
        if(e_wind(ip))then
           if (Mw.lt.mcut(1))then
           ime=1
@@ -9729,69 +9803,6 @@ c        print *,c3,c4
         return
         end     function sdi_ratio   
 c------------------------------------------------------------------------------
-      SUBROUTINE CB13_NGA_SPEC_IN
-c read in the coeffs only. Harmsen Feb 25 2013. Additional coeffs such as phi_low
-C     This program computes 5%-damped linear elastic response spectra from the 
-C     2012 Campbell-Bozorgnia NGA-West2 Ground Motion Prediction Equation (GMPE)
-C
-C     It is Based on Campbell-Bozorgnia NGA-West2 Draft Model, November 12, 2012, Rev111
-C
-C     Written by Yousef Bozorgnia (November 25, 2012)
-
-      parameter (nper=23)
-      common /cb13/Phi,Tau,c0,c1,c2low,c2,c3,c4,c5,c6,c7,c8,c9,c10,c10j,c10jlow,c11,c11j,
-     + c12,c13low,c13hi,c14,c15,k1,k2,k3,a2,h1,h2,h3,h4,h5,h6,phi_lny,phi_low, phi_hi,
-     + tau_lny,tau_lnyB,tau_low,tau_hi,phi_lnAF,rho
-       common/cb13p/Per
-       real phi_lnyB
-      REAL, dimension(nper) ::  Phi, Tau, csoil,nsoil,tau_low,tau_hi
-      REAL Per(nper), c0(nper), c1(nper), c2low(nper), c2(nper)
-      REAL c3(nper), c4(nper)
-      REAL c5(nper), c6(nper), c7(nper), c8(nper), c9(nper)
-      REAL c10(nper), c10J(nper), c10Jlow(nper) 
-      REAL c11(nper), c11J(nper) 
-      REAL, dimension(nper) :: c12, c13low,c13hi, c14,c15,k1, k2, k3,a2,h1,h2,h3
-      REAL, dimension(nper) :: h4,h5,h6, phi_low, phi_hi,phi_lny,tau_lny,tau_lnyB
-      REAL phi_lnAF(nper), rho(nper)
-      character*5 dum1
-   
-C.....
-C.....READ MODEL COEFFICIENTS FROM AN EXCEL FILE (text FORMAT, csv does not work on sun workstation)
-C.....
-c      if(icase.ne.1) go to 21 
-      call get_lun(m)
-c updated input file name Feb 25 2013.
-c        open (m,file='GR/CB13_Coeffs_Atten113_RE_fix_all_Feb_15_2013.txt',status='old',err=2012)
-        open (m,file='GR/CB13_Apr8_coeffs.txt',status='old',err=2012)
-c CB coefficient file modified April 8 2013. Same structure. Different values. Also 3 comment lines
-c instead of 1.
-      print *,'CB coefficient file opened OK unit ',m
-      read (m,1) dum1
- 1    format(a)
- 	print *,dum1
- 	read(m,1)dum1
- 	print *,dum1
- 	read(m,1)dum1
- 	print *,dum1	!three lines
-
-      do 20 iper=1,nper
-        read (m,*)Per(iper),c0(iper),c1(iper),c2low(iper),c2(iper),c3(iper),
-     +c4(iper),c5(iper),c6(iper),c7(iper),c8(iper),c9(iper),
-     +c10(iper),c10Jlow(iper),c10J(iper),c11(iper),c11J(iper),c12(iper),
-     +c13low(iper),c13hi(iper),c14(iper),
-     +c15(iper),a2(iper), h1(iper),h2(iper),h3(iper),h4(iper),h5(iper),h6(iper),
-     +k1(iper), k2(iper), k3(iper),
-     +csoil(iper), nsoil(iper),
-     +phi_low(iper), phi_hi(iper),tau_low(iper), tau_hi(iper), phi_lnAF(iper), sigma_c, rho(iper)
-c      print *,'period ',Per(iper)
-c      print *,c14(iper),c15(iper),phi_lnAF(iper), rho(iper),'c14(iper),c15(iper),phi_lnAF(iper), rho(iper)'
- 20   CONTINUE
-c Although read in csoil and nsoil will be real variables in the actual CB_SPEC_IN
-       close(m)
-       return
-2012      print *,'CB coeff file not found ; put in GR/ folder'
-      stop
-       end SUBROUTINE CB13_NGA_SPEC_IN
 
 c Below version of CY is Aug 1 2013...Includes option for source directivity response
 c but due to lack of guidance on coef. values, this is turned off.
