@@ -1,4 +1,5 @@
 c--- program  hazFXnga13l.f; 08/27/2013; Use  with NGA relations, or others.
+c 8/28/2013	CB13: "Save" phi_lny and always calculate phi_lny(22) on first time thru
 c 8/27/2013	CB13: Update c0 vector for PGA and several short-period SA Bozorgnia email
 c 8/27/2013	changed z1km to z1_ref in call to ASK
 c 8/21/2013	CB13: Improve Zhyp further for downdip ruptures.
@@ -776,7 +777,7 @@ c adum could be sa(g) or pgv (cm/s). need flexible format
             endif
       endif
       write (6,61)date,time,name
-61      format('# *** hazFXnga13l 08/27/2013 log file. Pgm run on ',a,' at ',a,/,
+61      format('# *** hazFXnga13l 08/28/2013 log file. Pgm run on ',a,' at ',a,/,
      +'# *** Input control file: ',a)
       if(poly)write(6,*)'hazFXnga13l: Polygon file &npts: ',polygon,npmax
 c Below bypasses are based on file name. Bypass wont work if file names change
@@ -1484,7 +1485,7 @@ c      print *,nper_gmpe,' number of periods having coeffs BSSA'
       if(per.le.0.01)ipgk(ip)=1	!use the sa1 for new graizer model
       write(6,*)'Calling Grazier Kalkan13 model.  Pd index ',ipgk(ip)
       write(6,*)'Graizer13 basin depth (km) set to ',dgkbasin
-      Q_CA=157.	!New Q for California from Vladimir Graizer. His Q was 435
+      Q_CA=150.	!New Q for California from Vladimir Graizer. His Q was 435
       Q_BR = 205.     ! Possible reasonable average value for basin and range Q.
       write(6,*)'Graizer13 Quality factor for California= ',Q_CA
       write(6,*)'For WUS sites with longitude>-120E, use this Q ',Q_BR
@@ -8756,7 +8757,7 @@ c output
 c If sdi is true, this subroutine will return inelastic spectral displ. (cm) instead
 c of pSA. Tothong&Cornell approach
        real gnd_ep(3,3,8)
-       save A1100
+       save A1100, phi_lny
 c T=.01,.02,.03,.05,.075,.1,.15,.2,.25,.3,0.4,0.5,.75,1,1.5,2,3,4,5,7.5,10,0,-1
 c-----Soil model constants (not using the constant vector from Bozorgnia code)
 	Per=(/0.01,0.02,0.03,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,
@@ -9039,6 +9040,15 @@ C........Rock PGA
 
          A1100 = EXP(F_mag + F_dis + F_flt + F_HW + 
      +               F_site_1100 + F_sed + F_Hhyp + F_Dip + F_atn)
+
+      If (Mw.le.4.5) then
+         phi_lny(22) =phi_low(22)
+      elseif (Mw.lt.5.5) then
+         phi_lny(22) =phi_hi(22) + 
+     &    (phi_low(22) - phi_hi(22))*(5.5-Mw)
+      else
+         phi_lny(22) =phi_hi(22) 
+      endif
 c         go to 1000
 C     Note: Statment number 1000 is not relevant F_site generally has to be calculated
       ENDIF
