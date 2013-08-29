@@ -1,4 +1,8 @@
 c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  08/27/ 2013. Long header version.
+c Aug 29 2013: standardize Rrup and Rx to OpenSHA from P.Powers notes. This mod
+c affects ASK13, CB13 and CY13. It does not affect other GMMs
+c 8/28/2013: CB13: always calculate phi_lnY(22) early in subroutine. It is needed
+c		for all spectral periods' sigma.
 c 8/27/2013: Include an mmin matrix option. Previously code just had an mmax distribution. This option
 c		is invoked if maxmat=-2. not finished
 c 8/27/2013: update c0 vector in CB13 model.
@@ -722,7 +726,7 @@ c adum could be sa(g) or pgv (cm/s). need flexi format
       endif
       call date_and_time(date,time,zone,ival)
       write (6,61)date,time,zone,namein
-61      format('hazgridXnga13l (8/01/2013) log file. Pgm run on ',a,' at ',a,1x,a,/,
+61      format('hazgridXnga13l (8/28/2013) log file. Pgm run on ',a,' at ',a,1x,a,/,
      + '# Control file:',a)
         call getarg(0,progname)
         ind=index(progname,' ')
@@ -852,7 +856,7 @@ c     Norm Abrahamson's CA z1 reference (eq 18). z1_ref is in units km.
 c z1_refr added 8/13/2013. Z1 for hard rock. This value is .0028 km or 2.8 m
 c      deltaZ1=0.0	!dont know use 0. from guidance in CY doc.
       z1=z1cal	!CY2013 function used until we know better for wus...
-      z1km=Z1cal*0.001	!for AS need units km
+      z1km= z1_ref 	!for AS need units km. Redefined as z1_ref 8/27/2013. From P.Powers
 c from B Chiou email of Apr 15 2013.
         deltaZ1 = Z1cal -
      1  exp(-7.15/4 *
@@ -1906,7 +1910,7 @@ c below added mar 6 2008 from email comment by Ken Campbell
          else
          rxfac=1.0
          endif
-         DIP=dipbck(icode(ip,ia))
+         DIP=dipbck(icode(ip,ia))	!UNITS DEGREES
           SJ=0.      !SJ 0 if not in Japan.
           if(iflt.eq.1.or.iflt.eq.10)then
           print *,'Random-strike fault dip (d): ',DIP
@@ -1989,15 +1993,15 @@ c CHECK HERE
       wus=.true.
 c at this point in code receiver location not yet known. Just use CAlif Q
 c      if(rx.lt.-120. .and. ry.gt.39.)then
-      Q=156.6	!california Q
+      Q=150.	!california Q
 c      elseif(ry.le.39.0 - 0.8*(rx+120.))then
-c      Q=156.6 	!more      california Q
+c      Q=150 	!more      california Q
 c       else
 c      Q=205.	!GK 13 update for basin and range outside CA
 c      endif
 c keep Bdepth very shallow for rock sites. new 4/4/2013.
 	if(vs30.ge.600.)then
-	 Bdepth=1.1*z1km
+	 Bdepth=0.15	!standardized to P. Powers value 8/27/2013.
 	else
          Bdepth=0.75 * z1km + 0.25*dbasin      !Vladimir says his basin is 1.5 km/s isosurface. Campbell is
 	endif
@@ -2010,7 +2014,7 @@ c keep Bdepth very shallow for rock sites. new 4/4/2013.
          else
          rxfac=1.0
          endif
-         DIP=dipbck(icode(ip,ia))
+         DIP=dipbck(icode(ip,ia))	!units Degrees
         vs30_rock = 1180.	!raised from 1100 july 2013.
         z10_rock = -1.0		!change to neg. value aug 13 2013
         useRy0=.false.
@@ -8189,6 +8193,7 @@ c------------------------------------------------------------------------------
       SUBROUTINE CB13_NGA_SPEC  (ip,iper,ia,ndist,di,nmag,magmin,dmag,DIP,SJ,rxsign)
 c     +(Mw,Rrup,Rjb,Rx, Frv,Fnm,Ztor,Hhyp,W,Dip,Vs30,Z25,SJ, 
 c     &Per,Y,Phi,Tau,Sigmatot,icase)
+c Aug 29 2013: standardize Rrup and Rx to OpenSHA from P.Powers 
 c Modified May 22 2013 to make depth to 2.5 km/s rock 0.398 km for hardrock model.
 c Modified May 13 2013 to include an anelastic atten for R>80. Bozorgnia email of May 2013
 c call this subroutine after calling CB13_NGA_SPEC_IN
@@ -8224,6 +8229,7 @@ c lines from hazgrid. table production
 c add SDI-related common block sdi feb 22 2013
        common/sdi/sdi,dy_sdi,fac_sde
        real, dimension(8) :: fac_sde
+	common/widthH/widthH
       common/mech/wtss,Frv,Fnm
        common/prob/p(25005),plim,dp2   !table of complementary normal probab
       common / atten / pr, xlev, nlev, icode, wt, wtdist
@@ -8237,7 +8243,7 @@ c add SDI-related common block sdi feb 22 2013
       REAL, dimension(nper) :: h4,h5,h6, phi_low, phi_hi,phi_lny,tau_lny,tau_lnyB,phi_lnAF, rho
 c lines from hazgrid. table production
       common/fix_sigma/fix_sigma,sigma_fx
-      LOGICAL fix_sigma,sdi
+      LOGICAL fix_sigma,sdi,footwall
       common/geotec/Vs30,Z25
       common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
       common/deagg/deagg
@@ -8394,8 +8400,9 @@ C*****Style-of-fauting term
       f_flt_F = c7(iper)*Frv + c8(iper)*Fnm
 C.....f_HW_dip
       f_HW_dip= (90.0 - DIP)/45.0
-      sinedip=sin(DIP*d2r)
-      cosdip = cos(DIP*d2r)
+      diprad = Dip*d2r
+      sinedip=sin(diprad)
+      cosdip = cos(diprad)
         wmax = 14./sinedip	!maximum seismogenic width.
 C*****Shallow sediment depth and 3-D basin term
 	Z25rock = 0.398	!from campbell email may 21 2013.
@@ -8413,7 +8420,7 @@ C*****Shallow sediment depth and 3-D basin term
       do kk=1,ntor
       Mw=magmin
       Ztor=dtor(kk)
-        wmax = (14.-Ztor)/sinedip	!maximum seismogenic width.
+c        wmax = (14.-Ztor)/sinedip	!maximum seismogenic width.
 C.....f_HW_Z
       IF(Ztor.le.16.66) THEN
         f_HW_Z=1.0-0.06* Ztor
@@ -8423,12 +8430,11 @@ C.....f_HW_Z
 
       do jj=1,nmag
 C*****Magnitude term
-c base area on w&c formula for all sources. Update to Stirling Wesnouski 2013?
-        area =  10**((Mw-4.07)/0.98)
-        W=sqrt(area/1.5)        !aspect ratio 1.5
-        W= min (W,wmax)
+        W=calcWidth(Mw,ztor,diprad)
+        widthH=W*cos(diprad)	!horiz.projection of width
       Hhyp = min(15.,Ztor +0.50*W*sinedip)	!virtual hypocentrs 1/2 of the way down dip.
-	print *,'CB mag area Hhyp',Mw,area,Hhyp
+c	if(ip.eq.1)print *,Mw,W,widthH,Hhyp,' CB Mw,W,widhtH,Hhyp'
+c	print *,'CB mag area Hhyp',Mw,area,Hhyp
        if(e_wind(ip))then
           if (Mw.lt.mcut(1))then
           ime=1
@@ -8468,6 +8474,15 @@ C.....Note: Magnitude limits and equation have been changed
       ENDIF
 
       F_flt= f_flt_F * f_flt_M
+c magnitude dependent sigma for pga needed
+      If (Mw.le.4.5) then
+         phi_lny(22) =phi_low(22)
+      elseif (Mw.lt.5.5) then
+         phi_lny(22) =phi_hi(22) + 
+     &    (phi_low(22) - phi_hi(22))*(5.5-Mw)
+      else
+         phi_lny(22) =phi_hi(22) 
+      endif
 
 C.....f_HW_M
 C.....Note: Equation for f_HW_M has been changed
@@ -8504,7 +8519,7 @@ c R1, R2 used with hanging wall effects
       if(abs(Mw-6.05).lt.0.02)write(12,122)Mw,Ztor,iper,F_Dip
 122      format(/,'#Rrup GM  sigma_lnY f_HW for Mw,Ztor,iper,Fdip ',f6.2,1x,f6.1,1x,i2,1x,e11.5)
         do ii=1,ndist
-        rjb=di*0.5+float(ii-1)*di
+        rjb=di*0.5+float(ii-1)*di	! is this meanRjb? check it.
        weight= wt(ip,ia,1)
        if(rjb.gt.wtdist(ip,ia)) weight= wt(ip,ia,2)
       if(e_wind(ip))then
@@ -8517,8 +8532,13 @@ c R1, R2 used with hanging wall effects
           endif
           gndx=gnd_ep(ide,ime,ip)
           endif
-        Rrup = sqrt(rjb**2+dtor(kk)**2)
-        Rx = rxsign*(rjb+rxfac(icode(ip,ia)))
+          footwall = wtss.gt.0.9.or.rxsign.lt.0.0
+          if(footwall)then
+          Rx = - rjb
+          else
+          Rx =rjb + widthH
+          endif
+        Rrup = getDistRup(rjb,ztor,zbot,diprad,footwall)
 C*****Distance term
       R = SQRT(Rrup**2 + c6(iper)**2)
       F_dis = (c4(iper) + c5(iper)*Mw)*LOG(R)
@@ -8703,11 +8723,12 @@ c run separately). These might be epistemic alternatives.
 c 
       implicit none
       integer MAXPER 
-      real c,n,sqrt2  
-      parameter (MAXPER=23,n=1.5,sqrt2=1.414213562)
+      real c,n,sqrt2,widthH,d2r,W 
+      parameter (d2r=0.0174533,MAXPER=23,n=1.5,sqrt2=1.414213562)
 c lines from hazgrid. table production
       common/fix_sigma/fix_sigma,sigma_fx
-      LOGICAL fix_sigma,hardrock
+	common/widthH/widthH
+      LOGICAL fix_sigma,hardrock,footwall
 c hardrock .true. for initial pass thru.
       common/mech/wtss,Frv,Fn
        common/prob/p,plim,dp2   !table of complementary normal probab
@@ -8723,7 +8744,7 @@ c      common/deagg/deagg
        real, dimension(3):: dtor,wtor,wtor65
        real, dimension(310,38,3):: Sa1180      !Hard-rock median
        integer nlev(8),icode(8,10),nfi,ntor, Region
-       real wt(8,10,2),wtdist(8,10),sigma_fx,wtss
+       real wt(8,10,2),wtdist(8,10),sigma_fx,wtss,calcWidth,getDistRup,zbot
        real, dimension(0:9) :: rxfac
       real, dimension(MAXPER):: c4, a1, a2, a3, a4, a5, a6,
      1     a7, a8, a9, a10, a11,
@@ -8736,7 +8757,7 @@ c      common/deagg/deagg
       real HW_taper1, HW_taper2, HW_taper3, HW_taper4, HW_taper5
       real damp_dSA1180, sigAmp, fltWidth, testv1,phiA_estimated,phiA_measured
       real f1, f4, f5, f6, f7, f8, f9, f10, f13, x1,x2, x1z, x2z, f_Reg
-      real Ry1, ZTOR, Frv, Fn, SpecT,rxsign
+      real Ry1, ZTOR, Frv, Fn, SpecT,rxsign,diprad
       real phiA, phiB, tauA, tauB, phi, tau, y1,y1z, y2, y2z
       integer vs30_class, ia,iPer,ie,ii,jj,k,kk,ipr,ime,ide,ip,nmag,ndist
       logical hwflag,useRy0,e_wind(8)      !don't use. but keep options open in case AS change their mind
@@ -8860,6 +8881,7 @@ C     c is 2400 for PGV and 2.4 for all other periods
          c = 2.4
       endif
         dAmp_dSA1180 = 0.
+        diprad = dip*d2r
       tanfac=tan(20.*3.1415926/180.)
 c     Set CA z1 reference
       z1_ref = exp ( -7.67/4. * alog( (Vs30**4 + 610.**4)/(1360.**4+610.**4) ) ) / 1000.
@@ -8954,10 +8976,10 @@ c loop on magnitude
       mag=magmin
       do jj=1,nmag
 C*****Magnitude term
-c base area on w&c formula for all sources. Update to Stirling Wesnouski 2013?
-        area =  10**((mag-4.07)/0.98)
-        FltWidth=sqrt(area/1.5)        !aspect ratio 1.5
-        FltWidth= min (FltWidth,wmax)
+        W=calcWidth(mag,ztor,diprad)
+        widthH=W*cos(diprad)	!horiz.projection of width
+        FltWidth= W
+        zBot=ztor + W*sin(diprad)
        if(e_wind(ip))then
           if (mag.lt.mcut(1))then
           ime=1
@@ -9022,8 +9044,14 @@ c     Compute HW taper2 (eq. 4.12)
           endif
           gndx=gnd_ep(ide,ime,ip)
           endif
-        Rrup = sqrt(rjb**2+dtor(kk)**2)
-        Rx = rxsign*(rjb+rxfac(icode(ip,ia)))      !same test model as in CB12. Needs work.
+c aug 29 2013 standardize Rx and Rrup to OpenSHA definitions.
+          footwall = wtss.gt.0.9.or.rxsign.lt.0.0
+          if(footwall)then
+          Rx = - rjb
+          else
+          Rx =rjb + widthH
+          endif
+        rRup = getDistRup(rjb,ztor,zbot,diprad,footwall)
 c     Set distance
       R = sqrt(rRup**2 + c4_mag**2)
 c     Compute HW taper 3 *** NoRy0 version, uses tapers from As08 for Rx > R1***
@@ -9808,32 +9836,30 @@ c Below version of CY is Aug 1 2013...Includes option for source directivity res
 c but due to lack of guidance on coef. values, this is turned off.
         subroutine CY2013_NGA(ip,iprd,ia,ndist,di,nmag,magmin,dmag,
      *    DELTA,deltaz1,v_s30,vs30_class,rxsign )
-c        call CY2013_NGA(ip,iper,ia,ndist,di,nmag,magmin,dmag,DIP,deltaz1,vs30,rxfac )
-c        (ip,iprd, M, R_Rup, R_JB, R_x, V_S30,
-c     1                   F_Measured, F_Inferred, deltaZ1, DELTA, Z_TOR,
-c     1                   F_RV, F_NM, cDPP, gndout, tau, sigma_NL0, sigmaf)
 
-c        implicit none
+c Aug 29 2013: standardize R_x and R_rup to the OpenSHA values. From P.Powers.
+c 
+        implicit none
         integer nprd, ip, ia, nmag
         real pi,d2r,sqrt2, dp2, plim
-      real sigmaf,sigma_fx,magmin,dmag,di,rxsign,wtss,tmp
+      real sigmaf,sigma_fx,magmin,dmag,di,rxsign,wtss,tmp,widthH
 c added MPM 20130320
         integer ndist
-c        real magmin, dmag, rxsign
+	common/widthH/widthH
         real gnd_ep(3,3,10),mcut(2),dcut(2),gndout(3),gndx
       real, dimension(25005):: p
        real, dimension (310,38,20,8,3,3):: pr
        real, dimension(20,8):: xlev
        real, dimension(3):: dtor,wtor,wtor65
        integer nlev(8),icode(8,10),nfi,ntor
-       real wt(8,10,2),wtdist(8,10), fac
+       real wt(8,10,2),wtdist(8,10), fac,deltaZ_TOR,coshM, zBot,W,calcWidth,getDistRup
        real, dimension(0:9) :: rxfac
-      logical e_wind(8),fix_sigma
+      logical e_wind(8),fix_sigma,footwall
       integer ide,ime,ie,ipr,ii,jj,kk,k,vs30_class
       logical direct/.false./
         real PERIOD, M,  R_rup, R_JB, R_x, V_S30, F_Measured,weight,
      1       F_Inferred, Z1, DELTA, Z_TOR, F_RV, F_NM, deltaZ1, cDPP
-        real cc, gamma, cosDELTA, psa, psa_ref, NL0, tau, sigma_NL0,
+        real cc, gamma, diprad, cosDELTA, psa, psa_ref, NL0, tau, sigma_NL0,
      1       total_app
         real r1, r2, r3, r4, fw, hw, fd, a, b, c, rkdepth,mZ_TOR
         integer iprd, sa
@@ -10116,8 +10142,6 @@ c new CY coeff set July 31 2013.
      1               0.7792,  0.7504,  0.7136,  0.7035,  0.7006,
      1               0.7001,  0.7000,  0.7000,  0.7000/
 
-c        pi = atan(1.0)*4.0
-c        d2r = pi/180.0
 	if(vs30_class.eq.0)then
       F_measured=0.0
       F_inferred=1.0	!Chiou recommendation july 31 2013.
@@ -10126,7 +10150,8 @@ c        d2r = pi/180.0
       F_inferred=0.0	!Chiou recommendation Nov 2012.
       endif
       fd=0.0
-        cosDELTA = cos(DELTA*d2r)
+       diprad = DELTA*d2r
+        cosDELTA = cos(diprad)
 c Soil effect: linear response
         a = phi1(iprd) * min(log(V_S30/1130.0), 0.0)
 
@@ -10148,6 +10173,10 @@ c loop on depth to top of rupture.
 c loop on magnitude
       M=magmin
       do jj=1,nmag
+        W=calcWidth(M,Z_tor,diprad)
+        widthH=W*cosDELTA	!horiz.projection of width
+        zBot=z_tor + W*sin(diprad)
+c        if(ip.eq.1)print *,M,W,widthH,zBot,' CY M W widthH zbot'
 c Center Z_TOR on the Z_TOR-M relation in Chiou and Youngs (2013)
         if (F_RV.EQ.1.0) then
           if (M .le. 5.849) then	!corrected from 5.869 May 16 2013
@@ -10199,8 +10228,14 @@ c Magnitude scaling
           gndx=gnd_ep(ide,ime,ip)
           endif
 
-        R_Rup = sqrt(R_JB**2+dtor(kk)**2)
-        R_x = rxsign*(R_JB+rxfac(icode(ip,ia)))      !same test model as in CB12. Needs work.
+c aug 29 2013 standardize Rx and Rrup to OpenSHA definitions.
+          footwall = wtss.gt.0.9.or.rxsign.lt.0.0
+          if(footwall)then
+          R_x = - R_JB
+          else
+          R_x =R_JB + widthH
+          endif
+          r_Rup = getDistRup(R_JB,z_tor,zbot,diprad,footwall)
 c Near-field magnitude and distance scaling
         r2 = c4(iprd) * log(R_Rup + cc)
 
@@ -11770,3 +11805,37 @@ c     Set total to return
       
       end function mu1_vs30
 ! --------------------------------------------------------- mu1_vs30
+
+	real function getDistRup(rjb,ztop,zbot,diprad,footwall)
+	common/widthH/widthH
+c diprad is faultplane dip in radians
+	logical footwall
+	if (footwall)then
+	getDistRup=sqrt(rjb**2 + ztop**2)
+	return
+	endif
+c cutoff distance ...
+	rcut = zbot * tan(diprad)
+	if(rjb.gt. rcut)then
+	getDistRup = sqrt(rjb**2 + zbot**2)
+	return
+	endif
+	rrup0 = sqrt(widthH**2 +ztop**2)	!rRup when rjb is 0
+	rrup0 = min(rrup0,zbot*cos(diprad))
+	rrupC = zbot/cos(dipRad)		!rRup at cutoff rjb
+	getDistRup = rrup0 + (rrupC-rrup0)*rjb/rcut
+c from Peter Powers.
+	return
+	end function getDistRup
+	
+	real function calcwidth(mag,depth,diprad)
+c from Peter Powers.
+	real arg,aspwidth,ddwidth,length,mag,depth,diprad
+	         arg= -3.22+0.69*mag
+         length= 10**arg	!w&c 94
+         aspwidth = length/1.5	!or /1.61803 the golden mean
+         ddwidth  = (14. - depth)/sin(diprad)
+         calcwidth = min(aspwidth,ddwidth)
+c         print *,calcwidth,aspwidth,length,ddwidth
+         return
+         end function calcwidth
