@@ -1,0 +1,15 @@
+24.6 50.0 0.05
+-125 -100 0.05
+3
+../out/combine/wus_flts_zeng.1hz
+0.15
+../out/combine/wus_flts_bird.1hz
+0.15
+../out/combine/wus_flts_geo.1hz
+0.7
+0
+../out/combine/hazard_combGeod15.1hz.2pc50
+1
+0
+4.04e-4
+1
