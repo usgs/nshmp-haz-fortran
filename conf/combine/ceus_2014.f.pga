@@ -32,10 +32,10 @@
 .16675
 ../out/CEUScmpga-srgr.out
 .08325
-../out/combine/CEUS_adGrid_2014.pga
-0.5
-../out/combine/CEUS_fixGrid_2014.pga
-0.5
+../out/CEUS_adGrid_2014_2zone.pga
+0.4
+../out/CEUS_fixRGrid_2014_2zone.pga
+0.6
 1
 ../out/combine/tmp.ceus.pga
 0
