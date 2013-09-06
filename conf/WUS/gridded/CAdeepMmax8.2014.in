@@ -4,7 +4,7 @@
 760 2. the 2 is a depth to 2.5 km/s bedrock. not used with intrapl GMPEs
 3 39. 1 -123.05 46. 1 -122.49   60. 1 -120. dtor 39, 46 or 60 km Modified May 8 2013
 1. 0 0 		!wts to ss, rev, normal (shouldnt affect deep)
-1. 200.
+1. 300.
 24.6 51. .1	!extended source grid sept 20 NGA
 -126.5 -100 .1
 0.80 7.2 8.0 .1 3.

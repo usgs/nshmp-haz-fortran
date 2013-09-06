@@ -4,12 +4,12 @@
 760 1.
 3 42. 1 -123.25 50. 1 -122.49   60. 1 -120. dtor 42, 50 or 60 km
 1. 0 0 		!wts to ss, rev, normal (shouldnt affect deep)
-1. 200.
+1. 300.
 42. 47. .1
 -125. -122 .1
 0.80 7.2 7.5 .1 3.		Mmin set to 6.5 afrankel email may 18
 1 0 0 0
-../conf/WUS/gridded/GR_DOS/agrd_ORdeep_comb.out
+../conf/WUS/gridded/GR_DOS/agrd_ORdeep_comb_scaled.out
 1. 0
 ../bin/rjbmean.bin.geoma
 3
