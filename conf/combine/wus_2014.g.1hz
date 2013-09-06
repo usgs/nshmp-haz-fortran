@@ -1,17 +1,23 @@
 1
-16		number of files 
+19		number of files 
 ../out/combine/EXTmap_adSm.1hz
 0.4
 ../out/combine/EXTmap_fixSm.1hz
-0.6
+0.5
+../out/EXTmap_2014_ss_M8.1hz
+0.1
 ../out/combine/WUSmap_adSm.1hz
 0.2
 ../out/combine/WUSmap_fixSm.1hz
-0.3
+0.2
+../out/WUSmap_2014_ss_M8.1hz
+0.1
 ../out/combine/noPuget_adSm.1hz
 0.2
 ../out/combine/noPuget_fixSm.1hz
-0.3
+0.2
+../out/noPuget_2014_ss_M8.1hz
+0.1
 ../out/combine/puget_2014.1hz
 0.5
 ../out/CAdeep_2014.1hz
