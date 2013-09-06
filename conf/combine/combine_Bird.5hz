@@ -1,11 +1,13 @@
 1
-3
+4
 ../out/2014WUSbird.65.5hz
 1
 ../out/2014WUSbird.char.5hz
 0.667
 ../out/2014WUSbird.gr.5hz
 0.333
+../out/zonesPB.5hz
+1
 1
 ../out/combine/wus_flts_bird.5hz
 0
