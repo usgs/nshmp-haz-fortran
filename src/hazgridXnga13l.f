@@ -2,7 +2,7 @@ c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  08/27/ 2013. Long header
 c Aug 29 2013: standardize Rrup and Rx to OpenSHA from P.Powers notes. This mod
 c affects ASK13, CB13 and CY13. It does not affect other GMMs
 c 8/28/2013: CB13: always calculate phi_lnY(22) early in subroutine. It is needed
-c		for all spectral periods' sigma.
+c		for all spectral periods sigma.
 c 8/27/2013: Include an mmin matrix option. Previously code just had an mmax distribution. This option
 c		is invoked if maxmat=-2. not finished
 c 8/27/2013: update c0 vector in CB13 model.
@@ -71,7 +71,7 @@ c      icode=0 90 =>d; 1=>80 d, 2=>70 d, and so on. Index 32.
 c Add GK12 model with basin effect. index 39. Q_s is 435 everywhere in the initial model setup.
 c this version has the long header records (896 instead of 308 byte)
 c 11/16/2012: add NAAsub corresponding to the BCHYDRO GMPE of 2010. Index=31. For intraplate sources.
-c       we don't intend to use NAAsub for subduction sources in this code (see hazSUBXnga.test)
+c       we dont intend to use NAAsub for subduction sources in this code (see hazSUBXnga.test)
 c GetGeom  : use BA nonlinear siteamp, from AF hazgridXGT.f. 
 c GetABsub: do not modify. Use the original 2003 formulation of siteamp. Some corrections to getABsub
 c were discovered by Pengsheng and fixed in this code Jan 9, 2013. SHarmsen.
@@ -82,8 +82,8 @@ c 7/22/2010: hazgridXnga13l with double precision for the summation step prob(,,
 c Idea is that the small distant source rate may be omitted during summation due to word-size.
 c Testing shows d.p. accumulation is a very minor improvement. But does not impact run time so we
 c implement it here.
-c 10/31/2012: Add AB06', A08', Pez11 CEUS GMPEs initially set up for A-rock or BC-rock only. The
-c   A->BC conversion uses Gail Atkinson's factors very different from Frankel's factors.
+c 10/31/2012: Add AB06, A08, Pez11 CEUS GMPEs initially set up for A-rock or BC-rock only. The
+c   A->BC conversion uses Gail Atkinsons factors very different from Frankels factors.
 c
 c 7/19/2010: Add Geomatrix subduction (previously just inslab). iatten=14 for subd.
 c 7/13/2010: Add Zhao interface and intraplate GMPEs. These have slightly different
@@ -112,7 +112,7 @@ c   that the calculation of rjbmean was for a M(SRL) or M(A) relation.
 c   
 c Dec 18 2008: vulnerability in output file names for the .m and .p files is finally repaired.
 c Nov 20 2008: add Zhao et al. atten. for inslab and interface source. Need variety of models at LP Sa, but
-c      	AB03 is only good to 3 s. Zhao's inslab goes to 5 s Sa.
+c      	AB03 is only good to 3 s. Zhaos inslab goes to 5 s Sa.
 c Nov 19 2008: increase set of periods available with Geomatrix inslab attn.
 c mod Oct 22 2008. M (saturation) limit at 8.0 (AB03, BSSA v93 #4, p 1709)
 c August 2008: Mmax may be treated as a distribution for the cases iflt=3 and iflt=4.
@@ -160,7 +160,7 @@ c --- iflt=-3 uses point src but also uses Johnston mb to Mw New sept 2008
 c --- iflt=-4 uses point src but also uses AB mb to Mw
 c April 30 2008: Read in precomputed array of mean distances to randomly oriented
 c faults. This array is called rjbmean and is indexed by mag and distance. Reading
-c in this array from file 'meanrjb.bin' can save a few seconds of CPU time
+c in this array from file meanrjb.bin can save a few seconds of CPU time
 c per CEUS background-hazard run (16 of them). Indexes ilat and ilon no longer needed.
 c Feb 1 2013: the mean distance from src S needed to be increased to allow
 c Mmax of 8.1 for the CEUS SSC logic tree branches. The new mean distance
@@ -305,8 +305,8 @@ c - - - iatten = 31 BCHydro for inslab. added Nov 2012. This one has nonln sitea
 c ---- iatten = 32 CB13 march
 c ---- iatten = 33 CY13 march
 c ----- iatten= 34  AS13 march
-c --- iatten=35 A08'
-c --- iatten=36 AB06'
+c --- iatten=35 A08prime
+c --- iatten=36 AB06prime
 c --- iatten=37 Pez11
 c --- iatten=38 Idriss Apr 2013 (this one has  been updated- STD. Deviation, however, has not).
 c --- iatten=39      GK12 with continuous basin response.
@@ -631,7 +631,7 @@ c available periods for CB as of Mar 2008. pga=0.0 here. Displacement per is -2
      +0.25,0.30,0.35,0.40,0.45,0.50,0.60,0.70,0.80,0.90,1.00,1.10,1.20,
      +1.30,1.50,1.70,2.00,2.20,2.50,3.00,3.50,4.00,4.50,5.00/)
 c perabs: period set for ab slab-zone (deep) eqs.
-c ab06 frequencies, these don't seem to be extremely close to 1/T
+c ab06 frequencies, these dont seem to be extremely close to 1/T
       abfrq = (/2.00e-01,2.50e-01,3.20e-01,4.00e-01,5.00e-01,6.30e-01,8.00e-01,1.00e+00,
      1       1.26e+00,1.59e+00,2.00e+00,2.52e+00,3.17e+00,3.99e+00,5.03e+00,6.33e+00,
      1       7.97e+00,1.00e+01,1.26e+01,1.59e+01,2.00e+01,2.52e+01,3.18e+01,4.00e+01,
@@ -850,7 +850,7 @@ c *** NEW 11/05 **** Enter soil Vs30 condition  ******NEW*******
       if(override_vs)vs30=vs30d
 c use Chiou-Youngs 10-2007 default depth to 1 km/s rock. Z1 Units: m.
         Z1cal = exp(-7.15/4 * log(((VS30/1000.)**4 + .57094**4)/(1.360**4 + .57094**4)))
-c     Norm Abrahamson's CA z1 reference (eq 18). z1_ref is in units km.
+c     Norm Abrahamsons CA z1 reference (eq 18). z1_ref is in units km.
        z1_ref = exp ( -7.67/4. * alog( (Vs30**4 + 610.**4)/(1360.**4+610.**4) ) ) / 1000.
 	z1_refr=exp ( -7.67/4. * alog( (1180.**4 + 610.**4)/(1360.**4+610.**4) )) / 1000.
 c z1_refr added 8/13/2013. Z1 for hard rock. This value is .0028 km or 2.8 m
@@ -930,7 +930,7 @@ c check reasonableness of distribution
       stop 'and retry with improved weights'
       endif
 c large tormin could be associated with deep Benioff zone. For crustal
-c earthquakes, this check isn't very interesting.
+c earthquakes, this check isnt very interesting.
       if(tormin.lt.0..or.tormin.gt.202.)stop'Top of rupture distribution
      +  not reasonble. Please reenter'
       dipang1=pi/2.
@@ -1028,7 +1028,7 @@ c
 c--- ibmat=1 uses b-value matrix
 c--- maxmat = 1 uses Mmax matrix. mmax>1 uses zones of Mmax. New April 2013.
 c --  maxmat = -1, use min of Mmax matrix and magmax scalar value input below
-c-- set each to zero if you don't want these
+c-- set each to zero if you dont want these
 c New nov 14 07L add field Mtaper (real variable). If M>Mtaper, multiply rate by wtgrid(k)
 c to include CA
 c      write(6,*) "enter iflt,ibmat,maxmat, Mtaper"
@@ -1037,7 +1037,7 @@ c New nov 14 07L add field Mtaper (real variable). If M>Mtaper, multiply rate by
 c to include CA
       read (1,*) iflt,ibmat,maxmat,Mtaper
       if(maxmat.gt.nzonex)stop'maximum number of Mmax zones is exceeded'
-c New sept 2008: Use logical variable finite to control whether it's handled as a point src.
+c New sept 2008: Use logical variable finite to control whether its handled as a point src.
       if(iflt.le.0.and.iflt.ne.-2)then
       finite=.false.
       iflt=abs(iflt)
@@ -2169,7 +2169,7 @@ c xwide(i) is max distance at which Rjb is zero (hw on)
 c The flush subroutine dumps buffered print material. Gfortran OK with subr. not with function.
         call flush(6)
 c If flush works for your computer, you can look at log file before the big grid gets underway.
-c---Here's the guts
+c---Heres the guts
       icnt=1
       do 100 i=1,nrec
        asum= 0.0	!matrix math
@@ -2195,7 +2195,7 @@ c find nearest gridpoint in vs30 array to the site with coords rx,ry
       ivy=nint((vymax-ry)/vdy)	!same organization as we are used to.
       vs30=v30(nvx*ivy+ivx)
       endif	!inbounds
-      endif	!array rather than scalar vs30	This doesn't do anything for gridded,
+      endif	!array rather than scalar vs30	This doesnt do anything for gridded,
 c which precomputed median motions and probabilities based on a fixed Vs30. In the future
 c site-specific Vs30 may be useful.
       if(byeca.and.ry.gt.43.9)goto 860
@@ -2375,7 +2375,7 @@ c one ground-motion level for deagg work, i.e., k=1.
 c kk = 1 and ifn = 1 for ceus.
       ebar(ir,im,ip,kk,ifn)=ebar(ir,im,ip,kk,ifn)+e0_ceus(ii,m,ip)*asumm
       elseif(slab)then
-c kk is probably 1 and ifn = 1 for intraslab. kk or depth could vary but it doesn't USGS.
+c kk is probably 1 and ifn = 1 for intraslab. kk or depth could vary but it doesnt USGS.
 c For some countries we have run separate depths with different infiles (50 100 150 km etc) 
       ebar(ir,im,ip,kk,ifn)=ebar(ir,im,ip,kk,ifn)+e0_sub(ii,m,ip,kk)*asumm
       endif
@@ -3075,7 +3075,7 @@ c not ready for nga code. out of date relation in 2008. Use getCamp2003
 cccccccccccccccccccccc
       subroutine getAB95(ip,iq,ia,ndist,di,nmag,
      &   magmin,dmag,sigmanf,distnf)
-c adapt to nga style. new problem: gettab. This routine doesn't seem to be used.
+c adapt to nga style. new problem: gettab. This routine doesnt seem to be used.
 c I dont ever see iatten 5 in CEUS input files for 2002. always getFEA. Check? SH
 c not ready. july 28 2006. Using iatten 5 for AB95 with table lookup.
       Write(6,*)'hazgridXnga13l: getAB95 should not be called. No array 
@@ -3702,7 +3702,7 @@ c        g3= rockf* gc3(i1) + soilf*gc3s(iq)
 c        g4= rockf* 1.7818  + soilf*1.097 
 c        ge= rockf* 0.554   + soilf*0.617
 c        gm= rockf* gmr     + soilf*gms
-c linear combinations of coeffs doesn't cut it. highly nonlinear response fcn.
+c linear combinations of coeffs doesnt cut it. highly nonlinear response fcn.
       stop' No plan for your ir into getGeom'
       endif
       period = pergeo(iq)
@@ -4066,24 +4066,24 @@ c
       c4= (/-1.591,-1.32,-1.158,-1.369,-1.28,-1.244142,
      + -1.216,-1.124,-1.691,-1.5660,-1.469/)
       c5= (/.683,.399,.299,0.484,0.349,0.32603806,
-     + 0.318,.310,0.922,0.75759,0.630/)  !paper's c7
+     + 0.318,.310,0.922,0.75759,0.630/)  !papers c7
       c6= (/.416,.493,.503,0.467,0.502,0.5040741,
-     + 0.503,.499,.376,0.40246,0.423/) !paper's c8
+     + 0.503,.499,.376,0.40246,0.423/) !papers c8
       c7= (/1.140,1.25,1.067,1.096,1.241,1.1833254,
-     + 1.116,1.015,0.759,0.76576,0.771/) !paper's c9
+     + 1.116,1.015,0.759,0.76576,0.771/) !papers c9
       c8= (/-.873,-.928,-.482,-1.284,-.753,-0.6529481,
-     + -0.606,-.4170,-.922,-1.1005,-1.239/) !paper's c10
+     + -0.606,-.4170,-.922,-1.1005,-1.239/) !papers c10
       c9= (/-.00428,-.0046,-.00255,-.00454,-.00414,-3.7463151E-3,
-     + -.00341,-.00187,-.00367,-.0037319,-.00378/) !paper's c5
+     + -.00341,-.00187,-.00367,-.0037319,-.00378/) !papers c5
       c10= (/.000483,.000337,.000141,.00046,.000263,2.1878805E-4,
-     + .000194,.000103,.000501,.00050044,.0005/) !paper's c6
+     + .000194,.000103,.000501,.00050044,.0005/) !papers c6
       c11= (/1.030,1.077,1.110,1.059,1.081,1.0901983,
-     + 1.098,1.093,1.03,1.037,1.042 /)  !paper's c11
+     + 1.098,1.093,1.03,1.037,1.042 /)  !papers c11
       c12= (/-.0860,-.0838,-.0793,-.0838,-0.0838,-0.083180725,
-     + -0.0824,-.0758,-.086,-0.0848,-.0838/) !paper's c12
+     + -0.0824,-.0758,-.086,-0.0848,-.0838/) !papers c12
       c13= (/0.414,.478,.543,0.460,0.482,0.49511834,
-     + 0.508,0.551,.414,0.43,.443/)  !paper's c13
-c clamp for 2s set to 0 as per Ken Campbell's email of Aug 18 2008.
+     + 0.508,0.551,.414,0.43,.443/)  !papers c13
+c clamp for 2s set to 0 as per Ken Campbells email of Aug 18 2008.
       clamp= (/3.0,6.0,0.,6.,6.,6.,3.0,0.,6.,6.,6./)
       period = perx(iq)
        cmagsig= 7.16
@@ -4171,7 +4171,7 @@ cccccc
       subroutine getBJF97(ip,iq,ia,ndist,di,nmag,
      & magmin,dmag,sigmanf,distnf)
 c prepared for the general vs30 case july 26 2006 (no nonlinear site resp here) SH
-c also prepared for 7 periods. based on Frankel's getBJF97     
+c also prepared for 7 periods. based on Frankels getBJF97     
       parameter (np=7,sqrt2=1.4142136,pi=3.141592654)
       real magmin,perx(8),sigma_fx,sigmaf
       common/fix_sigma/fix_sigma,sigma_fx	!add option to fix sigma_aleatory.
@@ -4709,7 +4709,7 @@ c Editorial comment I used the e3(10s)=e3(7.5)+e2(10s)-e2(7.5s) for 10s normal, 
 c report e3(10s) as 0.0 and this gives a large motion compared to others in nhbd.
 c also reported this to Dave Boore in email for his advice. SHarmsen Oct 3 2007. Gail suggests
 c that ratio for normal might equal ratio for unspecified or ratio for SS. No consensus. Using
-c Gail's sugg. This choice of e3(10s), -2.66, is very low. Normal median is probably too low.
+c Gails sugg. This choice of e3(10s), -2.66, is very low. Normal median is probably too low.
        e3= (/ 4.63188,-0.75472,-0.74551,-0.73906,-0.66722,-0.48462,
      1 -0.20578, 0.03058, 0.30185, 0.40860, 0.33880, 0.25356, 0.21398, 0.00967,-0.49176,
      1 -0.78465,-1.20902,-1.57697,-2.22584,-2.58228,-1.50904,-1.81022, -2.66/)
@@ -7383,7 +7383,7 @@ c Editorial comment I used the e3(10s)=e3(7.5)+e2(10s)-e2(7.5s) for 10s normal, 
 c report e3(10s) as 0.0 and this gives a large motion compared to others in nhbd.
 c also reported this to Dave Boore in email for his advice. SHarmsen Oct 3 2007. Gail suggests
 c that ratio for normal might equal ratio for unspecified or ratio for SS. No consensus. Using
-c Gail's sugg. This choice of e3(10s), -2.66, is very low. Normal median is probably too low.
+c Gails sugg. This choice of e3(10s), -2.66, is very low. Normal median is probably too low.
        e3= (/ 4.63188,-0.75472,-0.74551,-0.73906,-0.66722,-0.48462,
      1 -0.20578, 0.03058, 0.30185, 0.40860, 0.33880, 0.25356, 0.21398, 0.00967,-0.49176,
      1 -0.78465,-1.20902,-1.57697,-2.22584,-2.58228,-1.50904,-1.81022, -2.66/)
@@ -7811,10 +7811,10 @@ c the depth to top is immaterial to this GMPE. So the 1:ntor slots all receive t
 
 
       subroutine GailTable(i)
-c the "i" index refers to which model's table is read in. This is a mod
+c the "i" index refers to which models table is read in. This is a mod
 c from the snippet Gail sent, which only allows one model.
 c moved open to main. problems passing the string not resolved.
-c Currently looking at 3 possible models, AB08, AB06', or Pz11
+c Currently looking at 3 possible models, AB08, AB06p, or Pz11
 c wrute ti unit 94.
         parameter (gfac=6.8875526,sfac=2.3025851)	!to convert to base e
       common/gail1/xmag(20,3), gma(20,30,20,3), rlog(30,3), f(20,3),itype(3)
@@ -7868,13 +7868,13 @@ c     Gets ground motion value (ln PSA) from table
       parameter (gfac=6.8875526,sfac=2.3025851)	!to convert to base e
 c frequencies: 0.2, 0.33, 0.5, 1.0, 2.0, 3.33, 5., 10., 20., 33.0, 50., PGA, PGV
             bcfac = (/0.06, 0.08,0.09, 0.11, 0.14, 0.14, 0.12, 0.03, -0.2, -.045, -.045, -.045,0.09/)
-c bcfac for pga can be a function of rjb= -0.3+.15 log(rjb) (Repi in Gail's notes)
+c bcfac for pga can be a function of rjb= -0.3+.15 log(rjb) (Repi in Gails notes)
 c     
 c     Use interpolation to get amean for given freq(jfreq), amag, R (hazard looping values).
 c     Note that freq(jfreq) is the defined block of freq. for hazard calcs (common block)
 c     GMPE tables give values(gma) for freq array f(nf), for distances rlog(nd), magnitudes xmag(nm)
 c
-c The frequency is already known. It is input. Don't need to search.
+c The frequency is already known. It is input. Dont need to search.
       jfl=jf
       rl = alog10(r)
       jdflag = 0
@@ -8544,7 +8544,7 @@ C*****Distance term
       F_dis = (c4(iper) + c5(iper)*Mw)*LOG(R)
 
 C*****Hanging-wall term Skip this for first goaround. SH 12/2012 (skipping assumes vertical dip)
-C     Jennifer Donahue's HW Model plus CB08 distance taper 
+C     Jennifer Donahues HW Model plus CB08 distance taper 
       f1_Rx= h1(iper) + h2(iper)*(Rx/R1) + h3(iper)*((Rx/R1)**2)
       f2_Rx= h4(iper) + h5(iper)*((Rx-R1)/(R2-R1)) + 
      +       h6(iper)*((Rx-R1)/(R2-R1))**2
@@ -8691,7 +8691,7 @@ c------------------------------------------------------------------------------
 * -1 if it cannot find one.
 
 * Dates -- 05/19/98 - Written by D. Boore, following
-*                     Larry Baker's suggestion
+*                     Larry Bakers suggestion
 
       logical isopen
       do i = 99,10,-1
@@ -8760,7 +8760,7 @@ c      common/deagg/deagg
       real Ry1, ZTOR, Frv, Fn, SpecT,rxsign,diprad
       real phiA, phiB, tauA, tauB, phi, tau, y1,y1z, y2, y2z
       integer vs30_class, ia,iPer,ie,ii,jj,k,kk,ipr,ime,ide,ip,nmag,ndist
-      logical hwflag,useRy0,e_wind(8)      !don't use. but keep options open in case AS change their mind
+      logical hwflag,useRy0,e_wind(8)      !dont use. but keep options open in case AS change their mind
       real z10, Z1, zhat, c4_mag,weight,plim,dp2,sigmaf
       real R, V1, Vs30Star, hw_a2, h1, h2, h3, R1, R2, z1_ref,fac00,fac_c,tanfac
       save sa1180
@@ -9811,7 +9811,7 @@ c      print *,b1,b2,b3,b4,b5,b6,a,b
         sdi = sige
         elseif(rhat.lt.0.3)then
         sdi_ratio=g1(rhat,M,b1,b2,b3,b4,b5) - g1(0.2,M,b1,b2,b3,b4,b5)
-c because in this interval g2 is zero we don't see it ablove
+c because in this interval g2 is zero we dont see it ablove
         elseif(0.3.le. rhat .and. rhat .lt. 3.0)then
         sdi_ratio=g1(rhat,M,b1,b2,b3,b4,b5) - g1(0.2,M,b1,b2,b3,b4,b5)+
      +  g2(rhat,b6)*(M-6.5)

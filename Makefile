@@ -81,8 +81,8 @@ hazSUBX: iosubs
 hazpoint: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazpoint $(SRC)/hazpoint.f $(SRC)/iosubs.o
 hazinterpnga: iosubs
-	$(F_COMPILER2) $(FFLAGS1_I) -o $(OUT)/hazinterpnga $(SRC)/hazinterpnga.f $(SRC)/iosubs_128.o -w
-#	$(F_COMPILER) $(FFLAGS2) -o $(OUT)/hazinterpnga $(SRC)/hazinterpnga.f $(SRC)/iosubs.o
+#	$(F_COMPILER2) $(FFLAGS1_I) -o $(OUT)/hazinterpnga $(SRC)/hazinterpnga.f $(SRC)/iosubs_128.o -w
+	$(F_COMPILER) $(FFLAGS2) -o $(OUT)/hazinterpnga $(SRC)/hazinterpnga.f $(SRC)/iosubs.o
 
 #	utility
 avg_dist: iosubs

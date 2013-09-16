@@ -143,10 +143,11 @@ if (( $run_CASC )); then
 ../bin/hazallXL.v2 ../conf/combine/casc_sub2014.5hz
 ../bin/hazallXL.v2 ../conf/combine/casc_sub2014.pga
 ../bin/hazinterpnga < ../conf/combine/casc_2014.f.resample
-
-
 fi
 
-
+# all-US hazard curves
+../bin/hazallXL.v4 ../conf/combine/us_hazard_curves.5hz
+../bin/hazallXL.v4 ../conf/combine/us_hazard_curves.1hz
+../bin/hazallXL.v4 ../conf/combine/us_hazard_curves.pga
 
 
