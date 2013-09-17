@@ -1,4 +1,4 @@
-0 		!CEUS gridded for 2014, adaptive smoothing
+0  		!CEUS gridded for 2014, adaptive smoothing
 24.6 50 .1
 -115 -65 .1
 760.0 2		!firm rock
@@ -15,7 +15,7 @@
 3 4 6.5 0.2 7.0 0.5 7.5 0.2 8.0 0.1  rockyMtn
 4 4 6.5 0.2 7.0 0.5 7.5 0.2 8.0 0.1  coloPlateau
 5 4 6.5 0.2 7.0 0.5 7.5 0.2 8.0 0.1  other
-../conf/CEUS/gridded/GR_DOS/agrd_CEUS_adaptSm_2_4zone.out
+../conf/CEUS/gridded/GR_DOS/agrd_CEUS_adaptSm_2zone.out
 1. 0
 ../bin/meanrjb.bin
 3	# 3 spectral periods
