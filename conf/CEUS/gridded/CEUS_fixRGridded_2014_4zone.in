@@ -24,7 +24,7 @@
 12 4 6.5 0.2 7.0 0.5 7.5 0.2 8.0 0.1
 ../conf/CEUS/gridded/GR_DOS/agrd_CEUS_fixRSm_2zone.out
 1. 0
-../bin/meanrjb.bin
+../bin/rjbmean.bin.Aeast
 3	# 3 spectral periods
 0. 0. 0. PGA
 ../out/CEUS_fixRGrid_2014_4zone.pga
