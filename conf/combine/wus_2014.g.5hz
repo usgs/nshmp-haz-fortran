@@ -14,7 +14,7 @@
 0.02
 ../out/combine/WUSmap_fixSm.5hz
 0.27
-../out/WUSmap_fixSm_M8.5hz
+../out/combine/WUSmap_fixSm_M8.5hz
 0.03
 ../out/combine/noPuget_adSm.5hz
 0.18		# .5(puget/noPuget) .4(ad/fix) .9(mmax7.5/8)
