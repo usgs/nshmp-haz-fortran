@@ -1,19 +1,22 @@
 c assim.2013.f
 c assimilates and distills information in hazFXnga13l deterministic output files (.DET)
 c works for namx = number of atten. models =  3 to (5 nga-w models+GK) to 9
-c CEUS mod, new Feb 19 2013: incl ab08' a06' p11 or whatever.
+c CEUS mod, new Feb 19 2013: incl ab08' a06' p11  Total 9 GMPEs for CEUS.
+c Modify CEUS weights June 28 2013. From Sanaz Table 2. For faults. This code
+c Sept 20, 2013: WUS GMM set modified. 5 relations G-K removed
+cc is used with fault hazard not general background.
 c Cascadia mod, new Mar 4 2013: 4 models incl BCHydro 
 c f95 compile:
 c f95 assim.2013.f -o ../bin/assim.2013 -e
 c Steve Harmsen May 2013.
-        parameter (namax=9)
+        parameter (namax=9,nawest=5)
         real x,y
         real, dimension(namax) :: wte
         integer, dimension(namax) :: indexe
         real, dimension(3) :: wtc
         real, dimension(4) :: wtc2
-        real, dimension(6):: wtw
-        integer, dimension(6):: indw
+        real, dimension(nawest):: wtw
+        integer, dimension(nawest):: indw
         integer, dimension(3) :: indexc
         integer, dimension(4) :: indc2
 c wtc indexc are weights and indexes of Cascadia attenuation models. Code mod mar 4 2008
@@ -25,15 +28,13 @@ c sa is the median sa for a given atten model and sd is the std dev. for that mo
         character*88 rec,recold,fi*88,fi2
         indexe = (/6,2,20,7,10,19,25,26,27/)
         indexc = (/2,5,7/)
-        indw = (/33,34,35,36,37,38/)
-        wtw = (/0.18,0.18,0.18,0.18,0.18,0.1/)
+        indw = (/33,34,35,36,37/)	!modified 9/20/2013 only 5 relations now
+        wtw = (/0.22,0.22,0.22,0.22,0.12/)  !modified 9/20/2013 
         indc2 = (/5,7,20,21/)
         wtc2 = (/0.25,0.25,0.25,0.25/)
         wtc = (/0.25, 0.25, 0.5/)
-c        wte = (/0.09,0.09,0.09,0.1,0.09,0.09,0.1,0.25,.1/)
-c updated for current CEUS weighting scheme
         wte = (/0.06,0.11,0.06,0.10,0.11,0.11,0.08,0.22,.15/) !revised June 28 2013
-        if(iargc().lt.2)stop'Usage: assim2013 infile outfile'
+        if(iargc().lt.2)stop'Usage: assim.2013 infile outfile'
         call getarg(1,fi)
         open(1,file=fi,status='old',err=2013)
         ind=index(fi,'.DET')-4
@@ -50,11 +51,11 @@ c updated for current CEUS weighting scheme
         print 50,'Enter 1 if this is a 2013 Cascadia SUBDUCTION-Source file;Enter 2 if this is a WUS 2013 source file: '
         read *,i
         print *,i
-        ceus=i.eq.0
         subduction=i.eq.1
         usewt=.false.
         wus13=i.eq.2
-        if(wus13)wtw=6.*wtw
+        ceus=i.eq.0
+        if(wus13)wtw=float(nawest)*wtw
 1        read(1,5,end=24)rec
         dowhile(rec(1:1).eq.'#')
         read(1,5)rec
@@ -84,7 +85,8 @@ c updated for current CEUS weighting scheme
          wte=wte*float(namx)        !average calc divides by namx later on
          elseif (subduction)then
          usewtc=.true.
-         wtc=wtc*4.
+         wtc2=wtc2*4.
+         wtc=wtc*4.        !out of date.
          else
          usewtc=.false.
          usewt=.false.
@@ -117,8 +119,8 @@ c updated for current CEUS weighting scheme
         recold=rec
         goto 2
         endif
-        read(rec,*)sa(j),sd(j),iat,iflt,xmag,rjb,rrup
-c        if(x.ge.-99.9 .and. y .eq. 34.8)print *,sa(j),sd(j),iat,iflt,xmag,rjb,rrup
+        read(rec,*,err=2016)sa(j),sd(j),iat,iflt,xmag,rjb,rrup
+        if(x.ge.-98.76 .and. y .eq. 34.85)print *,sa(j),sd(j),iat,iflt,xmag,rjb,rrup
         if(usewt)then
         j1=1
         dowhile(iat.ne.indexe(j1))
@@ -181,7 +183,7 @@ c        if(x.ge.-99.9 .and. y .eq. 34.8)print *,sa(j),sd(j),iat,iflt,xmag,rjb,r
         enddo	!dowhile more to do
 24        if(.not.written)then
         if(namef)then
-        if(subduction) write(2,222)x,y,xmagmax,rjbmax,rrupmax,sbmax/namx,(samax(k),k=1,namx),
+          if(subduction) write(2,222)x,y,xmagmax,rjbmax,rrupmax,sbmax/namx,(samax(k),k=1,namx),
      + (sdmax(k),k=1,namx),fname(ifltmx)
         if(wus13) write(2,224)x,y,xmagmax,rjbmax,rrupmax,sbmax/namx,(samax(k),k=1,namx),
      + (sdmax(k),k=1,namx),fname(ifltmx)
@@ -196,4 +198,6 @@ c        if(x.ge.-99.9 .and. y .eq. 34.8)print *,sa(j),sd(j),iat,iflt,xmag,rjb,r
         print *,'output file is ',fi
         stop
 2013        stop'input file not found'
+2016        print 5,rec
+        stop'This record choked Mr. Fortran during internal read'
         end
