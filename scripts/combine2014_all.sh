@@ -2,10 +2,12 @@
 # script info
 # 
 
-run_WUS_faults=1
-run_WUS_grids=0
+run_WUS_faults=0
+run_WUS_grids=1
 run_CEUS_faults=0
+run_CA=0
 run_CASC=0
+run_all_hazard_curves=0
  
 # WUS faults
 if (( $run_WUS_faults )); then
@@ -56,11 +58,14 @@ if (( $run_WUS_faults )); then
 ../bin/hazallXL.v2 ../conf/combine/wus_2014.f.5hz.epimerge
 ../bin/hazallXL.v2 ../conf/combine/wus_2014.f.1hz.epimerge
 ../bin/hazallXL.v2 ../conf/combine/wus_2014.f.pga.epimerge
-
 fi
 
 # WUS grids
 if (( $run_WUS_grids )); then
+# options for addnl epistemic uncertainty branches
+central_branch=1
+m_branch=1
+p_branch=1
 # EXTmap
 ../bin/hazallXL.v2 ../conf/combine/wus_EXTmap_ad.g.1hz
 ../bin/hazallXL.v2 ../conf/combine/wus_EXTmap_ad.g.5hz
@@ -216,7 +221,14 @@ if (( $run_WUS_grids )); then
 ../bin/hazinterpnga < ../conf/combine/wus_shear.all.resample
 ../bin/hazinterpnga < ../conf/combine/wus_2014.g.resample
 
-# ca
+# merge branches
+../bin/hazallXL.v2 ../conf/combine/wus_2014.g.5hz.epimerge
+../bin/hazallXL.v2 ../conf/combine/wus_2014.g.1hz.epimerge
+../bin/hazallXL.v2 ../conf/combine/wus_2014.g.pga.epimerge
+fi
+
+# CA model - from PP
+if (( $run_CA )); then
 ../bin/hazinterpnga < ../conf/combine/ca.all.resample
 fi
 
@@ -252,7 +264,7 @@ if (( $run_CEUS_faults )); then
 ../bin/hazallXL.v2 ../conf/combine/ceus_NMFS_clu.f.5hz
 ../bin/hazallXL.v2 ../conf/combine/ceus_NMFS_clu.f.1hz
 ../bin/hazallXL.v2 ../conf/combine/ceus_NMFS_clu.f.pga
-# combine all sources
+# combine all sources - faults and grids
 ../bin/hazallXL.v2 ../conf/combine/ceus_2014.f.5hz
 ../bin/hazallXL.v2 ../conf/combine/ceus_2014.f.1hz
 ../bin/hazallXL.v2 ../conf/combine/ceus_2014.f.pga
@@ -269,8 +281,10 @@ if (( $run_CASC )); then
 fi
 
 # all-US hazard curves
+if (( $run_all_hazard_curves )); then
 ../bin/hazallXL.v4 ../conf/combine/us_hazard_curves.5hz
 ../bin/hazallXL.v4 ../conf/combine/us_hazard_curves.1hz
 ../bin/hazallXL.v4 ../conf/combine/us_hazard_curves.pga
+fi
 
 
