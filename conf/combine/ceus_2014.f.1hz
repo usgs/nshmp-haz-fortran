@@ -1,5 +1,5 @@
 1
-18
+20
 ../out/combine/tmp.newmad.1hz
 0.4
 ../out/combine/tmp.newmad_uncl.1hz
@@ -33,9 +33,13 @@
 ../out/CEUScm1hz-srgr.out
 .08325
 ../out/CEUS_adGrid_2014_2zone.1hz
-0.4
+0.2
+../out/CEUS_adGrid_2014_4zone.1hz
+0.2
 ../out/CEUS_fixRGrid_2014_2zone.1hz
-0.6
+0.3
+../out/CEUS_fixRGrid_2014_4zone.1hz
+0.3
 1
 ../out/combine/tmp.ceus.1hz
 0
