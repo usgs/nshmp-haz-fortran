@@ -3,11 +3,11 @@
 # 
 
 run_WUS_faults=0
-run_WUS_grids=1
+run_WUS_grids=0
 run_CEUS_faults=0
 run_CA=0
 run_CASC=0
-run_all_hazard_curves=0
+run_all_hazard_curves=1
  
 # WUS faults
 if (( $run_WUS_faults )); then
@@ -229,7 +229,7 @@ fi
 
 # CA model - from PP
 if (( $run_CA )); then
-../bin/hazinterpnga < ../conf/combine/ca.all.resample
+#../bin/hazinterpnga < ../conf/combine/ca.all.resample
 fi
 
 # CEUS 
