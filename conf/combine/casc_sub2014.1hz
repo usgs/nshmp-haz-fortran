@@ -7,29 +7,29 @@
 ../out/sub0_ch_top.1hz
 0.2	!top 0.2, full CSZ characteristic, Mscaling GMPE in input 
 ../out/sub0_GRb0_bot.1hz
-0.0278 !Mscaling GMPE in input, bot 0.3, b=0 0.5, float 0.5, full rup 0.2, scale to mean rate 1.2 & by length ratio 1.5445
+0.0348 !Mscaling GMPE in input, bot 0.3, b=0 0.5, float 0.5, full rup 0.2, scale to mean rate 1.2 & by length ratio 1.5445
 ../out/sub0_GRb0_mid.1hz
-0.0463 !Mscaling GMPE in input, mid 0.5, b=0 0.5, float 0.5, full rup 0.2, scale to mean rate 1.2 & by length ratio 1.5445
+0.0579 !Mscaling GMPE in input, mid 0.5, b=0 0.5, float 0.5, full rup 0.2, scale to mean rate 1.2 & by length ratio 1.5445
 ../out/sub0_GRb0_top.1hz
-0.0185 !Mscaling GMPE in input, top 0.2, b=0 0.5, float 0.5, full rup 0.2, scale to mean rate 1.2 & by length ratio 1.5445
+0.0232 !Mscaling GMPE in input, top 0.2, b=0 0.5, float 0.5, full rup 0.2, scale to mean rate 1.2 & by length ratio 1.5445
 ../out/sub0_GRb1_bot.1hz
-0.0278 !Mscaling GMPE in input, bot 0.3, b=1 0.5, float 0.5, full rup 0.2, scale to mean rate 1.2 & by length ratio 1.5445
+0.0348 !Mscaling GMPE in input, bot 0.3, b=1 0.5, float 0.5, full rup 0.2, scale to mean rate 1.2 & by length ratio 1.5445
 ../out/sub0_GRb1_mid.1hz
-0.0463 !Mscaling GMPE in input, mide 0.5, b=1 0.5, float 0.5, full rup 0.2, scale to mean rate 1.2 & by length ratio 1.5445
+0.0579 !Mscaling GMPE in input, mide 0.5, b=1 0.5, float 0.5, full rup 0.2, scale to mean rate 1.2 & by length ratio 1.5445
 ../out/sub0_GRb1_top.1hz
-0.0185 !Mscaling GMPE in input, top 0.2 ,b=1 0.5, float 0.5, full rup 0.2, scale to mean rate 1.2 & by length ratio 1.5445
+0.0232 !Mscaling GMPE in input, top 0.2 ,b=1 0.5, float 0.5, full rup 0.2, scale to mean rate 1.2 & by length ratio 1.5445
 ../out/sub1_GRb0_bot.1hz
-0.072  !float 0.5, bot 0.3, b=0 0.5,southernsegs 0.8, Mscaling GMPE in input, scale to mean rate 1.2
+0.0675  !float 0.5, bot 0.3, b=0 0.5,southernsegs 0.8, Mscaling GMPE in input, scale to mean rate 1.2
 ../out/sub1_GRb0_mid.1hz
-0.12   !float 0.5, mid 0.5, b=0 0.5,southernsegs 0.8, Mscaling GMPE in input, scale to mean rate 1.2
+0.1125   !float 0.5, mid 0.5, b=0 0.5,southernsegs 0.8, Mscaling GMPE in input, scale to mean rate 1.2
 ../out/sub1_GRb0_top.1hz
-0.048  !float 0.5, top 0.2, b=0 0.5,southernsegs 0.8, Mscaling GMPE in input, scale to mean rate 1.2
+0.045  !float 0.5, top 0.2, b=0 0.5,southernsegs 0.8, Mscaling GMPE in input, scale to mean rate 1.2
 ../out/sub1_GRb1_bot.1hz
-0.072  !float 0.5, bot 0.3, b=1 0.5,southernsegs 0.8, Mscaling GMPE in input, scale to mean rate 1.2
+0.0675  !float 0.5, bot 0.3, b=1 0.5,southernsegs 0.8, Mscaling GMPE in input, scale to mean rate 1.2
 ../out/sub1_GRb1_mid.1hz
-0.12   !float 0.5, mid 0.5, b=1 0.5,southernsegs 0.8, Mscaling GMPE in input, scale to mean rate 1.2
+0.1125   !float 0.5, mid 0.5, b=1 0.5,southernsegs 0.8, Mscaling GMPE in input, scale to mean rate 1.2
 ../out/sub1_GRb1_top.1hz
-0.048  !float 0.5, top 0.2, b=1 0.5,southernsegs 0.8, Mscaling GMPE in input, scale to mean rate 1.2
+0.045  !float 0.5, top 0.2, b=1 0.5,southernsegs 0.8, Mscaling GMPE in input, scale to mean rate 1.2
 ../out/sub1_ch_bot.1hz
 0.18   !ch 0.5, bot 0.3, scaling to mean rate 1.2
 ../out/sub1_ch_mid.1hz
@@ -49,11 +49,11 @@
 ../out/sub3_ch_top.1hz
 0.12   !ch 0.5, top 0.2, scaling to mean rate 1.2
 ../out/sub4_ch_bot.1hz
-0.03   !sub4_ch_bot uses 1/1000 rate, ch 0.5, bot 0.3, add  northern (0.2)
+0.0375   !sub4_ch_bot uses 1/1000 rate, ch 0.5, bot 0.3, add  northern (0.2)
 ../out/sub4_ch_mid.1hz
-0.05   !sub1_ch_bot uses 1/1000 rate, ch 0.5, mid 0.5, add  northern (0.2)
+0.0625   !sub1_ch_bot uses 1/1000 rate, ch 0.5, mid 0.5, add  northern (0.2)
 ../out/sub4_ch_top.1hz
-0.02   !sub1_ch_bot uses 1/1000 rate, ch 0.5, top 0.2, add  northern (0.2)
+0.025   !sub1_ch_bot uses 1/1000 rate, ch 0.5, top 0.2, add  northern (0.2)
 1
 ../out/combine/sub.2014.1hz.crv
 0
