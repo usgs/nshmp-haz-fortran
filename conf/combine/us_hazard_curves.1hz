@@ -1,0 +1,18 @@
+24.6 50.0 0.05
+-125 -65 0.05
+6
+../out/combine/sub.2014.1hz
+1
+../out/combine/ceus.1hz
+1
+../out/combine/shear_epimerge.1hz
+1
+../out/combine/wus_2014_epimerge.f.1hz
+1
+../out/combine/wus_2014_epimerge.g.1hz
+1
+../out/CA-1Hz-ALL-0p05.curves
+1
+1
+../out/combine/us_epimerge.1hz
+0
