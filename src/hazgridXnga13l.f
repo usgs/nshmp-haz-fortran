@@ -9624,7 +9624,7 @@ c-------  Distance dependence -------------------------
         enddo	!ie	extra epistemic.
          enddo      !ii
          xmag=xmag+dmag
-         changem=xmag.gt.6.75.and.xmag.lt.6.9
+         changem=xmag.gt.6.75
          if(changem)then
 	a1=(/9.0138,9.0408,9.1338,9.2538,7.9837,7.7560,9.4252,9.6242,11.1300,
      + 11.3629,11.7818,11.6097,11.4484,10.9065,9.8565,8.3363,6.8656,4.1178,1.8102,0.0977,-3.0563,-4.4387/)
