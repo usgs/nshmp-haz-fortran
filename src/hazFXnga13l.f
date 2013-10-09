@@ -1,4 +1,6 @@
-c--- program  hazFXnga13l.f; 08/27/2013; Use  with NGA relations, or others.
+c--- program  hazFXnga13l.f; 10/01/2013; Use  with NGA relations, or others.
+c OCT 1, 2013: use Mcap of 7.5 on s.d. computation in Idriss2013.
+c 9/17/2013	In ASK13, Ry0 is always -1. (previously some cases Ry0=dmin(5)=-1)
 c 8/28/2013	CB13: "Save" phi_lny and always calculate phi_lny(22) on first time thru
 c 8/27/2013	CB13: Update c0 vector for PGA and several short-period SA Bozorgnia email
 c 8/27/2013	changed z1km to z1_ref in call to ASK
@@ -523,7 +525,7 @@ c      real, dimension (22):: Percb13,PerIMIdriss
       integer, dimension (nfltmx) :: itype,npts,npts1,iftype,ibtype
       logical, dimension(npmx,iamx) :: nga,wus02,ceus02,ceus11     
 c logical variables for subsets of attenuation models should help narrow
-c the search more efficiently.   CEUS11 added mar 18 2011: Gail Atkinsons 3 new
+c the search more efficiently.   CEUS11 added mar 18 2011: Gail Atkinson's 3 new
 C CENA models, with indexes 25, 26, and 27. 
 c Benioff or deep-seismicity relations n/a here: see gridded hazard code hazgridXnga2.f      
 c new 6/06: potentially variable a and b values for up to 12 branches for each fault
@@ -777,7 +779,7 @@ c adum could be sa(g) or pgv (cm/s). need flexible format
             endif
       endif
       write (6,61)date,time,name
-61      format('# *** hazFXnga13l 08/28/2013 log file. Pgm run on ',a,' at ',a,/,
+61      format('# *** hazFXnga13l 09/17/2013 log file. Pgm run on ',a,' at ',a,/,
      +'# *** Input control file: ',a)
       if(poly)write(6,*)'hazFXnga13l: Polygon file &npts: ',polygon,npmax
 c Below bypasses are based on file name. Bypass wont work if file names change
@@ -1157,7 +1159,7 @@ c routinely used. Added for special studies Jan 19 2007. SHarmsen.
      1 abs(ipia).eq.6.or.abs(ipia).eq.7.or.abs(ipia).eq.10
        ceus11(ip,ia)=ipia.gt.24.and.ipia.lt.28  !new mar 2011.
       nga(ip,ia)=(ipia.gt.12.and.ipia.lt.19).or.ipia.gt.30
-c kanno et. al. is included with NGA even though its not. But is modern.
+c kanno et. al. is included with NGA even though it's not. But is modern.
 c prepare look-up tables for certain CEUS relations.
         if(ceus11(ip,ia))then
         kf=1
@@ -1410,7 +1412,7 @@ c!pga or other?
       ipas13(ip)=k
       	endif
       write(6,*)'Calling AS2013 NGA-W revision with z1=',z1km,' period index ',ipas13(ip)
-      useRy0(ip)=.true.
+      useRy0(ip)= .false.	!dont use this metric
       print *,'Using Ry0 metric for this spectral period?',useRy0(ip)
         vs30_rock = 1180.	!changed from 1100 to 1180 July 2013.
         iReg=1	!USA
@@ -3519,7 +3521,7 @@ c no cluster model has been specifically discussed
         do 204 ia=1,nattn(ip)
 c        iftype2= iftype(ift)
         rrup = dmin(3)      !type3 r_cd or rrup
-        Ry0= dmin(5)      !type 5 new dec 2012. But, set to -1 8/13/2013
+        Ry0= -1.      !type 5 new dec 2012. But, set to -1 8/13/2013
 c        write(6,*)rjb,rrup,ip,' rjb rrup ip'
         if(rjb.gt.dmax)goto 204      !sail on out if too far.
       ipia=iatten(ip,ia)
@@ -3603,7 +3605,7 @@ c hanging-wall flag for as12 model added dec 7 2012.
       hwflag=0
       endif
       dippy=max(dip0(ift),65.)
-      Ry0=dmin(5)      !new dec 10
+      Ry0= -1.0     !new dec 10
       call ASK13_v11_model ( ipas13(ip),xmag2,dip0(ift), Width(ift), dtor, F_rv, F_NM, rRup, rjb, r_x, Ry0, 
      1                     vs30_rock, SA_rock, Z10_rock, z1_refr, hwflag, vs30_class,iReg,lnSa, phi, tau )
       Sa1180 = exp(lnSa)
@@ -3906,7 +3908,7 @@ c        iftype2= iftype(ift)
         do  ip=1,nper
       idet=ip+66
       R_x = dmin(4)      !new signed distance, 10/2007
-        Ry0= dmin(5)      !type 5 new dec 2012.
+        Ry0= -1.     !type 5 new dec 2012.
         do 3203 ia=1,nattn(ip)
         rrup= dmin(3)
         if(rjb.gt.dmax)goto 3203
@@ -6752,7 +6754,7 @@ c  limit pga median to 1.5 g; 5hz to 3 g. 2006.
            gnd=min(1.099,gnd)
           endif
        gndout(1)=gnd
-c We dont plan to include extra gnd uncert for CEUS models but this is permitted in AB06 and others.
+c We don't plan to include extra gnd uncert for CEUS models but this is permitted in AB06 and others.
          if(l_gnd_ep(iper))then
          gndout(2)= gnd+gnd_ep(ide,ime,iper)
          gndout(3)= gnd-gnd_ep(ide,ime,iper)
@@ -8632,12 +8634,13 @@ c           SA2=SA*exp(sigma(ipgk))
       end function y_ngaw2_no_site_amps
 c >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>      
       subroutine getIdriss2013(iper,ip,xmag,rrup,vs30,gndout,sigmaf)
+c Oct 1 2013: When computing sd, use Mcap 7.5 Mlow 5.0
 c Dec 3 2012: for pga and many periods to 10s. Updated 4/2013.
 c ip is period index in calling program. 
 c iper is period index in this subroutine. 
       parameter (pi=3.14159265,sqrt2=1.414213562,vref=760.,nper=22)
       common/epistemic/l_gnd_ep,gnd_ep,ide,ime
-      real gnd_ep(3,3,8),gndout(3)
+      real gnd_ep(3,3,8),gndout(3),Mcap/7.5/
       logical l_gnd_ep(8)
       common/mech/ss,rev,normal,obl
       real, dimension (nper):: a1, a2, a3, b1,b2, x,g,phi, Period
@@ -8694,7 +8697,8 @@ c This sigma may be revised.
       if(fix_sigma)then
       sig=sigma_fx
       else
-      sig = 1.28 + 0.05*alog(T) - 0.08 * xmag
+      xmagc=max(5.0,min(xmag,Mcap))
+      sig = 1.28 + 0.05*alog(T) - 0.08 * xmagc
       endif	!special study can fix all sigma at a specified value. jan 7 2012.
           sigmaf= 1./sig/sqrt2
           vscap=min(vs30,1200.)
