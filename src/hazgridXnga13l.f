@@ -1,9 +1,12 @@
-c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  09/10/ 2013. Long header version.
+c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  10/08/ 2013. Long header version.
+c OCT 1, 2013: use Mcap of 7.5 on s.d. computation in Idriss2013.
+c Oct 8 2013: standardize Rrup for Idriss too. Lowers dip-slip hazard on hanging wall
+c		compared to previous. Footwall hazard same. Strike-slip same.
 c Aug 29 2013: standardize Rrup and Rx to OpenSHA from P.Powers notes. This mod
 c affects ASK13, CB13 and CY13. It does not affect other GMMs.
 c 9/10/2013: In CB13, zbot is initialized for the first time. Several unused subroutines removed.
 c 8/28/2013: CB13: always calculate phi_lnY(22) early in subroutine. It is needed
-c		for all spectral periods sigma.
+c		for all spectral periods' sigma.
 c 8/27/2013: Include an mmin matrix option. Previously code just had an mmax distribution. This option
 c		is invoked if maxmat=-2. not finished
 c 8/27/2013: update c0 vector in CB13 model.
@@ -72,7 +75,7 @@ c      icode=0 90 =>d; 1=>80 d, 2=>70 d, and so on. Index 32.
 c Add GK12 model with basin effect. index 39. Q_s is 435 everywhere in the initial model setup.
 c this version has the long header records (896 instead of 308 byte)
 c 11/16/2012: add NAAsub corresponding to the BCHYDRO GMPE of 2010. Index=31. For intraplate sources.
-c       we dont intend to use NAAsub for subduction sources in this code (see hazSUBXnga.test)
+c       we don't intend to use NAAsub for subduction sources in this code (see hazSUBXnga.test)
 c GetGeom  : use BA nonlinear siteamp, from AF hazgridXGT.f. 
 c GetABsub: do not modify. Use the original 2003 formulation of siteamp. Some corrections to getABsub
 c were discovered by Pengsheng and fixed in this code Jan 9, 2013. SHarmsen.
@@ -113,7 +116,7 @@ c   that the calculation of rjbmean was for a M(SRL) or M(A) relation.
 c   
 c Dec 18 2008: vulnerability in output file names for the .m and .p files is finally repaired.
 c Nov 20 2008: add Zhao et al. atten. for inslab and interface source. Need variety of models at LP Sa, but
-c      	AB03 is only good to 3 s. Zhaos inslab goes to 5 s Sa.
+c      	AB03 is only good to 3 s. Zhao's inslab goes to 5 s Sa.
 c Nov 19 2008: increase set of periods available with Geomatrix inslab attn.
 c mod Oct 22 2008. M (saturation) limit at 8.0 (AB03, BSSA v93 #4, p 1709)
 c August 2008: Mmax may be treated as a distribution for the cases iflt=3 and iflt=4.
@@ -727,7 +730,7 @@ c adum could be sa(g) or pgv (cm/s). need flexi format
       endif
       call date_and_time(date,time,zone,ival)
       write (6,61)date,time,zone,namein
-61      format('hazgridXnga13l (9/10/2013) log file. Pgm run on ',a,' at ',a,1x,a,/,
+61      format('hazgridXnga13l (10/08/2013) log file. Pgm run on ',a,' at ',a,1x,a,/,
      + '# Control file:',a)
         call getarg(0,progname)
         ind=index(progname,' ')
@@ -1473,7 +1476,7 @@ c      print *,nper_gmpe,' number of periods having coeffs BSSA'
       endif	!ipia.eq.29
 c
       if(ipia.eq.32)then
-
+c  
       if(per.le.0.01)then
       k=22
       else
@@ -1485,7 +1488,7 @@ c
       endif	!pga or other spectral accel?
       ipcb13(ip)=k
       print *,'CB13 relation period index ',k,' for period ',per
-      endif	!ipia =34?
+      endif	!ipia =32?
       if(ipiaa.ge.35.and.ipiaa.le.37)then
         kf=1
         if(per.gt.0.01)then
@@ -2053,8 +2056,15 @@ c keep Bdepth very shallow for rock sites. new 4/4/2013.
       iper(ip)=k
       endif
       wus=.true.
-c      call Idriss2013(iper,ip,ia,ndist,di,nmag,magmin,dmag,vs30)	
-      call Idriss2013(k,ip,ia,ndist,di,nmag,magmin,dmag,vs30)	
+c add hanging wall/footwall to Idriss calculations. Oct 8 2013.
+         if(icode(ip,ia).lt.0)then
+         icode(ip,ia)=-icode(ip,ia)
+         rxfac=-1.
+         else
+         rxfac=1.0
+         endif
+         DIP=dipbck(icode(ip,ia))	!units Degrees
+      call Idriss2013(k,ip,ia,ndist,di,nmag,magmin,dmag,vs30,DIP,rxfac)	
       elseif(ipia.eq.25)then
       wus=.true.
       call getIdriss 
@@ -9505,13 +9515,16 @@ c         if (ii.eq.1.or.ii.eq.2)print *,x,SA1,Mw,sigma(L)
            return
         END subroutine gksa13v2
 
-      subroutine Idriss2013(iper,ip,ia,ndist,di,nmag,magmin,dmag,vs30)
+      subroutine Idriss2013(iper,ip,ia,ndist,di,nmag,magmin,dmag,vs30,DELTA,rxsign)
+c Oct 1 2013: introduce Mcap=7.5 when computing aleatory s.d. and Mbot=5.0
+c Oct 8 2013: introduce Dip(Delta) and rxsign to compute hangingwall and footwall distance
+c *** Input rxsign less than zero to put site on footwall.
 c Apr 2013: for pga and many periods to 10s. Idriss Coeffs are updated april 11 2013.
 c ip is period index in calling program. 
 c iper is period index in this subroutine.
 c User can fix sigma_aleatory to a preset value if fix_sigma is .true. Jan 9 2013. 
       integer Nper
-      parameter (pi=3.14159265,sqrt2=1.414213562,Nper=22)
+      parameter (pi=3.14159265,sqrt2=1.414213562,Nper=22,d2r=0.01745329)
 c lines from hazgrid. table production
       common/fix_sigma/fix_sigma,sigma_fx
       common/mech/wtss,wtrev,wtnm
@@ -9520,6 +9533,7 @@ c lines from hazgrid. table production
 c lines from hazgrid. table production
       common/depth_rup/ntor,dtor,wtor,wtor65
       common/epistemic/nfi,e_wind,gnd_ep,mcut,dcut
+	common/widthH/widthH
       real, dimension (nper):: a1, a2, a3, b1,b2, x,g, phi, Period
       real gnd_ep(3,3,10),mcut(2),dcut(2),gndout(3),gndx,gnd0,gndm,gnd,sigma_fx
       real, dimension(25005):: p
@@ -9527,15 +9541,14 @@ c lines from hazgrid. table production
       real, dimension(20,8):: xlev
       real, dimension(3):: dtor,wtor,wtor65
       integer nlev(8),icode(8,10)
-      real wt(8,10,2),wtdist(8,10)
-c      real gndout(3)
+      real wt(8,10,2),wtdist(8,10),Mcap/7.5/,widthH
       logical e_wind(8),fix_sigma
 c 22 periods in Idriss NGA Dec 2012:
 
 c----  This version assumes v30 effect is linear with rock gm.
 c----  uses ln coefficients
       real xmag,magmin,dmag
-      logical changem
+      logical changem,footwall
 c coeffs. from apr 2013 email
 c	Period=(/0.01,0.02,0.03,0.04,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,0.5,0.75,1.,1.5,2.,3.,4.,5.,7.5,10.0/)
         Period  = (/0.01,0.02,0.03,0.04,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,0.5,0.75,1.0,1.5,2.,3.,4.0,5.,7.5,10./)
@@ -9558,6 +9571,9 @@ c	Period=(/0.01,0.02,0.03,0.04,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,0.5,0.75,1.,
 c Thie below sigma from Eq Spectra 2008 may be revised.
       T = max(period(iper),0.05)
       T = min(T,3.0)
+       diprad = DELTA*d2r
+        cosDELTA = cos(diprad)
+          footwall = wtss.gt.0.9 .or. rxsign.lt.0.0
       if(fix_sigma)then
       sigmaf=1./sigma_fx/sqrt2
       endif
@@ -9567,16 +9583,21 @@ c vs30 dependence (linear)
       gnd0=a1(iper)+wtrev*phi(iper)+ x(iper)*alog(vscap)
 c loop on depth to top of rupture.
        do kk=1,ntor
-      Z_torsq=dtor(kk)**2
+       z_tor=dtor(kk)
+      Z_torsq=z_tor**2
 c loop on magnitude
       xmag=magmin
       do jj=1,nmag
-C*****Magnitude dependent terms
+C*****Magnitude dependent terms. Sandwich xmagc between 5 and 7.5
       if(.not.fix_sigma)then
-        sig = 1.28 + 0.05*alog(T) - 0.08 * xmag
+      xmagc=max(5.0,min(xmag,Mcap))
+        sig = 1.28 + 0.05*alog(T) - 0.08 * xmagc
           sigmaf= 1./sig/sqrt2
           endif
          gndm=gnd0+a2(iper)*xmag+a3(iper)*(8.5-xmag)**2
+        W=calcWidth(xmag,z_tor,diprad)
+        widthH=W*cosDELTA	!horiz.projection of width
+        zBot=z_tor + W*sin(diprad)
        if(e_wind(ip))then
           if(xmag.lt.mcut(1))then
           ime=1
@@ -9601,7 +9622,11 @@ c-------  Distance dependence -------------------------
           endif
           gndx=gnd_ep(ide,ime,ip)
           endif      !extra epistemic?
-         rrup = sqrt(R_JB**2+Z_torsq)
+c          rrupo = sqrt(R_JB**2+Z_torsq)
+c Revise rrup. Even for smaller mags, rrup is now a function of M. Standardized
+c definition consistent with OpenSHA. Mod Oct 8  2013.
+          rrup = getDistRup(R_JB,z_tor,zbot,diprad,footwall)
+c          if(ip.eq.1)write(25,*)rrup,rrupo,xmag,widthH,z_tor,zbot,diprad,footwall
           gnd= gndm-(b1(iper)+b2(iper)*xmag)*alog(rrup+10.)+g(iper)*rrup
         gndout(1)=gnd
          if(e_wind(ip))then
@@ -9624,7 +9649,7 @@ c-------  Distance dependence -------------------------
         enddo	!ie	extra epistemic.
          enddo      !ii
          xmag=xmag+dmag
-         changem=xmag.gt.6.75
+         changem=xmag.gt.6.75.and.xmag.lt.6.9
          if(changem)then
 	a1=(/9.0138,9.0408,9.1338,9.2538,7.9837,7.7560,9.4252,9.6242,11.1300,
      + 11.3629,11.7818,11.6097,11.4484,10.9065,9.8565,8.3363,6.8656,4.1178,1.8102,0.0977,-3.0563,-4.4387/)
@@ -11762,7 +11787,7 @@ c cutoff distance ...
 	endif
 	rrup0 = sqrt(widthH**2 +ztop**2)	!rRup when rjb is 0
 	rrup0 = min(rrup0,zbot*cos(diprad))
-	rrupC = zbot/cos(dipRad)		!rRup at cutoff rjb
+	rrupC = zbot/cos(diprad)		!rRup at cutoff rjb
 	getDistRup = rrup0 + (rrupC-rrup0)*rjb/rcut
 c from Peter Powers.
 	return

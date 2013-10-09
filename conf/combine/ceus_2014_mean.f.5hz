@@ -21,15 +21,6 @@
 .09
 ../out/a08p_newmad2014-500-clu.5hz.g5
 .045
-0
-../out/combine/ceus_a08p_hazard.5hz.2pc50
-1
-0
-4.04e-4
-1
-24.6 50 0.1
--115 -65 0.1
-10
 ../out/ab06_140_CEUSchar_2014_n9.ssc71.5hz
 1
 ../out/ab06_140_CEUS_fixRGrid_2014_2zone.5hz
@@ -50,15 +41,6 @@
 .09
 ../out/ab06_140_newmad2014-500-clu.5hz.g5
 .045
-0
-../out/combine/ceus_ab06_140_hazard.5hz.2pc50
-1
-0
-4.04e-4
-1
-24.6 50 0.1
--115 -65 0.1
-10
 ../out/ab06_200_CEUSchar_2014_n9.ssc71.5hz
 1
 ../out/ab06_200_CEUS_fixRGrid_2014_2zone.5hz
@@ -79,15 +61,6 @@
 .09
 ../out/ab06_200_newmad2014-500-clu.5hz.g5
 .045
-0
-../out/combine/ceus_ab06_200_hazard.5hz.2pc50
-1
-0
-4.04e-4
-1
-24.6 50 0.1
--115 -65 0.1
-10
 ../out/ab06p_CEUSchar_2014_n9.ssc71.5hz
 1
 ../out/ab06p_CEUS_fixRGrid_2014_2zone.5hz
@@ -108,15 +81,6 @@
 .09
 ../out/ab06p_newmad2014-500-clu.5hz.g5
 .045
-0
-../out/combine/ceus_ab06p_hazard.5hz.2pc50
-1
-0
-4.04e-4
-1
-24.6 50 0.1
--115 -65 0.1
-10
 ../out/campBC_CEUSchar_2014_n9.ssc71.5hz
 1
 ../out/campBC_CEUS_fixRGrid_2014_2zone.5hz
@@ -137,60 +101,6 @@
 .09
 ../out/campBC_newmad2014-500-clu.5hz.g5
 .045
-0
-../out/combine/ceus_campBC_hazard.5hz.2pc50
-1
-0
-4.04e-4
-1
-1
-20
-../out/combine/tmp.newmad.5hz
-0.4
-../out/combine/tmp.newmad_uncl.5hz
-0.1
-../out/combine/tmp.NMFS_RLME_clu.5hz
-0.45
-../out/NMFS_RFT_RLME.5hz
-0.025
-../out/combine/tmp.Charl.5hz
-1.0
-../out/combine/tmp.ERM-N.5hz
-1.0
-../out/combine/tmp.ERM-S.5hz
-1.0
-../out/combine/tmp.Chlvx.5hz
-1.0
-../out/combine/tmp.Mari.5hz
-0.5
-../out/combine/tmp.Comm.5hz
-1
-../out/combine/tmp.Wabash.5hz
-1
-../out/CEUScm2014.5hz
-0.5
-../out/CEUSmeers5hz-2014.out
-0.5
-../out/CEUScm5hz-recur.out
-.25
-../out/CEUScm5hz-srchar.out
-.16675
-../out/CEUScm5hz-srgr.out
-.08325
-../out/CEUS_adGrid_2014_2zone.5hz
-0.2
-../out/CEUS_adGrid_2014_4zone.5hz
-0.2
-../out/CEUS_fixRGrid_2014_2zone.5hz
-0.3
-../out/CEUS_fixRGrid_2014_4zone.5hz
-0.3
-1
-../out/combine/tmp.ceus.5hz
-0
-24.6 50 0.1
--115 -65 0.1
-10
 ../out/fea_CEUSchar_2014_n9.ssc71.5hz
 1
 ../out/fea_CEUS_fixRGrid_2014_2zone.5hz

@@ -523,7 +523,7 @@ c      real, dimension (22):: Percb13,PerIMIdriss
       integer, dimension (nfltmx) :: itype,npts,npts1,iftype,ibtype
       logical, dimension(npmx,iamx) :: nga,wus02,ceus02,ceus11     
 c logical variables for subsets of attenuation models should help narrow
-c the search more efficiently.   CEUS11 added mar 18 2011: Gail Atkinson's 3 new
+c the search more efficiently.   CEUS11 added mar 18 2011: Gail Atkinsons 3 new
 C CENA models, with indexes 25, 26, and 27. 
 c Benioff or deep-seismicity relations n/a here: see gridded hazard code hazgridXnga2.f      
 c new 6/06: potentially variable a and b values for up to 12 branches for each fault
@@ -1157,7 +1157,7 @@ c routinely used. Added for special studies Jan 19 2007. SHarmsen.
      1 abs(ipia).eq.6.or.abs(ipia).eq.7.or.abs(ipia).eq.10
        ceus11(ip,ia)=ipia.gt.24.and.ipia.lt.28  !new mar 2011.
       nga(ip,ia)=(ipia.gt.12.and.ipia.lt.19).or.ipia.gt.30
-c kanno et. al. is included with NGA even though it's not. But is modern.
+c kanno et. al. is included with NGA even though its not. But is modern.
 c prepare look-up tables for certain CEUS relations.
         if(ceus11(ip,ia))then
         kf=1
@@ -6752,7 +6752,7 @@ c  limit pga median to 1.5 g; 5hz to 3 g. 2006.
            gnd=min(1.099,gnd)
           endif
        gndout(1)=gnd
-c We don't plan to include extra gnd uncert for CEUS models but this is permitted in AB06 and others.
+c We dont plan to include extra gnd uncert for CEUS models but this is permitted in AB06 and others.
          if(l_gnd_ep(iper))then
          gndout(2)= gnd+gnd_ep(ide,ime,iper)
          gndout(3)= gnd-gnd_ep(ide,ime,iper)
