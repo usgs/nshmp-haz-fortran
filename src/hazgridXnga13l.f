@@ -2206,7 +2206,7 @@ c find nearest gridpoint in vs30 array to the site with coords rx,ry
       ivy=nint((vymax-ry)/vdy)	!same organization as we are used to.
       vs30=v30(nvx*ivy+ivx)
       endif	!inbounds
-      endif	!array rather than scalar vs30	This doesn't do anything for gridded,
+      endif	!array rather than scalar vs30	This doesnt do anything for gridded,
 c which precomputed median motions and probabilities based on a fixed Vs30. In the future
 c site-specific Vs30 may be useful.
       if(byeca.and.ry.gt.43.9)goto 860
@@ -2386,7 +2386,7 @@ c one ground-motion level for deagg work, i.e., k=1.
 c kk = 1 and ifn = 1 for ceus.
       ebar(ir,im,ip,kk,ifn)=ebar(ir,im,ip,kk,ifn)+e0_ceus(ii,m,ip)*asumm
       elseif(slab)then
-c kk is probably 1 and ifn = 1 for intraslab. kk or depth could vary but it doesn't USGS.
+c kk is probably 1 and ifn = 1 for intraslab. kk or depth could vary but it doesnt USGS.
 c For some countries we have run separate depths with different infiles (50 100 150 km etc) 
       ebar(ir,im,ip,kk,ifn)=ebar(ir,im,ip,kk,ifn)+e0_sub(ii,m,ip,kk)*asumm
       endif
@@ -3086,7 +3086,7 @@ c not ready for nga code. out of date relation in 2008. Use getCamp2003
 cccccccccccccccccccccc
       subroutine getAB95(ip,iq,ia,ndist,di,nmag,
      &   magmin,dmag,sigmanf,distnf)
-c adapt to nga style. new problem: gettab. This routine doesn't seem to be used.
+c adapt to nga style. new problem: gettab. This routine doesnt seem to be used.
 c I dont ever see iatten 5 in CEUS input files for 2002. always getFEA. Check? SH
 c not ready. july 28 2006. Using iatten 5 for AB95 with table lookup.
       Write(6,*)'hazgridXnga13l: getAB95 should not be called. No array 
@@ -3713,7 +3713,7 @@ c        g3= rockf* gc3(i1) + soilf*gc3s(iq)
 c        g4= rockf* 1.7818  + soilf*1.097 
 c        ge= rockf* 0.554   + soilf*0.617
 c        gm= rockf* gmr     + soilf*gms
-c linear combinations of coeffs doesn't cut it. highly nonlinear response fcn.
+c linear combinations of coeffs doesnt cut it. highly nonlinear response fcn.
       stop' No plan for your ir into getGeom'
       endif
       period = pergeo(iq)
@@ -9580,7 +9580,7 @@ c Thie below sigma from Eq Spectra 2008 may be revised.
 c-- 
 c vs30 dependence (linear)
           vscap=min(vs30,1200.)
-      gnd0=a1(iper)+wtrev*phi(iper)+ x(iper)*alog(vscap)
+c      gnd0=a1(iper)+wtrev*phi(iper)+ x(iper)*alog(vscap)
 c loop on depth to top of rupture.
        do kk=1,ntor
        z_tor=dtor(kk)
@@ -9588,6 +9588,42 @@ c loop on depth to top of rupture.
 c loop on magnitude
       xmag=magmin
       do jj=1,nmag
+              if(xmag.gt.6.75)then
+	a1=(/9.0138,9.0408,9.1338,9.2538,7.9837,7.7560,9.4252,9.6242,11.1300,
+     + 11.3629,11.7818,11.6097,11.4484,10.9065,9.8565,8.3363,6.8656,4.1178,1.8102,0.0977,-3.0563,-4.4387/)
+	a2=(/-0.0794,-0.0794,-0.0794,-0.0794,-0.1923,-0.1614,-0.1887,-0.0665,
+     + -0.1698,-0.1766,-0.2798,-0.3048,-0.2911,-0.3097,-0.2565,-0.2320,-0.1226,0.1724,0.3001,0.4609,0.6948,0.8393/)
+	a3=(/0.0589,0.0589,0.0589,0.0589,0.0417,0.0527,0.0442,0.0329,0.0188,
+     + 0.0095,-0.0039,-0.0133,-0.0224,-0.0267,-0.0198,-0.0367,-0.0291,-0.0214,-0.0240,-0.0202,-0.0219,-0.0035/)
+	b1=(/2.9935,2.9935,2.9935,2.9935,2.7995,2.8143,2.8131,2.4091,2.4938,
+     + 2.3773,2.3772,2.3413,2.3477,2.2042,2.1493,2.0408,2.0013,1.9408,1.7763,1.7030,1.5212,1.4195/)
+	b2=(/-0.2287,-0.2287,-0.2287,-0.2287,-0.2319,-0.2326,-0.2211,-0.1676,
+     + -0.1685,-0.1531,-0.1595,-0.1594,-0.1584,-0.1577,-0.1532,-0.1470,-0.1439,-0.1278,-0.1326,-0.1291,-0.1220,-0.1145/)
+	x=(/-0.854,-0.854,-0.854,-0.854,-0.631,-0.591,-0.757,-0.911,-0.998,
+     + -1.042,-1.030,-1.019,-1.023,-1.056,-1.009,-0.898,-0.851,-0.761,-0.675,-0.629,-0.531,-0.586/)
+	g=(/-0.0027,-0.0027,-0.0027,-0.0027,-0.0061,-0.0056,-0.0042,-0.0046,
+     +-0.0030,-0.0028,-0.0029,-0.0028,-0.0021,-0.0029,-0.0032,-0.0033,-0.0032,-0.0031,-0.0051,-0.0059,-0.0057,-0.0061/)
+	phi=(/0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.06,0.04,0.02,0.02,0.,0.,0.,0./)
+      else
+	a1=(/7.0887,7.1157,7.2087,7.3287,6.2638,5.9051,7.5791,8.0190,9.2812,9.5804,9.8912,9.5342,
+     +9.2142,8.3517,7.0453,5.1307,3.3610,0.1784,-2.4301,-4.3570,-7.8275,-9.2857/)
+	a2=(/0.2058,0.2058,0.2058,0.2058,0.0625,0.1128,0.0848,0.1713,0.1041,
+     +0.0875,0.0003,0.0027,0.0399,0.0689,0.1600,0.2429,0.3966,0.7560,0.9283,1.1209,1.4016,1.5574/)
+	a3=(/0.0589,0.0589,0.0589,0.0589,0.0417,0.0527,0.0442,0.0329,0.0188,
+     +0.0095,-0.0039,-0.0133,-0.0224,-0.0267,-0.0198,-0.0367,-0.0291,-0.0214,-0.0240,-0.0202,-0.0219,-0.0035/)
+	b1=(/2.9935,2.9935,2.9935,2.9935,2.8664,2.9406,3.0190,2.7871,2.8611,
+     +2.8289,2.8423,2.8300,2.8560,2.7544,2.7339,2.6800,2.6837,2.6907,2.5782,2.5468,2.4478,2.3922/)
+	b2=(/-0.2287,-0.2287,-0.2287,-0.2287,-0.2418,-0.2513,-0.2516,-0.2236,
+     +-0.2229,-0.2200,-0.2284,-0.2318,-0.2337,-0.2392,-0.2398,-0.2417,-0.2450,-0.2389,-0.2514,-0.2541,-0.2593,-0.2586/)
+	x=(/-0.854,-0.854,-0.854,-0.854,-0.631,-0.591,-0.757,-0.911,-0.998,
+     +-1.042,-1.030,-1.019,-1.023,-1.056,-1.009,-0.898,-0.851,-0.761,-0.675,-0.629,-0.531,-0.586/)
+	g=(/-0.0027,-0.0027,-0.0027,-0.0027,-0.0061,-0.0056,-0.0042,-0.0046,
+     +-0.0030,-0.0028,-0.0029,-0.0028,-0.0021,-0.0029,-0.0032,-0.0033,
+     +-0.0032,-0.0031,-0.0051,-0.0059,-0.0057,-0.0061/)
+	phi=(/0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.06,0.04,0.02,0.02,0.,0.,0.,0./)
+      endif
+      gnd0=a1(iper) +wtrev*phi(iper) + x(iper)*alog(vscap)
+
 C*****Magnitude dependent terms. Sandwich xmagc between 5 and 7.5
       if(.not.fix_sigma)then
       xmagc=max(5.0,min(xmag,Mcap))
@@ -9633,6 +9669,16 @@ c          if(ip.eq.1)write(25,*)rrup,rrupo,xmag,widthH,z_tor,zbot,diprad,footwa
          gndout(2)= gnd+gndx
          gndout(3)= gnd-gndx
          endif
+
+cc    PP
+cc    dist =0 , 5, 10, 100  [0.5 5.5 10.5 100.5]
+cc      if(ii.eq.1.or.ii.eq.6.or.ii.eq.11.or.ii.eq.101) then
+cc      mag = 5.05, 5.75, 6.45, 7.45, 7.95
+cc        if(jj.eq.1.or.jj.eq.8.or.jj.eq.15.or.jj.eq.25.or.jj.eq.26) then
+cc          write(6,*)'ID',ii,xmag,ip,dtor(kk),R_JB,rrup,gnd,sig,gndm,gnd0,footwall
+cc        endif
+cc      endif
+
       do ie=1,nfi
       do 199 k=1,nlev(ip)
       tmp= (gndout(ie) - xlev(k,ip))*sigmaf
@@ -9649,26 +9695,8 @@ c          if(ip.eq.1)write(25,*)rrup,rrupo,xmag,widthH,z_tor,zbot,diprad,footwa
         enddo	!ie	extra epistemic.
          enddo      !ii
          xmag=xmag+dmag
-         changem=xmag.gt.6.75.and.xmag.lt.6.9
-         if(changem)then
-	a1=(/9.0138,9.0408,9.1338,9.2538,7.9837,7.7560,9.4252,9.6242,11.1300,
-     + 11.3629,11.7818,11.6097,11.4484,10.9065,9.8565,8.3363,6.8656,4.1178,1.8102,0.0977,-3.0563,-4.4387/)
-	a2=(/-0.0794,-0.0794,-0.0794,-0.0794,-0.1923,-0.1614,-0.1887,-0.0665,
-     + -0.1698,-0.1766,-0.2798,-0.3048,-0.2911,-0.3097,-0.2565,-0.2320,-0.1226,0.1724,0.3001,0.4609,0.6948,0.8393/)
-	a3=(/0.0589,0.0589,0.0589,0.0589,0.0417,0.0527,0.0442,0.0329,0.0188,
-     + 0.0095,-0.0039,-0.0133,-0.0224,-0.0267,-0.0198,-0.0367,-0.0291,-0.0214,-0.0240,-0.0202,-0.0219,-0.0035/)
-	b1=(/2.9935,2.9935,2.9935,2.9935,2.7995,2.8143,2.8131,2.4091,2.4938,
-     + 2.3773,2.3772,2.3413,2.3477,2.2042,2.1493,2.0408,2.0013,1.9408,1.7763,1.7030,1.5212,1.4195/)
-	b2=(/-0.2287,-0.2287,-0.2287,-0.2287,-0.2319,-0.2326,-0.2211,-0.1676,
-     + -0.1685,-0.1531,-0.1595,-0.1594,-0.1584,-0.1577,-0.1532,-0.1470,-0.1439,-0.1278,-0.1326,-0.1291,-0.1220,-0.1145/)
-	x=(/-0.854,-0.854,-0.854,-0.854,-0.631,-0.591,-0.757,-0.911,-0.998,
-     + -1.042,-1.030,-1.019,-1.023,-1.056,-1.009,-0.898,-0.851,-0.761,-0.675,-0.629,-0.531,-0.586/)
-	g=(/-0.0027,-0.0027,-0.0027,-0.0027,-0.0061,-0.0056,-0.0042,-0.0046,
-     +-0.0030,-0.0028,-0.0029,-0.0028,-0.0021,-0.0029,-0.0032,-0.0033,-0.0032,-0.0031,-0.0051,-0.0059,-0.0057,-0.0061/)
-	phi=(/0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.06,0.04,0.02,0.02,0.,0.,0.,0./)
-      gnd0=a1(iper) +wtrev*phi(iper) + x(iper)*alog(vscap)
-      endif
-      enddo	!jj or mag loop
+c         changem=xmag.gt.6.75.and.xmag.lt.6.9
+       enddo	!jj or mag loop
       enddo	!kk or depth of source loop
       return
       end subroutine Idriss2013
