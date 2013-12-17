@@ -68,6 +68,8 @@ hazgridXnga5: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga5 $(SRC)/hazgridXnga5.f $(SRC)/iosubs.o
 hazgridXnga13l: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga13l $(SRC)/hazgridXnga13l.f $(SRC)/iosubs.o
+hazgridXnga13l_test: iosubs
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga13l_test $(SRC)/hazgridXnga13l_test.f $(SRC)/iosubs.o
 hazgridXnga13l_deep: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga13l_deep $(SRC)/hazgridXnga13l_deep.f $(SRC)/iosubs.o
 
@@ -83,6 +85,13 @@ hazpoint: iosubs
 hazinterpnga: iosubs
 #	$(F_COMPILER2) $(FFLAGS1_I) -o $(OUT)/hazinterpnga $(SRC)/hazinterpnga.f $(SRC)/iosubs_128.o -w
 	$(F_COMPILER) $(FFLAGS2) -o $(OUT)/hazinterpnga $(SRC)/hazinterpnga.f $(SRC)/iosubs.o
+
+# deagg codes
+deaggFLTH: 
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/deaggFLTH $(SRC)/deaggFLTH.f 
+
+deaggGRID: 
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/deaggGRID $(SRC)/deaggGRID.f 
 
 #	utility
 avg_dist: iosubs

@@ -1,4 +1,5 @@
-c--- program  hazFXnga13l.f; 10/01/2013; Use  with NGA relations, or others.
+c--- program  hazFXnga13l.f; 12/16/2013; Use  with NGA relations, or others.
+c 12/16/2013: Update ASK2013 a1 and vlin for some short periods. from Sanaz R email
 c OCT 1, 2013: use Mcap of 7.5 on s.d. computation in Idriss2013.
 c 9/17/2013	In ASK13, Ry0 is always -1. (previously some cases Ry0=dmin(5)=-1)
 c 8/28/2013	CB13: "Save" phi_lny and always calculate phi_lny(22) on first time thru
@@ -92,6 +93,7 @@ c are set up for Characteristic without uncertainty. Other rup. models need more
 c--- Solaris compile: cc -c iosubs_128.c 
 c                 f95 -o hazFXnga13l hazFXnga13l.f iosubs_128.o -fast -e -ftrap=%none
 c -fast has been known to produce segmentation errors whereas -O is not known to produce them all else equal
+c -fast definitely fails (seg error) when the clustered source is invoked.
 c for debug:
 c  f95 -o hazFXnga13l hazFXnga13l.f iosubs_128.o -C  -e -ftrap=%none
 c for typical runs:
@@ -779,7 +781,7 @@ c adum could be sa(g) or pgv (cm/s). need flexible format
             endif
       endif
       write (6,61)date,time,name
-61      format('# *** hazFXnga13l 09/17/2013 log file. Pgm run on ',a,' at ',a,/,
+61      format('# *** hazFXnga13l 12/16/2013 log file. Pgm run on ',a,' at ',a,/,
      +'# *** Input control file: ',a)
       if(poly)write(6,*)'hazFXnga13l: Polygon file &npts: ',polygon,npmax
 c Below bypasses are based on file name. Bypass wont work if file names change
@@ -11536,6 +11538,7 @@ c ------------------------------------------------------------------
       subroutine ASK13_v11_model (iPer, mag, dip, FltWidth, ZTOR, Frv, Fn, rRup, rjb, Rx, Ry0, 
      1                     vs30, Sa1180, Z1,  z1_ref, hwflag, vs30_class, Region, 
      2                     lnSa, phi, tau)
+c 12/16/2013: Update ASK2013 a1 and vlin for some short periods. from Sanaz R email
 c from Kamai email July 24 2013. z1_ref is input rather than computed, unless Japan.
 c Steve Harmsen July 25, 2013. This version does use the Ry0 distance metric.
 c
@@ -11565,13 +11568,13 @@ c
 
       data period / 0.0, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 
      1              0.3, 0.4, 0.5, 0.75, 1., 1.5, 2., 3., 4., 5., 6., 7.5, 10., -1.0/
-      data Vlin/ 660,680,770,800,800,800,740,590,495,430,360,340,330,330,
+      data Vlin/ 660,680,770,915,960,910,740,590,495,430,360,340,330,330,
      1			 330,330,330,330,330,330,330,330,330 /
       data b/ -1.47,-1.46,-1.39,-1.22,-1.15,-1.23,-1.59,-2.01,-2.41,-2.76,
      1         -3.28,-3.6,-3.8,-3.5,-2.4,-1,0,0,0,0,0,0,-2.02 /
       data c4/ 4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,
      1     	4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5 /
-      data a1/ 0.587,0.598,0.602,0.746,1.021,1.210,1.442,1.637,1.701,1.712,
+      data a1/ 0.587,0.598,0.602,0.707,0.973,1.169,1.442,1.637,1.701,1.712,
      1     1.662,1.571,1.299,1.043,0.665,0.329,-0.060,-0.299,-0.562,-0.875,-1.303,-1.928,5.975 /
       data a2/ -0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,
      1      	-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,

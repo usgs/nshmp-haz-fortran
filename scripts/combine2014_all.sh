@@ -2,11 +2,11 @@
 # script info
 # 
 
-run_WUS_faults=0
+run_WUS_faults=1
 run_WUS_grids=0
 run_CEUS_faults=0
 run_CA=0
-run_CASC=1
+run_CASC=0
 run_all_hazard_curves=0
  
 # WUS faults

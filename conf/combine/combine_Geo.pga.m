@@ -6,13 +6,13 @@
 0.667
 ../out/2014WUSgeo.gr.pga.m
 0.333
-../out/wasatchSLCseg.clu.char.pga.m.g1
+../out/wasatchSLCseg.clu.char.pga.g1
 0.24
-../out/wasatchSLCseg.clu.char.pga.m.g2
+../out/wasatchSLCseg.clu.char.pga.g2
 0.24
-../out/wasatchSLCseg.clu.char.pga.m.g3
+../out/wasatchSLCseg.clu.char.pga.g3
 0.24
-../out/wasatchSLCseg.noclu.char.pga.m
+../out/wasatchSLCseg.noclu.char.pga
 0.24
 1
 ../out/combine/wus_flts_geo.pga.m

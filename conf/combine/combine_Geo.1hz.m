@@ -6,13 +6,13 @@
 0.667
 ../out/2014WUSgeo.gr.1hz.m
 0.333
-../out/wasatchSLCseg.clu.char.1hz.m.g1
+../out/wasatchSLCseg.clu.char.1hz.g1
 0.24
-../out/wasatchSLCseg.clu.char.1hz.m.g2
+../out/wasatchSLCseg.clu.char.1hz.g2
 0.24
-../out/wasatchSLCseg.clu.char.1hz.m.g3
+../out/wasatchSLCseg.clu.char.1hz.g3
 0.24
-../out/wasatchSLCseg.noclu.char.1hz.m
+../out/wasatchSLCseg.noclu.char.1hz
 0.24
 1
 ../out/combine/wus_flts_geo.1hz.m
