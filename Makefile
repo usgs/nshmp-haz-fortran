@@ -90,8 +90,11 @@ hazinterpnga: iosubs
 deaggFLTH: 
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/deaggFLTH $(SRC)/deaggFLTH.f 
 
-deaggGRID: 
-	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/deaggGRID $(SRC)/deaggGRID.f 
+deaggGRID: iosubs
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/deaggGRID $(SRC)/deaggGRID.f $(SRC)/iosubs.o
+
+deaggSUBD: iosubs
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/deaggSUBD $(SRC)/deaggSUBD.f 
 
 #	utility
 avg_dist: iosubs
