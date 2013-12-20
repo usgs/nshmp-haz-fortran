@@ -1,4 +1,5 @@
-c--- deaggGRID.2013.f for USGS PSHA runs, 12/16/ 2013. update of deaggGRID.2011.f
+c--- deaggGRID.2013.f for USGS PSHA runs, 12/19/ 2013. update of deaggGRID.2011.f
+c 12/19/2013: update newer CEUS GMMs to compute CMS.
 c 12/16/2013: Update ASK2013 a1 and vlin for some short periods. from Sanaz R email
 c 11/25: update m_att array of global indexes for attenuation models.
 c 10/18: update Idriss2013 with standardixed Rcd
@@ -287,7 +288,7 @@ c ---		$atten = flag to include all the GMPE deaggs as well as mean haz.
 c ---		$GEO = 1 : geographic deagg. $GEO=2: COmpute mean spectrum. One or the other
 c ---
 c Output:
-c   shaw is the output  file which goes to a directory called  Deagg
+c	shaw is the output  file which goes to a directory called  Deagg/
 c
 
 c --- Messages are written to have more useful diagnostic information. Look at log file if
@@ -447,6 +448,7 @@ c above spectral period vectors are associated with various NGA and other
 c atten models. perka corresponds to Kanno et al. added Nov 8 2006.	
       dimension aperiod(108)
       integer, dimension (7) :: jmsc_p
+      integer, dimension(12) :: imsc_ga	!atkinson-ceus to CMS period map
       integer iper
 c      integer, dimension(npmx,3):: ifp
 c prob5 dims: distance, magnitude,  gmuncert,  epsilon bins, attn model, resp. (not saving
@@ -536,6 +538,7 @@ c june 30 2007.
      + 0.150, 0.200, 0.250, 0.300, 0.400, 0.500, 0.750, 1.000,
      + 1.500, 2.000, 3.000, 4.000, 5.0, 7.5, 10.0/)
 	       imsc_p= (/1,6,8,10,12,14,16/)
+	       imsc_ga= (/19,17,16,14,12,10,8,6,4,3,2,1/)
 c imsc_p are the indexes of the ms_p array available for all CEUS atten models.
 	dipbck =(/90.0,80.,70.,60.,50.,45.,40.,35.,30.,25.0/)
 c pdgk = period set for GK12 model.
@@ -584,7 +587,7 @@ c available periods for CB as of Mar 2008. pga=0.0 here. Displacement per is -2
 c perabs: enlarged period set for ab slab-zone (deep) eqs. -1 or PGV not available
        perabs= (/0.,0.2,1.0,0.1,0.3,0.5,2.0,3.0,
      +0.020,  0.030,  0.050,  0.0750,  0.150,  0.250,  0.40,  0.75,1.50,-1./)	
-c ab06 frequencies, these don't seem to be extremely close to 1/T
+c ab06 frequencies, these dont seem to be extremely close to 1/T
       abfrq = (/2.00e-01,2.50e-01,3.20e-01,4.00e-01,5.00e-01,6.30e-01,8.00e-01,1.00e+00,
      1       1.26e+00,1.59e+00,2.00e+00,2.52e+00,3.17e+00,3.99e+00,5.03e+00,6.33e+00,
      1       7.97e+00,1.00e+01,1.26e+01,1.59e+01,2.00e+01,2.52e+01,3.18e+01,4.00e+01,
@@ -739,7 +742,7 @@ c	ss=.not.normal	!temporary testing: no reverse or oblique.
 c *** NEW 11/05 **** Enter soil Vs30 condition  ******NEW*******
       vs30=vs30d
 c use Chiou-Youngs 10-2007 default depth to 1 km/s rock. Z1 Units: m.
-c the below Z1 is defined from Brian Chiou's recommendation. 2013 update.
+c the below Z1 is defined from Brian Chious recommendation. 2013 update.
 c use Chiou-Youngs 10-2007 default depth to 1 km/s rock. Z1 Units: m.
         Z1cal = exp(-7.15/4 * log(((VS30/1000.)**4 + .57094**4)/(1.360**4 + .57094**4)))
        z1_ref = exp ( -7.67/4. * alog( (Vs30**4 + 610.**4)/(1360.**4+610.**4) ) ) / 1000.
@@ -750,7 +753,7 @@ c DeltaZ1 from B Chiou email of Apr 15 2013.
         deltaZ1 = Z1cal -
      1  exp(-7.15/4 *
      1      log(((VS30/1000.)**4 + .57094**4)/(1.360**4 + .57094**4)))
-	if(abs(vs30-760.).lt.10.)Z1 = 40.	!this is Chiou's preferred default Z1 for BC
+	if(abs(vs30-760.).lt.10.)Z1 = 40.	!this is Chious preferred default Z1 for BC
 c       write(6,*)' Vs30 (m/s), Z1 (m) and depth of basin (km): ',vs30,Z1,dbasin
       if(vs30.lt.90..and.vs30.gt.0.)then
 C       write(6,*)'Vs30 = ',vs30,'. This looks unreasonable.'
@@ -787,7 +790,7 @@ c check reasonableness of distribution
       stop 'and retry with improved weights'
       endif
 c large tormin could be associated with deep Benioff zone. For crustal
-c earthquakes, this check isn't very interesting.
+c earthquakes, this check isnt very interesting.
 	if(tormin.lt.0..or.tormin.gt.202.)stop'Top of rupture distribution
      +  not reasonble. Please reenter'
 c      dipang1=pi/2.
@@ -887,7 +890,7 @@ c---- iflt=4 uses finite faults with Boore-Atkinson nblg to Mw conv.
 c--- ibmat=1 uses b-value matrix
 c--- maxmat = 1 uses Mmax matrix. 
 c --  maxmat = -1, use min of Mmax matrix and magmax scalar value input below
-c-- set each to zero if you don't want these
+c-- set each to zero if you dont want these
 	l_mmax=.false.
 c new nov 14 add field Mtaper (real variable). If M>Mtaper, multiply rate by wtgrid(k)
 c to include CA
@@ -975,9 +978,9 @@ c example line: 5 6.5 0.1 6.7 0.2 6.9 0.4 7.1 0.2 7.3 0.1
       wt_zone(1:i1,izone)=wt_zone(1:i1,izone)/sum
       endif
       wt_zone(i1:40,izone)=0.0	!Pr[ M>max(Mmax)] is zero
-      print 3434,'For magnitude zone ',k,' CCD of Mmax beginning at ',magmin
+c      print 3434,'For magnitude zone ',k,' CCD of Mmax beginning at ',magmin
 3434	format(a,i2,a,f5.2)
-      print *,wt_zone(1:i1,k)
+c      print *,wt_zone(1:i1,k)
       enddo	!k loop
       mzone=int(mmax)	!mzone is integer field over the region {1,2,..,mmax}
       endif
@@ -1378,7 +1381,7 @@ c fill imsp and lmsp arrays with can do information.
       endif	!ipia =32?
       if(ipia.ge.35.and.ipia.le.37)then
         kf=1
-        if(per.gt.0.01)then
+        if(per.gt.0.011)then
         fr=1.0/per
         elseif(per.ge.0.0)then
         fr=99.
@@ -1408,28 +1411,13 @@ c fill imsp and lmsp arrays with can do information.
 	m_att(ia) = 25
 	endif
 	lmsp(ia,1)=.true.
-	imsp(ia,1)=13	!pga index is last one fr=99
+	imsp(ia,1)=12	!pga index is last one fr=99
 c	print *,'AB06per ',ms_p(1),lmsp(ia,1),imsp(ia,1)
-	do j=2,npnga-3
-	ka=1
-        if(ms_p(j).gt.0.01)then
-        fr=1.0/per
-        elseif(ms_p(j).ge.0.0)then
-        fr=99.
-        elseif(ms_p(j).eq.-1.)then
-        fr=89.
-        else
-        print *,'period requested ',ms_p(j)
-        stop' CEUS11 models close encounter with an unknown CMS period'
-        endif
-        dowhile(fr.gt.a11fr(ka)+.01)
-        ka=ka+1
-        if(ka.gt.12)stop' period not in A06,A08,P11 set'
-        enddo
-	imsp(ia,j)=ka
-	lmsp(ia,j)=.true.
-c	print *,'Gailper ',ms_p(j),lmsp(ia,j),imsp(ia,j)
-	enddo	!j=1,npnga 
+	do j=1,12
+	lmsp(ia,imsc_ga(j))=.true.
+	imsp(ia,imsc_ga(j))=j
+c	print *,lmsp(ia,imsc_ga(j)),imsp(ia,imsc_ga(j)),a11fr(j)
+	enddo	!j=1,12 
 c For new CEUS relations t=5.0 s longest available period (fr=0.2 Hz). Index of 5s is npnga-2
 	kmsp(ia)=npnga-2 ; kmsp(0)=min(kmsp(0),npnga-2)
 	endif	!mean spectrum details 
@@ -1569,6 +1557,24 @@ c      WRITE(6,*)'7/2008: Input spectral period not available for Toro-mblg mode
 	iq=ka
 	endif	!pga or not?
 	oktogo=.true.
+       if(l_ms)then
+c fill imsp and lmsp arrays with can do information.
+	lmsp(ia,1:npnga)=.false. 
+	do j=1,16
+	ka=1
+	dowhile(abs(ms_p(j)-max(0.01,perx_pl(ka))).gt.0.002.and.ka.lt.9)
+	ka=ka+1
+	enddo
+	if(ka.le.9)then
+	imsp(ia,j)=ka
+	lmsp(ia,j)=.true.
+	endif
+	enddo	!j=1,npnga 
+	kmsp(ia)=16	!2s
+	kmsp(0)=min(kmsp(0),kmsp(ia))
+c	print *,'TORO lmsp',lmsp(ia,1:16)
+c	print *,'TORO imsp',imsp(ia,1:16)
+	endif	!mean spectrum details 
 c      WRITE(6,*)' Toro relation is called with hardrock coeffs., per index ',iq
 	elseif(ipiaa.eq.6.and.vs30.ge.1500.)then
 	ceus=.true.
@@ -1590,6 +1596,24 @@ c      WRITE(6,*)'Input spectral period not available for FEA model'
 	oktogo=.true.
 c      WRITE(6,*)'Frankel relation called with hardrock coeffs, A-like Vs30'
 c      WRITE(6,*)' period index is ',iq,' in perx_pl'
+       if(l_ms)then
+c fill imsp and lmsp arrays with can do information.
+	lmsp(ia,1:npnga)=.false. 
+	do j=1,16
+	ka=1
+	dowhile(abs(ms_p(j)-max(0.01,perx_pl(ka))).gt.0.002.and.ka.lt.9)
+	ka=ka+1
+	enddo
+	if(ka.le.9)then
+	imsp(ia,j)=ka
+	lmsp(ia,j)=.true.
+	endif
+	enddo	!j=1,npnga 
+	kmsp(ia)=16	!2s
+	kmsp(0)=min(kmsp(0),kmsp(ia))
+c	print *,'FRANKEL lmsp',lmsp(ia,1:16)
+c	print *,'FRANKEL imsp',imsp(ia,1:16)
+	endif	!mean spectrum details 
 	elseif(ipiaa.eq.10)then	!campbell ceus
 	if(per.le.0.01)then
 	ipcamp=1
@@ -1810,7 +1834,7 @@ c fill imsp and lmsp arrays with can do information.
 	endif
 	kmsp(ia)=npnga-5
 	kmsp(0)=min(kmsp(0),kmsp(ia))
-c	print *,'Silva periods? ',ms_p(j),lmsp(ia,j)
+c	print *,'Silva periods? ',ms_p(j),lmsp(ia,j),imsp(ia,j)
 	enddo	!j=1,npnga  
 	endif	!mean spectrum details 
           if(vs30.ge.1500.)then
@@ -1832,15 +1856,15 @@ c 2011 CEUS relations
       print *,magmin,dmag,ip,iq,ia,freq
 c	print *,'Going into getA08p ',per
 c	print *,ip,iq,freq,ia,ndist,di,nmag,magmin,dmag
-      call getA08p(ip,iq,freq,ia,ndist,di,nmag,magmin,dmag)
+      call getA08p(iq,freq,ia,ndist,di,nmag,magmin,dmag)
       ceus=.true.
       elseif(ipia.eq.36)then
 	m_att(ia) = 32
-      call getAB06p(ip,iq,freq,ia,ndist,di,nmag,magmin,dmag)
+      call getAB06p(iq,freq,ia,ndist,di,nmag,magmin,dmag)
       ceus=.true.
       else
 	m_att(ia) = 25
-      call getPez11(ip,iq,freq,ia,ndist,di,nmag,magmin,dmag)
+      call getPez11(iq,freq,ia,ndist,di,nmag,magmin,dmag)
       ceus=.true.
       endif
        elseif(ipia.eq.1.and.oktogo)then 
@@ -1867,6 +1891,7 @@ C       write(6,*)'Sadigh soil subroutine setup OK'
 	do j=1,7
 	lmsp(ia,imsc_p(j))=.true.
 	imsp(ia,imsc_p(j))=jmsc_p(j)
+	print *,lmsp(ia,imsc_p(j)),imsp(ia,imsc_p(j))
 	enddo
 	endif	!compute cms?
       call getFEA(iq,1,ia,ndist,di,nmag,magmin,dmag)
@@ -2443,7 +2468,7 @@ c added geometry for California faults. Not present in deaggGRID.2009.
       if(cal_fl)then
       area1 = 10.**(xmag-4.2)
       area2 = 10.**((xmag-4.07)/0.98)
-c assume virtual fault is 14 km wide: doesn't break surface or it wouldnt be virtual
+c assume virtual fault is 14 km wide: doesnt break surface or it wouldnt be virtual
       	if(area1.ge. 500.)then
       	ruplen = area1/14.
       	else
@@ -2471,7 +2496,7 @@ c determine whether period j can be computed for the mean spectrum
 	lmsp(0,1:npnga)=lmsp(0,1:npnga) .and. lmsp(ia,1:npnga)
 	enddo
 	endif	!if l_ms
-c---Here's the guts
+c---Heres the guts
       i=1
 	 asum= 0.0	!matrix math
       	rx=rlond
@@ -2722,7 +2747,7 @@ c	if(j.eq.jms)print *,exp(factor),ia,r,xmag,e0/ratex
 	eps0b(ia) = eps0b(ia) + e0*fac/ratex
 	endif
 	elseif(slab)then
-c kk is probably 1 and ifn = 1 for intraslab. kk or depth could vary but it doesn't USGS.
+c kk is probably 1 and ifn = 1 for intraslab. kk or depth could vary but it doesnt USGS.
 c For some countries we have run separate depths with different infiles (50 100 150 km etc) 
 c the mean spectrum work for slab atten models is also left to a future happier time.
 	e0 = e0_sub(ii,m,kk,ia)
@@ -3548,7 +3573,7 @@ c iq period index. ip is the current index in iatten() array; ip=1
 c iq = is the index in perx() the standard set of SA periods in 2003 PSHA.
 c ir = flag to control which interpolation table:
 c The table data are input here. File has to reside in subdir called GR.
-c Table data are not saved (new aug 06) use em and overwrite em.
+c Table data are not saved (new aug 06) use 'em and overwrite 'em.
 c ir =1=>Fea BC,
 c 2=> AB Bc, 
 c 3=> Fea A(HR)
@@ -3559,44 +3584,42 @@ c
 c Note: depth to rupture is controlled by dtor rather than set to "bdepth"
 c
 	parameter (np=7,sqrt2=1.414213562)
-      logical deagg,et,sp/.false./	!short-period?
+      logical deagg,et,lmsp(0:10,21),l_ms,sp/.false./	!short-period?
       real magmin,perx(9)
-c meanspec and sigmaspec: for each source. 
-c e0_ceus not saving a depth of rupture dim, although could be sens. to this.
-c FOR CEUS runs 2008, only one depth of rupture is considered.
-      dimension pr(310,38,3,3,0:10),icode(10),
-     + wt(10,2),wtdist(10) 
-	real bdepth/5./,bsigma(9),clamp(9),xlogfac(7)/7*0./
-        
-        integer npnga, jms, imsp(10,21)
-        real, dimension(310,38,21,3,10) :: meanspec,sigspec	!for each request. Fills inside each GMPE subroutine.
-        logical l_ms, lmsp(0:10,21)
-c bdepth is no longer used. use dtor instead.
-c Same sigma for AB94 and FEA. 1s and 2s larger than the rest. As in Toro ea.
-      dimension tabdist(21),gma(22,30)
-      character*30 nametab(np),nameab(np),namehr(np+2),name
-      character*30 hardab(np+2)
-	common/e0_ceus/e0_ceus(310,38,0:10)
+      integer, dimension(10,21) :: imsp
 	common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
       common / atten / pr, xlev, nlev, icode, wt, wtdist
        common/ms/npnga,jms,l_ms,lmsp,imsp,meanspec,sigspec
+c meanspec and sigmaspec: for each source. 
+      real, dimension(310,38,21,3,10) :: meanspec,sigspec	!for each request. Fills inside each GMPE subroutine.
+c e0_ceus not saving a depth of rupture dim, although could be sens. to this.
+c FOR CEUS runs 2008, only one depth of rupture is considered.
+	common/e0_ceus/e0_ceus(310,38,0:10)
+      dimension pr(310,38,3,3,0:10),icode(10),
+     + wt(10,2),wtdist(10) 
+	real bdepth/5./,bsigma(9),clamp(9),xlogfac(7)/7*0./
+c bdepth is no longer used. use dtor instead.
+c Same sigma for AB94 and FEA. 1s and 2s larger than the rest. As in Toro ea.
+      dimension tabdist(21),gma(22,30)
+      character*15 hardab(np+2),nametab(np),nameab(np),namehr(np+2),name
+c trouble with these names trailing junk... dec 18 2013. 
 c Subroutine assumes these files are in working directory:
       perx= (/0.0,0.2,1.0,0.1,0.3,0.5,2.0,0.04,0.4/)
 c added 0.04 and 0.4 s for NRC work july 15 2008. hard rock tables k006
      	bsigma=(/0.326,0.326,0.347,0.326,0.326,0.326,0.347,0.326,0.326/)
      	clamp =(/3.,6.,0.,6.,6.,6.,0.,6.,6./)
-      nametab= (/'GR/pgak01l.tbl ','GR/t0p2k01l.tbl','GR/t1p0k01l.tbl','GR/t0p1k01l.tbl',
-     1 'GR/t0p3k01l.tbl','GR/t0p5k01l.tbl','GR/t2p0k01l.tbl'/)
-      namehr= (/'GR/pgak006.tbl ','GR/t0p2k006.tbl','GR/t1p0k006.tbl','GR/t0p1k006.tbl',
+      data nametab/'GR/pgak01l.tbl ','GR/t0p2k01l.tbl','GR/t1p0k01l.tbl','GR/t0p1k01l.tbl',
+     1 'GR/t0p3k01l.tbl','GR/t0p5k01l.tbl','GR/t2p0k01l.tbl'/
+      data namehr/'GR/pgak006.tbl ','GR/t0p2k006.tbl','GR/t1p0k006.tbl','GR/t0p1k006.tbl',
      1 'GR/t0p3k006.tbl','GR/t0p5k006.tbl','GR/t2p0k006.tbl','GR/tp04k006.tbl',
-     2'GR/t0p4k006.tbl'/)
+     2'GR/t0p4k006.tbl'/
 c tp04k006 was renamed from t0p04k006.tbl to have fixed length
-	nameab= (/'GR/Abbc_pga.tbl','GR/Abbc0p20.tbl','GR/Abbc1p00.tbl',
-     1 'GR/Abbc0p10.tbl','GR/Abbc0p30.tbl','GR/Abbc0p50.tbl','GR/Abbc2p00.tbl'/)
+	data nameab/'GR/Abbc_pga.tbl','GR/Abbc0p20.tbl','GR/Abbc1p00.tbl',
+     1 'GR/Abbc0p10.tbl','GR/Abbc0p30.tbl','GR/Abbc0p50.tbl','GR/Abbc2p00.tbl'/
 c added 0.04 and 0.4s to hardab, July 15 2008. SH.
-	hardab= (/'GR/ABHR_PGA.TBL','GR/ABHR0P20.TBL','GR/ABHR1P00.TBL',
+	data hardab/'GR/ABHR_PGA.TBL','GR/ABHR0P20.TBL','GR/ABHR1P00.TBL',
      1'GR/ABHR0P10.TBL','GR/ABHR0P30.TBL','GR/ABHR0P50.TBL','GR/ABHR2P00.TBL',
-     2'GR/Abhr0p04.tbl','GR/Abhr0p40.tbl'/)
+     2'GR/Abhr0p04.tbl','GR/Abhr0p40.tbl'/
 	period=perx(iq)
 	ip=1
 cC        write(6,*)ip,nlev,' ip nlev() in getFEA before table fill'
@@ -3616,13 +3639,13 @@ c         read(1,900) nametab
 cC        write(6,*) "enter depth, sigma, log factor"
 c         read(1,*) bdepth,bsigma,xlogfac, clamp
 	if(ir.eq.1)then
-	 name=nametab(iq)
+	 name=trim(nametab(iq))
          elseif(ir.eq.2)then
-         name=nameab(iq)
+         name=trim(nameab(iq))
 	 elseif(ir.eq.3)then
-         name=namehr(iq)
+         name=trim(namehr(iq))
          elseif(ir.eq.4)then
-         name = hardab(iq)
+         name = trim(hardab(iq))
          endif
          open(unit=15,file=name,status='old',err=234)
          read(15,900) adum
@@ -3716,6 +3739,9 @@ c      if (ii.eq.1.and.m.eq.1.and.k.eq.1)write(6,*)ip,temp,temp1,gnd,probgt3,'ge
   104 continue	!mag loop
 	if(l_ms)then
 c play it again, Arthur, for the CEUS CMS
+c	print *,'Arthur lmsp',lmsp(ia,1:16)
+c	print *,'Arthur imsp',imsp(ia,1:16)
+c	
 	do j=1,16
 	if (lmsp(ia,j) .and. j.ne.jms ) then
 		jp=imsp(ia,j)
@@ -3730,16 +3756,20 @@ c play it again, Arthur, for the CEUS CMS
 c In nga, negative period implies PGV. However, PGV not available in tables
           freq=1.	! Flow should not have arrived at this spot.
           endif
+          name = ' '
 	if(ir.eq.1)then
-	 name=nametab(jp)
+	 name=trim(nametab(jp))
+         open(unit=15,file=trim(nametab(jp)),status='old',err=234)
          elseif(ir.eq.2)then
-         name=nameab(jp)
+         name=trim(nameab(jp))
+         open(unit=15,file=trim(nameab(jp)),status='old',err=234)
 	elseif(ir.eq.3)then
-         name=namehr(jp)
+         name=trim(namehr(jp))
+         open(unit=15,file=trim(namehr(jp)),status='old',err=234)
          elseif(ir.eq.4)then
-         name = hardab(jp)
-         endif
-         open(unit=15,file=name,status='old',err=234)
+         name = trim(hardab(jp))
+          open(unit=15,file=trim(hardab(jp)),status='old',err=234)
+        endif
          read(15,900) adum
          do 180 idist=1,21
   180    read(15,*) tabdist(idist),(gma(imag,idist),imag=1,20)
@@ -3762,9 +3792,9 @@ c-- gnd for SS; gnd2 for thrust; gnd3 for normal
           imag= (xmag-4.4)/0.2 +1
           xm1= (imag-1)*0.2 + 4.4
           fracm= (xmag-xm1)/0.2
-c loop over depth of rupture. dtor replaces bdepth in this subroutine.
-	do 203 kk=1,ntor
-	hsq=dtor(kk)**2
+c Dont loop over depth of rupture. dtor replaces bdepth in this subroutine.
+c	do 203 kk=1,ntor
+	hsq=dtor(ntor)**2
 c-- loop through distances. ii index corresponds to rjb.
       do 203 ii=1,ndist
       dist0= (ii-.5)*di 
@@ -3799,8 +3829,8 @@ c--- following is for clipping 1.5 g pga, 3 g 5hz 3 hz
            elseif(sp)then
            gnd=min(gnd,1.099)
            endif
-	meanspec(ii,m,j,kk,ia)=gnd
-	sigspec(ii,m,j,kk,ia)=sig
+	meanspec(ii,m,j,1,ia)=gnd
+	sigspec(ii,m,j,1,ia)=sigma
            
   203 continue	!dist loop
   204 continue	!mag loop
@@ -4728,7 +4758,7 @@ c meanspec and sigmaspec: for each source.
      + wt(10,2),wtdist(10) 
 	real,dimension(np):: c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,
      1 clamp,c1h,c11,c12,c13,perx
-	integer, dimension(8,21) :: imsp(10,21)
+	integer, dimension(10,21) :: imsp(10,21)
        perx = (/0.01,0.2,1.0,0.1,0.3,0.4,
      + 0.5,2.0,.03,.04,.05,1.5,3.,0.75/)
 c Tried using A->BC factors of 0.7, 0.6, and 0.4 for periods 0.05, 0.04, an 0.03, respectively
@@ -4926,7 +4956,7 @@ cccccc
       subroutine getBJF97(ip,iq,ia,ndist,di,nmag,
      & magmin,dmag)
 c prepared for the general vs30 case july 26 2006 (no nonlinear site resp here) SH
-c also prepared for 7 periods. based on Frankel's getBJF97     
+c also prepared for 7 periods. based on Frankels getBJF97     
 	parameter (np=7,sqrt2=1.4142136,pi=3.141592654)
       real magmin,perx(8)
 	common/prob/p(25005),plim,dp2	!table of complementary normal probab.
@@ -5178,7 +5208,7 @@ c Editorial comment I used the e3(10s)=e3(7.5)+e2(10s)-e2(7.5s) for 10s normal, 
 c report e3(10s) as 0.0 and this gives a large motion compared to others in nhbd.
 c also reported this to Dave Boore in email for his advice. SHarmsen Oct 3 2007. Gail suggests
 c that ratio for normal might equal ratio for unspecified or ratio for SS. No consensus. Using
-c Gail's sugg. This choice of e3(10s), -2.66, is very low. Normal median is probably too low.
+c Gails sugg. This choice of e3(10s), -2.66, is very low. Normal median is probably too low.
        e3= (/ 4.63188,-0.75472,-0.74551,-0.73906,-0.66722,-0.48462,
      1 -0.20578, 0.03058, 0.30185, 0.40860, 0.33880, 0.25356, 0.21398, 0.00967,-0.49176,
      1 -0.78465,-1.20902,-1.57697,-2.22584,-2.58228,-1.50904,-1.81022, -2.66/)
@@ -5905,7 +5935,7 @@ c This simple formula works for vertical-dip faults.
 c f3 term is computed outside loop to save time
 		if(mt .gt .0)then
 		iit=min(200,ii-1)
-c the array has only been defined to a max distance of 200 km. Beyond 200: use 200's val.
+c the array has only been defined to a max distance of 200 km. Beyond 200: use 200s val.
                f4= avghwcb(iit,mt,jp)	!this value is period dependent.
                else
                f4=0.0
@@ -7377,22 +7407,20 @@ c Added 2.5 and 25 hz July 1 2008 (for NRC projects). Add 20 hz, or 0.05 s. july
 	parameter (sqrt2=1.414213562,npmx=11)
 c There is a new CEUS document (7/2008) at 
 c pacificengineering.com. looks different from the 2002 CEUS model.
-c meanspec and sigmaspec: for each source. 
-c       integer, dimension(8,21) :: imsp	!stores map into the period indexes.
-       dimension pr(310,38,3,3,0:10),icode(10),wt(10,2),
-     +  wtdist(10) 
-c m-index of 30 allows 4.5 to 7.5 because of dM/2 shift (4.55 to 7.45 by 0.1)
-       real magmin,dmag,di,fac,fac2,gnd,gnd0,period,test0,test
-       integer npnga, jms, imsp(10,21)
-       real, dimension(310,38,21,3,10) :: meanspec,sigspec	!for each request. Fills inside each GMPE subroutine.
-       logical l_ms, lmsp(0:10,21)
-       logical sp,deagg	!sp=short period data different clamping (included here)
-       real, dimension(npmx) :: c1,c1hr,c2,c3,c4,c5,c6,c7,c8,c9,c10,pd,sigma,clamp
-       common / atten / pr, xlev, nlev, icode, wt, wtdist
-       common/e0_ceus/e0_ceus(310,38,0:10)
 	common/geotec/v30,dbasin
 	common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
        common/ms/npnga,jms,l_ms,lmsp,imsp,meanspec,sigspec
+c meanspec and sigmaspec: for each source. 
+      real, dimension(310,38,21,3,10) :: meanspec,sigspec	!for each request. Fills inside each GMPE subroutine.
+       common / atten / pr, xlev, nlev, icode, wt, wtdist
+       common/e0_ceus/e0_ceus(310,38,0:10)
+       integer, dimension(10,21) :: imsp	!stores map into the period indexes.
+	dimension pr(310,38,3,3,0:10),icode(10),wt(10,2),
+     +  wtdist(10) 
+c m-index of 30 allows 4.5 to 7.5 because of dM/2 shift (4.55 to 7.45 by 0.1)
+         real magmin,dmag,di,fac,fac2,gnd,gnd0,period,test0,test
+         logical sp,l_ms,lmsp(0:10,21),deagg	!sp=short period data different clamping (included here)
+	real, dimension(npmx) :: c1,c1hr,c2,c3,c4,c5,c6,c7,c8,c9,c10,pd,sigma,clamp
 	pd=(/0.,0.04,0.05,0.1,0.2,0.3,0.4,0.5,1.,2.,5./)
 	clamp = (/3.,6.,6.,6.,6.,6.,6.,6.,0.,0.,0./)	! reviewed apr 10 2008.
 	c1hr=(/5.53459,6.81012,6.63937,5.43782,3.71953,2.60689,
@@ -7485,7 +7513,7 @@ c Assume no branching on median motion(2nd to last subscr) for eastern US
   103 continue
   104 continue
       if(l_ms)then
-c Play it again, Walt, for CEUS CMS. Could lookat 5-s but we won't.
+c Play it again, Walt, for CEUS CMS. Could lookat 5-s but we wont.
 	do j=1,npnga-5
 	if(j.ne.jms .and.lmsp(ia,j)) then
 	jp=imsp(ia,j)
@@ -8043,7 +8071,7 @@ c Editorial comment I used the e3(10s)=e3(7.5)+e2(10s)-e2(7.5s) for 10s normal, 
 c report e3(10s) as 0.0 and this gives a large motion compared to others in nhbd.
 c also reported this to Dave Boore in email for his advice. SHarmsen Oct 3 2007. Gail suggests
 c that ratio for normal might equal ratio for unspecified or ratio for SS. No consensus. Using
-c Gail's sugg. This choice of e3(10s), -2.66, is very low. Normal median is probably too low.
+c Gails sugg. This choice of e3(10s), -2.66, is very low. Normal median is probably too low.
        e3= (/ 4.63188,-0.75472,-0.74551,-0.73906,-0.66722,-0.48462,
      1 -0.20578, 0.03058, 0.30185, 0.40860, 0.33880, 0.25356, 0.21398, 0.00967,-0.49176,
      1 -0.78465,-1.20902,-1.57697,-2.22584,-2.58228,-1.50904,-1.81022, -2.66/)
@@ -8763,18 +8791,21 @@ c*******************************************************************************
 	implicit none
 	real sqrt2
 	parameter (sqrt2=1.414213562)
+       common/ms/npnga,jms,l_ms,lmsp,imsp,meanspec,sigspec
 c meanspec and sigmaspec: for each source. 
       real, dimension(310,38,21,3,10) :: meanspec,sigspec	!for each request. Fills inside each GMPE subroutine.
       logical lmsp(0:10,21),l_ms	!for the CMS calcs.
       integer npnga,j,jp,jms,imsp(10,21)
+	common/geotec/vs30,dbasin
+	common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
 c wtor = weights to top of Benioff zone (km). these are applied in main, to rate matrices.
 	real, dimension(22):: b,theta1, theta2, theta6, theta7, theta8, vlin
 	real theta10(22), theta11(22), theta12(22), theta13(22), theta14(22)
 	real theta15(22), theta16(22)
 	real dtor,wtor,wtor65,delC(3), delC1,di,p,xlev,e0_sub,e0tmp,magmin,dmag
 	real dbasin, fac, xmag, R, Rep, zH, zHp, fterm,ftermp,tmp,plim,dp2,pga0,gm0,weight
-        integer ntor,Fevnt, Ffaba, delCi, c4/10/,iq,ndist,ii,im,ir,nlev
-        integer ia,nmag,ipr,k,kk
+	integer ntor,Fevnt, Ffaba, delCi, c4/10/,iq,ndist,ii,im,ir,nlev
+	integer ia,nmag,ipr,k,kk
 	logical deagg
 	real c1/7.8/, c/1.88/, n/1.18/
 	real theta3/0.1/, theta4/0.9/, theta5/0.0/, theta9/0.4/
@@ -8783,18 +8814,15 @@ c wtor = weights to top of Benioff zone (km). these are applied in main, to rate
 	real Rmax
 	real sigma/0.772/,sigmaf
 c lines from hazgrid. table production
-	real, dimension (310,38,3,3,0:10) :: pr
-       integer icode(10),ip
-       real wt(10,2),wtdist(10) 
-
-       common/ms/npnga,jms,l_ms,lmsp,imsp,meanspec,sigspec
        common/prob/p(25005),plim,dp2   !table of complementary normal probab
-       common / atten / pr, xlev, nlev, icode, wt, wtdist
-       common/e0_sub/e0_sub(310,38,3,0:10)
-       common/geotec/vs30,dbasin
-       common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
+      common / atten / pr, xlev, nlev, icode, wt, wtdist
+	common/e0_sub/e0_sub(310,38,3,0:10)
+	real, dimension (310,38,3,3,0:10) :: pr
 
-       vlin = (/865.1,1053.5,1085.7,1032.5,877.6,748.2,654.3,587.1,503.0,456.6,430.3,410.5,400.0,
+       integer icode(10),ip
+        real wt(10,2),wtdist(10) 
+	
+	vlin = (/865.1,1053.5,1085.7,1032.5,877.6,748.2,654.3,587.1,503.0,456.6,430.3,410.5,400.0,
      1            400.0, 400.0, 400.0, 400.0, 400.00, 400.0, 400.0, 400.0, 400.0/)
         b = (/-1.186, -1.346, -1.471,-1.624, -1.931,-2.188, -2.381, -2.518, -2.657, -2.669,
      1       -2.599, -2.401, -1.955, -1.025, -0.299, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000/)
@@ -11342,15 +11370,8 @@ c meanspec and sigmaspec: for each source.
       logical lmsp(0:10,21),l_ms	!for the CMS calcs.
       integer npnga,jms,jp,imsp(10,21)
 c hardrock .true. for initial pass thru.
-	common/widthH/widthH
-      common/mech/wtss,Frv,Fn
-       common/prob/p,plim,dp2   !table of complementary normal probab
-      common / atten / pr, xlev, nlev, icode, wt, wtdist
 c lines from hazgrid. table production
-	common/e0_wus/e0_wus(310,38,3,3,0:10)
-      common/epistemic/nfi,e_wind,gnd_ep,mcut,dcut
        real gnd_ep(3,3),mcut(2),dcut(2),gndout(3),gndx
-      common/depth_rup/ntor,dtor,wtor,wtor65
       real, dimension(25005):: p
        real, dimension (310,38,3,3,0:10):: pr
        real :: xlev
@@ -11376,6 +11397,13 @@ c lines from hazgrid. table production
       logical hwflag,useRy0,e_wind      !don't use. but keep options open in case AS change their mind
       real z10, Z1, zhat, c4_mag,weight,plim,dp2,sigmaf,diprad,y1z
       real R, V1, Vs30Star, hw_a2, h1, h2, h3, R1, R2, z1_ref,fac00,fac_c,tanfac
+      common/widthH/widthH
+      common/mech/wtss,Frv,Fn
+      common/prob/p,plim,dp2   !table of complementary normal probab
+      common / atten / pr, xlev, nlev, icode, wt, wtdist
+      common/e0_wus/e0_wus(310,38,3,3,0:10)
+      common/epistemic/nfi,e_wind,gnd_ep,mcut,dcut
+      common/depth_rup/ntor,dtor,wtor,wtor65
       save sa1180
 c updated coef set. May 16 2013. also Dec 2013. 
       data period / 0.0, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 
@@ -12448,7 +12476,7 @@ C*****Distance term
       F_disp = (c4(22) + c5(22)*Mw)*LOG(R)
 
 C*****Hanging-wall term Skip this for first goaround. SH 12/2012 (skipping assumes vertical dip)
-C     Jennifer Donahue's HW Model plus CB08 distance taper 
+C     Jennifer Donahues HW Model plus CB08 distance taper 
       f1_Rx= h1(iper) + h2(iper)*(Rx/R1) + h3(iper)*((Rx/R1)**2)
       f2_Rx= h4(iper) + h5(iper)*((Rx-R1)/(R2-R1)) + 
      +       h6(iper)*((Rx-R1)/(R2-R1))**2
@@ -12960,7 +12988,7 @@ c      print *,b1,b2,b3,b4,b5,b6,a,b
         sdi = sige
         elseif(rhat.lt.0.3)then
         sdi_ratio=g1(rhat,M,b1,b2,b3,b4,b5) - g1(0.2,M,b1,b2,b3,b4,b5)
-c because in this interval g2 is zero we don't see it ablove
+c because in this interval g2 is zero we dont see it ablove
         elseif(0.3.le. rhat .and. rhat .lt. 3.0)then
         sdi_ratio=g1(rhat,M,b1,b2,b3,b4,b5) - g1(0.2,M,b1,b2,b3,b4,b5)+
      +  g2(rhat,b6)*(M-6.5)
@@ -13022,10 +13050,10 @@ c        print *,c3,c4
 ! --------------------------------------------------------- mu1_vs30
 
       subroutine GailTable(i)
-c the "i" index refers to which model's table is read in. This is a mod
+c the "i" index refers to which models table is read in. This is a mod
 c from the snippet Gail sent, which only allows one model.
 c moved open to main. problems passing the string not resolved.
-c Currently looking at 3 possible models, AB08, AB06', or Pz11
+c Currently looking at 3 possible models, AB08, AB06, or Pz11
 c wrute ti unit 94.
         parameter (gfac=6.8875526,sfac=2.3025851)	!to convert to base e
       common/gail1/xmag(20,3), gma(20,30,20,3), rlog(30,3), f(20,3),itype(3)
@@ -13062,11 +13090,11 @@ c          if(m7)write(94,10)10**rlog(jd,i),exp(a),exp(b),exp(c)
       return
       end subroutine GailTable
 
-      real function amean11(amag,r,rjb,Vs30,ip,jf,ka)
+      real function amean11(amag,r,rjb,Vs30,jf,ka)
 c Inputs: amag: Mw
 c       r= distance (rjb or rcd, depending on ka)
 c       Vs30 = top 30 m Vs. A or BC is expected.
-c      ip = global period index
+c      remove ip index: always 1
 c      jf = frequency index
 c      ka = 1,2, or 3 depending on which table to use AB06 AB08 or P11
 c     Gets ground motion value (ln PSA) from table
@@ -13079,13 +13107,13 @@ c     Gets ground motion value (ln PSA) from table
       parameter (gfac=6.8875526,sfac=2.3025851)	!to convert to base e
 c frequencies: 0.2, 0.33, 0.5, 1.0, 2.0, 3.33, 5., 10., 20., 33.0, 50., PGA, PGV
             bcfac = (/0.06, 0.08,0.09, 0.11, 0.14, 0.14, 0.12, 0.03, -0.2, -.045, -.045, -.045,0.09/)
-c bcfac for pga can be a function of rjb= -0.3+.15 log(rjb) (Repi in Gail's notes)
+c bcfac for pga can be a function of rjb= -0.3+.15 log(rjb) (Repi in Gails notes)
 c     
 c     Use interpolation to get amean for given freq(jfreq), amag, R (hazard looping values).
 c     Note that freq(jfreq) is the defined block of freq. for hazard calcs (common block)
 c     GMPE tables give values(gma) for freq array f(nf), for distances rlog(nd), magnitudes xmag(nm)
 c
-c The frequency is already known. It is input. Don't need to search.
+c The frequency is already known. It is input. Dont need to search.
       jfl=jf
       rl = alog10(r)
       jdflag = 0
@@ -13186,25 +13214,24 @@ c the Pezeshk article is in base10 logarithm units. we work in natural log units
       return
       end function sigPez11
 cccccccccccccccc
-      subroutine getAB06p(ip,iq,fr,ia,ndist,di,nmag,magmin,dmag)
-c 13 periods incl PGV.
+      subroutine getAB06p(iq,fr,ia,ndist,di,nmag,magmin,dmag)
+c 13 periods incl PGV (index 13) and PGA(index 12).
 c added Nov 1 2012.
-c Period indexes ip = counter index. iq = index associated with clamp
+c Period indexes  iq = index associated with clamp
 c fr = frequency (Hz) and code in Atkinson Lexicon 99 = pga; 89 =pgv.
 c 
 c 
 c Table GR/A08revA_Rjb.dat assumes hardrock model .
 c clamp on upper-bound ground accel is applied here. As in original hazgridX code.
-       parameter (sqrt2=1.414213562, pi=3.141592654,np=13)
-       logical et,deagg,sp,lceus_sigma  !sp = short period but not pga?
-       integer npnga, jms, imsp(10,21)
-       real, dimension(310,38,21,3,10) :: meanspec,sigspec	!for each request. Fills inside each GMPE subroutine.
-       logical l_ms, lmsp(0:10,21)
-
-       common/ceus_sig/lceus_sigma,ceus_sigma
-       common/geotec/vs30,dbasin
-       common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
-       common/ms/npnga,jms,l_ms,lmsp,imsp,meanspec,sigspec
+        parameter (sqrt2=1.414213562, pi=3.141592654,np=13)
+        logical et,deagg,sp,lceus_sigma  !sp = short period but not pga?
+        common/ceus_sig/lceus_sigma,ceus_sigma
+      common/geotec/vs30,dbasin
+      common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
+      common/ms/npnga,jms,l_ms,lmsp,imsp,meanspec,sigspec
+      real, dimension(310,38,21,3,10) :: meanspec,sigspec	!for each request. Fills inside each GMPE subroutine.
+	logical l_ms,lmsp(0:10,21)
+	integer imsp(10,21)
       real magmin,dmag,gndm,gnd
              real, dimension(np):: perx(np)
            real   clamp(9)
@@ -13213,9 +13240,13 @@ c clamp on upper-bound ground accel is applied here. As in original hazgridX cod
       common / atten / pr, xlev, nlev, icode, wt,wtdist
 c e0_ceus not saving a depth of rupture dim, not sens. to this
       common/e0_ceus/e0_ceus(310,38,0:10)
-	real pr(310,38,3,3,0:10),wt(10,2),wtdist(10) 
+	real pr(310,38,3,3,0:10),wt(10,2),wtdist(10),a11fr(13),ms_p(21) 
       integer nlev,icode(10)
        character*32 name
+       a11fr =(/0.20,0.33,0.50, 1., 2.00, 3.33, 5.,10.,20.,33.,50.,99.,89./)
+       ms_p = (/0.010, 0.020, 0.030, 0.050, 0.075, 0.100,
+     + 0.150, 0.200, 0.250, 0.300, 0.400, 0.500, 0.750, 1.000,
+     + 1.500, 2.000, 3.000, 4.000, 5.0, 7.5, 10.0/)
            clamp = (/3.,6.,0.,6.,6.,6.,0.,6.,6./)
         name ='GR/AB06revA_Rcd.dat'
         name=trim(name)
@@ -13254,13 +13285,17 @@ c-- loop through distances. ii index corresponds to rjb.
       if(dist0.gt.wtdist(ia)) weight= wt(ia,2)
       dist= sqrt(dist0*dist0+hsq)
       rkm=dist
-       gnd = amean11(xmag,rkm,rjbp,vs30,ip,jf,2)      !ka=2
+       gnd = amean11(xmag,rkm,rjbp,vs30,jf,2)      !ka=2
 c---following is for clipping gnd motions: 1.5g PGA, 3.0g  for 0.3s, 3.0g 0.2s sa median 
           if(fr.gt.90.)then
            gnd=min(0.405,gnd)
            elseif(fr.gt.2.and.fr.lt.8.)then
            gnd=min(gnd,1.099)
            endif
+	if(l_ms)then
+	meanspec(ii,m,jms,1,ia)=gnd
+	sigspec(ii,m,jms,1,ia)=sigma	
+	endif
 c           if(rkm.lt.25.)write(25,*)rkm,exp(gnd),xmag
            test0=gnd + 3.*sigma
       test= exp(test0)
@@ -13288,53 +13323,90 @@ c the depth to top is relevant to this GMPE. So the kk slot may receive depth-de
 103      continue
 104      continue
   	if(l_ms)then
-c Play it again, GAil, for the CEUS CMS.
-	          sigmat = sigma		!fixed sigma for this GMPE.
-	do j=1,npnga-2	!5s max for the Toro relation.
+c Play it again, Gail, for the CEUS CMS.
+	do j=1,npnga-2	!5s max for the AB06p relation.
 	if(lmsp(ia,j) .and. j.ne.jms)then
 	jp=imsp(ia,j)
-	print *,j,jp,'CMS indexes in getAB06p'
-c work in progress june 24 2013.
+	print *,j,ms_p(j),a11fr(jp),'CMS indexes in getAB06p'
+c work in progress dec 18 2013
+      do m=1,nmag
+      xmag0= magmin + (m-1)*dmag
+c  First convert mb_Lg to Mw if called on to do so.
+        if(icode(ia).eq.1) THEN
+        xmag= 1.14 +0.24*xmag0+0.0933*xmag0*xmag0
+        ELSEif(icode(ia).eq.2) then
+        xmag= 2.715 -0.277*xmag0+0.127*xmag0*xmag0
+        else
+        xmag=xmag0      !Mw coming in.
+        endif
+c--- loop through atten. relations for each period
+c-- gnd for SS; gnd2 for thrust; gnd3 for normal
+c Using Rcd metric: Do  loop over depth of rupture. dtor replaces bdepth in this subroutine.
+c      do  kk=1,ntor
+      hsq=dtor(ntor)**2
+c-- loop through distances. ii index corresponds to rjb.
+      do  ii=1,ndist
+      dist0= (ii-.5)*di 
+      rjbp=max(dist0,0.11)	!a lower bound 110 meters. pretty close to the source.
+
+      dist= sqrt(dist0*dist0+hsq)
+      rkm=dist
+       gnd = amean11(xmag,rkm,rjbp,vs30,jp,2)      !ka=2
+	meanspec(ii,m,j,1,ia)=gnd
+	sigspec(ii,m,j,1,ia)=sigma		endif
+       enddo	!distance
+c       enddo	!top of rupture: dont loop. not saving this one in meanspec.
+       enddo	!magnitude
+c---following is for clipping gnd motions: 1.5g PGA, 3.0g  for 0.3s, 3.0g 0.2s sa median 
 	endif	!available period?
 	enddo	!loop through CMS periods.
 c set up erf matrix p as ftn of dist,mag,period,level,flt type,atten type
 	endif
+	write(35,35)'#AB06p for distance bin 10 mag bin 15'
+35	format(/,a)
+	do j=1,21
+	if(lmsp(ia,j)) write(35,*)ms_p(j),exp(meanspec(10,15,j,1,ia))
+	enddo
       return
 202      print *,name
       stop' put this file in the expected folder'
       	end subroutine getAB06p
       
 cccccccccccccccc
-      subroutine getA08p(ip,iq,fr,ia,ndist,di,nmag,magmin,dmag)
+      subroutine getA08p(iq,fr,ia,ndist,di,nmag,magmin,dmag)
 c 13 periods incl PGV.
 c added Oct 31 2012.
-c Period indexes ip = counter index. iq = index associated with clamp
+c Period index:  iq = index associated with clamp
 c fr = frequency (Hz) and code in Atkinson Lexicon 99 = pga; 89 =pgv.
 c 
 c 
 c Table GR/A08revA_Rjb.dat assumes hardrock model .
 c clamp on upper-bound ground accel is applied here. As in original hazgridX code.
+	integer np
+	real sqrt2,pi
         parameter (sqrt2=1.414213562, pi=3.141592654,np=13)
         logical et,deagg,sp,lceus_sigma  !sp = short period but not pga?
         common/ceus_sig/lceus_sigma,ceus_sigma
-       common/geotec/vs30,dbasin
-       common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
-       real magmin,dmag,gndm,gnd
-       real, dimension(np):: perx(np)
-       real   clamp(9)
-       integer npnga, jms, imsp(10,21)
-       real, dimension(310,38,21,3,10) :: meanspec,sigspec	!for each request. Fills inside each GMPE subroutine.
-       logical l_ms, lmsp(0:10,21)
-
+      common/geotec/vs30,dbasin
+      common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
+      real magmin,dmag,gndm,gnd,ms_p(21)
+             real, dimension(np):: perx(np)
+           real   clamp(9)
       common/ia08/ia08
-      integer :: ia08
+      integer :: ia08,ip,iq
       common / atten / pr, xlev, nlev, icode, wt,wtdist
 c e0_ceus not saving a depth of rupture dim, not sens. to this
       common/e0_ceus/e0_ceus(310,38,0:10)
       common/ms/npnga,jms,l_ms,lmsp,imsp,meanspec,sigspec
+      real, dimension(310,38,21,3,10) :: meanspec,sigspec	!for each request. Fills inside each GMPE subroutine.
+      integer imsp(10,21)
+	logical l_ms,lmsp(0:10,21)
       real pr(310,38,3,3,0:10),xlev,wt(10,2),wtdist(10) 
       integer nlev,icode(10)
        character*32 name
+       ms_p = (/0.010, 0.020, 0.030, 0.050, 0.075, 0.100,
+     + 0.150, 0.200, 0.250, 0.300, 0.400, 0.500, 0.750, 1.000,
+     + 1.500, 2.000, 3.000, 4.000, 5.0, 7.5, 10.0/)
            clamp = (/3.,6.,0.,6.,6.,6.,0.,6.,6./)
         name ='GR/A08revA_Rjb.dat'
         name=trim(name)
@@ -13372,7 +13444,7 @@ c-- loop through distances. ii index corresponds to rjb.
       weight= wt(ia,1)
       if(dist0.gt.wtdist(ia)) weight= wt(ia,2)
 c      dist= sqrt(dist0*dist0+hsq)
-       gnd = amean11(xmag,rkm,rjbp,vs30,ip,jf,1)      !ka=1
+       gnd = amean11(xmag,rkm,rjbp,vs30,jf,1)      !ka=1
 c---following is for clipping gnd motions: 1.5g PGA, 3.0g  for 0.3s, 3.0g 0.2s sa median 
           if(fr.gt.90.)then
            gnd=min(0.405,gnd)
@@ -13397,16 +13469,57 @@ c           if(rkm.lt.25.)write(26,*)rkm,exp(gnd),xmag
        e0tmp = -fac*temp*sqrt2
        e0_ceus(ii,m,ia)=e0tmp
        e0_ceus(ii,m,0)= e0_ceus(ii,m,0) + e0tmp
+	if(l_ms)then
+	meanspec(ii,m,jms,1,ia)=gnd
+	sigspec(ii,m,jms,1,ia)=sigma	
+	endif
 	   pr(ii,m,1:ntor,1,ia)= weight*temp1
 199        pr(ii,m,1:ntor,1,0)= pr(ii,m,1:ntor,1,0)+weight*temp1      !sum thru ia index
 c the depth to top is immaterial to this GMPE. So the 1:ntor slots all receive the same hazard.
 103      continue
 104      continue
   	if(l_ms)then
-c Play it again, GAil, for the CEUS CMS.
-	print *,"CMS calculations not prepared for A08' june 2013"
-	stop
-	endif
+c Play it again, GAil, for the CEUS CMS. Needs clamps Dec 19 2013.
+	do j=1,npnga-2	!5s max for the A08p relation.
+	if(lmsp(ia,j) .and. j.ne.jms)then
+	jp=imsp(ia,j)
+c	print *,j,jp,'CMS indexes in getA08p'
+c work in progress Dec 19 2013.
+      do  m=1,nmag
+      xmag0= magmin + (m-1)*dmag
+c  First convert mb_Lg to Mw if called on to do so. Two models are used (icode 1 and 2)
+        if(icode(ia).eq.1) THEN
+        xmag= 1.14 +0.24*xmag0+0.0933*xmag0*xmag0
+        ELSEif(icode(ia).eq.2) then
+        xmag= 2.715 -0.277*xmag0+0.127*xmag0*xmag0
+        else
+        xmag=xmag0      !Mw coming in.
+        endif
+c--- loop through atten. relations for each period
+c-- gnd for SS; gnd2 for thrust; gnd3 for normal
+c Using Rjb metric: Do not loop over depth of rupture. dtor replaces bdepth in this subroutine.
+c-- loop through distances. ii index corresponds to rjb.
+      do  ii=1,ndist
+      dist0= (ii-.5)*di 
+      rjbp=max(dist0,0.11)	!a lower bound 110 meters. pretty close to the source.
+
+      rkm=rjbp
+      weight= wt(ia,1)
+      if(dist0.gt.wtdist(ia)) weight= wt(ia,2)
+c      dist= sqrt(dist0*dist0+hsq)
+       gnd = amean11(xmag,rkm,rjbp,vs30,jp,1)      !jp is a freq. index. ka=1
+	meanspec(ii,m,j,1,ia)=gnd
+	sigspec(ii,m,j,1,ia)=sigma	
+	enddo	!ii index (distance)
+	enddo	!m indx (magnitude)
+	endif	!available period?
+	enddo	!loop through CMS periods.
+	write(35,35)'#A08p for distance bin 10 mag bin 15'
+35	format(/,a)
+	do j=1,21
+	if(lmsp(ia,j)) write(35,*)ms_p(j),exp(meanspec(10,15,j,1,ia))
+	enddo
+	endif	!want CMS?
       return
 202      print *,name
       stop' put this file in the expected folder'
@@ -13414,42 +13527,41 @@ c Play it again, GAil, for the CEUS CMS.
 
 
 cccccccccccccccc
-      subroutine getPez11(ip,iq,fr,ia,ndist,di,nmag,magmin,dmag)
+      subroutine getPez11(iq,fr,ia,ndist,di,nmag,magmin,dmag)
 c 13 periods incl PGV.
 c added Oct 31 2012.
-c Period indexes ip = counter index. iq = index associated with clamp
+c Period indexes . iq = index associated with clamp
 c fr = frequency (Hz) and code in Atkinson Lexicon 99 = pga; 89 =pgv.
 c ia = attenuation model # for each preiod ip.
 c 
 c 
 c Table GR/P11A_Rcd.dat.dat assumes hardrock model .
 c clamp on upper-bound ground accel is applied here. As in original hazgridX code.
-c     parameter (sqrt2=1.414213562, pi=3.141592654,np=13)
-      parameter (np=13)
-      logical et,deagg,sp,lceus_sigma  !sp = short period but not pga?
-      real magmin,dmag,gndm,gnd,test0,test
-      real, dimension(np):: perx(np)
-      real   clamp(9)
-      real sigma,sigPez11,xmag,hsq,rjbp,rkm
-      integer :: ia08
-      integer m,jf,kk,ip,ia
-      integer npnga, jms, imsp(10,21)
-      real, dimension(310,38,21,3,10) :: meanspec,sigspec	!for each request. Fills inside each GMPE subroutine.
-      logical l_ms, lmsp(0:10,21)
-
-
-      parameter (sqrt2=1.414213562, pi=3.141592654)
-      common/ceus_sig/lceus_sigma,ceus_sigma
-      common / atten / pr, xlev, nlev, icode, wt,wtdist
+        parameter (sqrt2=1.414213562, pi=3.141592654,np=13)
+        logical et,deagg,sp,lceus_sigma  !sp = short period but not pga?
+        common/ceus_sig/lceus_sigma,ceus_sigma
       common/geotec/vs30,dbasin
       common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
       common/ms/npnga,jms,l_ms,lmsp,imsp,meanspec,sigspec
+      real, dimension(310,38,21,3,10) :: meanspec,sigspec	!for each request. Fills inside each GMPE subroutine.
+	logical l_ms,lmsp(0:10,21)
+	integer imsp(10,21)
+      real magmin,dmag,gndm,gnd,test0,test
+             real, dimension(np):: perx(np)
+           real   clamp(9)
+           real sigma,sigPez11,xmag,hsq,rjbp,rkm
       common/ia08/ia08
+      integer :: ia08
+      integer m,jf,kk,ip,ia
+      common / atten / pr, xlev, nlev, icode, wt,wtdist
 c e0_ceus not saving a depth of rupture dim, not sens. to this
       common/e0_ceus/e0_ceus(310,38,0:10)
-      real pr(310,38,3,3,0:10),xlev,wt(10,2),wtdist(10) 
+      real pr(310,38,3,3,0:10),xlev,wt(10,2),wtdist(10),ms_p(21) 
       integer nlev,icode(10)
        character*32 name
+       ms_p = (/0.010, 0.020, 0.030, 0.050, 0.075, 0.100,
+     + 0.150, 0.200, 0.250, 0.300, 0.400, 0.500, 0.750, 1.000,
+     + 1.500, 2.000, 3.000, 4.000, 5.0, 7.5, 10.0/)
            clamp = (/3.,6.,0.,6.,6.,6.,0.,6.,6./)
         name ='GR/P11A_Rcd.dat'
         name=trim(name)
@@ -13487,13 +13599,17 @@ c-- loop through distances. ii index corresponds to rjb.
       if(dist0.gt.wtdist(ia)) weight= wt(ia,2)
       dist= sqrt(dist0*dist0+hsq)
       rkm=dist
-       gnd = amean11(xmag,rkm,rjbp,vs30,ip,jf,3)      !ka=3 to access Pezeshk model.
+       gnd = amean11(xmag,rkm,rjbp,vs30,jf,3)      !ka=3 to access Pezeshk model.
 c---following is for clipping gnd motions: 1.5g PGA, 3.0g  for 0.3s, 3.0g 0.2s sa median 
           if(fr.gt.90.)then
            gnd=min(0.405,gnd)
            elseif(fr.gt.2.and.fr.lt.8.)then
            gnd=min(gnd,1.099)
            endif
+           if(l_ms)then
+	meanspec(ii,m,jms,1,ia)=gnd
+	sigspec(ii,m,jms,1,ia)=sigma
+	endif	
            test0=gnd + 3.*sigma
       test= exp(test0)
       if(clamp(iq).lt.test .and. clamp(iq).gt.0.) then
@@ -13521,8 +13637,49 @@ c the depth to top is material to this GMPE. So a kk index has to be included.
 104      continue
   	if(l_ms)then
 c Play it again, Mr Pezeshk, for the CEUS CMS.
-	print *,"CMS calculations not prepared for Pez11 june 2013"
-	stop
+	do j=1,npnga-2	!5s max for the A08p relation.
+	if(lmsp(ia,j) .and. j.ne.jms)then
+	jp=imsp(ia,j)
+c	print *,j,jp,'CMS indexes in getPez11'
+c work in progress Dec 19 2013.
+      do  m=1,nmag
+      xmag0= magmin + (m-1)*dmag
+c mag-dependent sigma. First convert mb_Lg to Mw if called on to do so.
+        if(icode(ia).eq.1) THEN
+        xmag= 1.14 +0.24*xmag0+0.0933*xmag0*xmag0
+        ELSEif(icode(ia).eq.2) then
+        xmag= 2.715 -0.277*xmag0+0.127*xmag0*xmag0
+        else
+        xmag=xmag0      !Mw coming in.
+        endif
+      sigma=sigPez11(xmag,jp)
+c      print *,fr,xmag,sigma
+c      if(sigma.gt.2.)stop
+c--- loop through atten. relations for each period
+c-- gnd for SS; gnd2 for thrust; gnd3 for normal
+c Using Rcd metric: Do loop over depth of rupture. dtor replaces bdepth in this subroutine.
+c      do  kk=1,ntor
+      hsq=dtor(ntor)**2
+c      write(27,*)
+c-- loop through distances. ii index corresponds to rjb.
+      do  ii=1,ndist
+      dist0= (ii-.5)*di 
+      rjbp=max(dist0,0.11)	!a lower bound 110 meters. pretty close to the source.
+      dist= sqrt(dist0*dist0+hsq)
+      rkm=dist
+       gnd = amean11(xmag,rkm,rjbp,vs30,jp,3)      !ka=3 to access Pezeshk model.
+	meanspec(ii,m,j,1,ia)=gnd
+	sigspec(ii,m,j,1,ia)=sigma	
+	enddo	!dist
+	enddo	!mag
+c	enddo	!depth of top
+	endif	!available CMS period?
+	enddo	!CMS period loop
+	write(35,35)'#Pez11 for distance bin 10 mag bin 15'
+35	format(/,a)
+	do j=1,21
+	if(lmsp(ia,j)) write(35,*)ms_p(j),exp(meanspec(10,15,j,1,ia))
+	enddo
 	endif
       return
 202      print *,name

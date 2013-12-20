@@ -1,4 +1,5 @@
-c--- program deaggFLTH.2013.f; 12/16/2013; Use  with 2nd gen NGA relations, or others.
+c--- program deaggFLTH.2013.f; 12/18/2013; Use  with 2nd gen NGA relations, or others.
+c 12/18/2013: updated to run with gfortran (M.Moschetti).
 c 12/17/2013: in ASK13, add hardrock median calcs at periods defining the CMS
 c 12/16/2013: update some a1 coeffs in ASK13 model for short periods. Email from Sanaz R.
 c 11/26/2013: global indexes for AB06',A08', and Pez11 set up.
@@ -388,6 +389,7 @@ c One goes to output name given, two, to output//.p and three, to output//.m
         real, dimension(100) :: ale, ale2
 c  array of station coordinates if using list option
       integer, dimension(nfltmx):: igroup,jseg,nmagf,itest,mx_index
+      integer, dimension(12) :: imsc_ga	!atkinson-ceus to CMS period map
        real, dimension(nfltmx):: cDPP
       integer, dimension (50,nfltmx) :: nrupd,nrups
 c add some arrays for storing information related to downdip ruptures.
@@ -533,6 +535,7 @@ c Abrahamson Silva 2013 model 23 periods but #23 is bogus.
      &         2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0/
 c atkinson and pezeshk 2011 frequency set in a11fr (added June 17 2013)
        a11fr =(/0.20,    0.33, 0.50, 1.00, 2.00, 3.33, 5.00,10.00,20.,33.00,50.00,99.00,89.00/)
+	       imsc_ga= (/19,17,16,14,12,10,8,6,4,3,2,1/)
 c perbssa13 is the available set of spectral periods for the  April 2013 BSSA NGAW gmpe
 	perbssa13=(/-1.000000, 0.000000, 0.010000, 0.020000, 0.022000, 0.025000, 0.029000,
      + 0.030000, 0.032000, 0.035000, 0.036000, 0.040000, 0.042000, 0.044000, 0.045000, 0.046000, 0.048000,
@@ -1017,6 +1020,13 @@ c First group, the 2011 tables from Gail A.
        callme(3)=.false.
        endif   !read table 3?
         ip11=kf
+	do j=1,12
+	lmsp(ia,imsc_ga(j))=.true.
+	imsp(ia,imsc_ga(j))=j
+c	print *,lmsp(ia,imsc_ga(j)),imsp(ia,imsc_ga(j)),a11fr(j)
+	enddo	!j=1,12 
+c For new CEUS relations t=5.0 s longest available period (fr=0.2 Hz). Index of 5s is npnga-2
+	kmsp(ia)=npnga-2 ; kmsp(0)=min(kmsp(0),npnga-2)
        endif       !if ia = 25, 26, or 27
        endif		!ceus11?
        if(iatt.eq.6) then
@@ -2583,7 +2593,17 @@ c new code for CEUS11 GMPEs added june 17 2013.
       jf=ia08
              ka=1
              sigma = 0.3*2.303
-       gnd(1) = amean11(xmag,rkm,rjbp,vs30,ip,jf,ka)
+       gnd(1) = amean11(xmag,rkm,rjbp,vs30,jf,ka)
+	if(l_ms)then
+	sigspec=sigma	!same value all periods
+	meanspec(jms)=gnd(1)
+	do j=1,npnga-2	!5s max for the CEUS11 relations.
+	if(lmsp(ia,j) .and. j.ne.jms)then
+	jp=imsp(ia,j)
+	meanspec(j)=amean11(xmag,rkm,rjbp,vs30,jp,ka)
+	endif
+	enddo
+	endif
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
@@ -2592,7 +2612,17 @@ c     print *,gnd,rkm,ip,jf,ka
        jf=ia06
        ka=2
              sigma = 0.3*2.303
-       gnd(1) = amean11(xmag,rkm,rjbp,vs30,ip,jf,ka)
+       gnd(1) = amean11(xmag,rkm,rjbp,vs30,jf,ka)
+	if(l_ms)then
+	sigspec=sigma	!same value all periods
+	meanspec(jms)=gnd(1)
+	do j=1,npnga-2	!5s max for the CEUS11 relations.
+	if(lmsp(ia,j) .and. j.ne.jms)then
+	jp=imsp(ia,j)
+	meanspec(j)=amean11(xmag,rkm,rjbp,vs30,jp,ka)
+	endif
+	enddo
+	endif
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
@@ -2602,7 +2632,17 @@ c     print *,gnd,rkm,ip,jf,ka
 c 2nd variable in sigPez11 is the frequency index according to the GailA set 2011.
       sigma = sigPez11(xmag,jf)	!new 10/30/2012. SH.
        ka=3
-       gnd(1) = amean11(xmag,rkm,rjbp,vs30,ip,jf,ka)
+       gnd(1) = amean11(xmag,rkm,rjbp,vs30,jf,ka)
+	if(l_ms)then
+	sigspec=sigma	!same value all periods
+	meanspec(jms)=gnd(1)
+	do j=1,npnga-2	!5s max for the CEUS11 relations.
+	if(lmsp(ia,j) .and. j.ne.jms)then
+	jp=imsp(ia,j)
+	meanspec(j)=amean11(xmag,rkm,rjbp,vs30,jp,ka)
+	endif
+	enddo
+	endif	!l_ms? extra code for Conditional mean spectrum
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
@@ -3060,7 +3100,17 @@ c new code for CEUS11 GMPEs added june 17 2013.
       jf=ia08
              ka=1
              sigma = 0.3*2.303
-       gnd(1) = amean11(xmag2,rkm,rjbp,vs30,ip,jf,ka)
+       gnd(1) = amean11(xmag2,rkm,rjbp,vs30,jf,ka)
+	if(l_ms)then
+	sigspec=sigma	!same value all periods
+	meanspec(jms)=gnd(1)
+	do j=1,npnga-2	!5s max for the CEUS11 relations.
+	if(lmsp(ia,j) .and. j.ne.jms)then
+	jp=imsp(ia,j)
+	meanspec(j)=amean11(xmag,rkm,rjbp,vs30,jp,ka)
+	endif
+	enddo
+	endif
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
@@ -3069,7 +3119,17 @@ c     print *,gnd,rkm,ip,jf,ka
        jf=ia06
        ka=2
              sigma = 0.3*2.303
-       gnd(1) = amean11(xmag2,rkm,rjbp,vs30,ip,jf,ka)
+       gnd(1) = amean11(xmag2,rkm,rjbp,vs30,jf,ka)
+	if(l_ms)then
+	sigspec=sigma	!same value all periods
+	meanspec(jms)=gnd(1)
+	do j=1,npnga-2	!5s max for the CEUS11 relations.
+	if(lmsp(ia,j) .and. j.ne.jms)then
+	jp=imsp(ia,j)
+	meanspec(j)=amean11(xmag,rkm,rjbp,vs30,jp,ka)
+	endif
+	enddo
+	endif
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
@@ -3079,7 +3139,17 @@ c     print *,gnd,rkm,ip,jf,ka
 c 2nd variable in sigPez11 is the frequency index according to the GailA set 2011.
       sigma = sigPez11(xmag2,jf)	!new 10/30/2012. SH.
        ka=3
-       gnd(1) = amean11(xmag,rkm,rjbp,vs30,ip,jf,ka)
+       gnd(1) = amean11(xmag,rkm,rjbp,vs30,jf,ka)
+	if(l_ms)then
+	sigspec=sigma	!same value all periods
+	meanspec(jms)=gnd(1)
+	do j=1,npnga-2	!5s max for the CEUS11 relations.
+	if(lmsp(ia,j) .and. j.ne.jms)then
+	jp=imsp(ia,j)
+	meanspec(j)=amean11(xmag,rkm,rjbp,vs30,jp,ka)
+	endif
+	enddo
+	endif
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
@@ -3446,7 +3516,17 @@ c new code for CEUS11 GMPEs added june 17 2013.
       jf=ia08
              ka=1
              sigma = 0.3*2.303
-       gnd(1) = amean11(xmag,rkm,rjbp,vs30,ip,jf,ka)
+       gnd(1) = amean11(xmag,rkm,rjbp,vs30,jf,ka)
+	if(l_ms)then
+	sigspec=sigma	!same value all periods
+	meanspec(jms)=gnd(1)
+	do j=1,npnga-2	!5s max for the CEUS11 relations.
+	if(lmsp(ia,j) .and. j.ne.jms)then
+	jp=imsp(ia,j)
+	meanspec(j)=amean11(xmag,rkm,rjbp,vs30,jp,ka)
+	endif
+	enddo
+	endif
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
@@ -3455,7 +3535,17 @@ c     print *,gnd,rkm,ip,jf,ka
        jf=ia06
        ka=2
              sigma = 0.3*2.303
-       gnd(1) = amean11(xmag,rkm,rjbp,vs30,ip,jf,ka)
+       gnd(1) = amean11(xmag,rkm,rjbp,vs30,jf,ka)
+	if(l_ms)then
+	sigspec=sigma	!same value all periods
+	meanspec(jms)=gnd(1)
+	do j=1,npnga-2	!5s max for the CEUS11 relations.
+	if(lmsp(ia,j) .and. j.ne.jms)then
+	jp=imsp(ia,j)
+	meanspec(j)=amean11(xmag,rkm,rjbp,vs30,jp,ka)
+	endif
+	enddo
+	endif
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
@@ -3465,7 +3555,17 @@ c     print *,gnd,rkm,ip,jf,ka
 c 2nd variable in sigPez11 is the frequency index according to the GailA set 2011.
       sigma = sigPez11(xmag,jf)	!new 10/30/2012. SH.
        ka=3
-       gnd(1) = amean11(xmag,rkm,rjbp,vs30,ip,jf,ka)
+       gnd(1) = amean11(xmag,rkm,rjbp,vs30,jf,ka)
+	if(l_ms)then
+	sigspec=sigma	!same value all periods
+	meanspec(jms)=gnd(1)
+	do j=1,npnga-2	!5s max for the CEUS11 relations.
+	if(lmsp(ia,j) .and. j.ne.jms)then
+	jp=imsp(ia,j)
+	meanspec(j)=amean11(xmag,rkm,rjbp,vs30,jp,ka)
+	endif
+	enddo
+	endif
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
@@ -3934,7 +4034,17 @@ c new code for CEUS11 GMPEs added june 17 2013.
       jf=ia08
              ka=1
              sigma = 0.3*2.303
-       gnd(1) = amean11(xmag2,rkm,rjbp,vs30,ip,jf,ka)
+       gnd(1) = amean11(xmag2,rkm,rjbp,vs30,jf,ka)
+	if(l_ms)then
+	sigspec=sigma	!same value all periods
+	meanspec(jms)=gnd(1)
+	do j=1,npnga-2	!5s max for the CEUS11 relations.
+	if(lmsp(ia,j) .and. j.ne.jms)then
+	jp=imsp(ia,j)
+	meanspec(j)=amean11(xmag,rkm,rjbp,vs30,jp,ka)
+	endif
+	enddo
+	endif
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
@@ -3943,7 +4053,17 @@ c     print *,gnd,rkm,ip,jf,ka
        jf=ia06
        ka=2
              sigma = 0.3*2.303
-       gnd(1) = amean11(xmag2,rkm,rjbp,vs30,ip,jf,ka)
+       gnd(1) = amean11(xmag2,rkm,rjbp,vs30,jf,ka)
+	if(l_ms)then
+	sigspec=sigma	!same value all periods
+	meanspec(jms)=gnd(1)
+	do j=1,npnga-2	!5s max for the CEUS11 relations.
+	if(lmsp(ia,j) .and. j.ne.jms)then
+	jp=imsp(ia,j)
+	meanspec(j)=amean11(xmag,rkm,rjbp,vs30,jp,ka)
+	endif
+	enddo
+	endif
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
@@ -3953,7 +4073,17 @@ c     print *,gnd,rkm,ip,jf,ka
 c 2nd variable in sigPez11 is the frequency index according to the GailA set 2011.
       sigma = sigPez11(xmag,jf)	!new 10/30/2012. SH.
        ka=3
-       gnd(1) = amean11(xmag2,rkm,rjbp,vs30,ip,jf,ka)
+       gnd(1) = amean11(xmag2,rkm,rjbp,vs30,jf,ka)
+	if(l_ms)then
+	sigspec=sigma	!same value all periods
+	meanspec(jms)=gnd(1)
+	do j=1,npnga-2	!5s max for the CEUS11 relations.
+	if(lmsp(ia,j) .and. j.ne.jms)then
+	jp=imsp(ia,j)
+	meanspec(j)=amean11(xmag,rkm,rjbp,vs30,jp,ka)
+	endif
+	enddo
+	endif
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
@@ -4429,7 +4559,17 @@ c new code for CEUS11 GMPEs added june 17 2013.
       jf=ia08
              ka=1
              sigma = 0.3*2.303
-       gnd(1) = amean11(xmag,rkm,rjbp,vs30,ip,jf,ka)
+       gnd(1) = amean11(xmag,rkm,rjbp,vs30,jf,ka)
+	if(l_ms)then
+	sigspec=sigma	!same value all periods
+	meanspec(jms)=gnd(1)
+	do j=1,npnga-2	!5s max for the CEUS11 relations.
+	if(lmsp(ia,j) .and. j.ne.jms)then
+	jp=imsp(ia,j)
+	meanspec(j)=amean11(xmag,rkm,rjbp,vs30,jp,ka)
+	endif
+	enddo
+	endif
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
@@ -4438,7 +4578,17 @@ c     print *,gnd,rkm,ip,jf,ka
        jf=ia06
        ka=2
              sigma = 0.3*2.303
-       gnd(1) = amean11(xmag,rkm,rjbp,vs30,ip,jf,ka)
+       gnd(1) = amean11(xmag,rkm,rjbp,vs30,jf,ka)
+	if(l_ms)then
+	sigspec=sigma	!same value all periods
+	meanspec(jms)=gnd(1)
+	do j=1,npnga-2	!5s max for the CEUS11 relations.
+	if(lmsp(ia,j) .and. j.ne.jms)then
+	jp=imsp(ia,j)
+	meanspec(j)=amean11(xmag,rkm,rjbp,vs30,jp,ka)
+	endif
+	enddo
+	endif
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
@@ -4448,7 +4598,17 @@ c     print *,gnd,rkm,ip,jf,ka
 c 2nd variable in sigPez11 is the frequency index according to the GailA set 2011.
       sigma = sigPez11(xmag,jf)	!new 10/30/2012. SH.
        ka=3
-       gnd(1) = amean11(xmag,rkm,rjbp,vs30,ip,jf,ka)
+       gnd(1) = amean11(xmag,rkm,rjbp,vs30,jf,ka)
+	if(l_ms)then
+	sigspec=sigma	!same value all periods
+	meanspec(jms)=gnd(1)
+	do j=1,npnga-2	!5s max for the CEUS11 relations.
+	if(lmsp(ia,j) .and. j.ne.jms)then
+	jp=imsp(ia,j)
+	meanspec(j)=amean11(xmag,rkm,rjbp,vs30,jp,ka)
+	endif
+	enddo
+	endif
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
@@ -11782,7 +11942,8 @@ c the "i" index refers to which model's table is read in. This is a mod
 c from the snippet Gail sent, which only allows one model.
 c moved open to main. problems passing the string not resolved.
 c Currently looking at 3 possible models, AB08, AB06', or Pz11
-c wrute ti unit 94.
+c Do not write to unit 94. All available periods are read in. 1st dimension (jf) is freq.
+c
         parameter (gfac=6.8875526,sfac=2.3025851)	!to convert to base e
       common/gail1/xmag(20,3), gma(20,30,20,3), rlog(30,3), f(20,3),itype(3)
       common/gail2/nf(3), nd(3), nm(3)
@@ -11801,15 +11962,15 @@ c wrute ti unit 94.
 99      format(a)
       read(3,*) (f(jf,i), jf=1,nf(i))
 c
-      write(94,9)fname(i2:i3), itype(i)
-      write(94,99)'R(km)  1hzSA(g)   5hzSA(g)	  PGA(g) for hard rock'
+c      write(94,9)fname(i2:i3), itype(i)
+c      write(94,99)'R(km)  1hzSA(g)   5hzSA(g)	  PGA(g) for hard rock'
       do 5000 jm = 1, nm(i)
         read(3,*)xmag(jm,i)
         m7=xmag(jm,i).eq.7.0
         do 4000 jd = 1, nd(i)
           read(3,*)rlog(jd,i),(gma(jf,jd,jm,i), jf = 1,nf(i))
-          a=gma(4,jd,jm,i)*sfac-gfac;b=gma(7,jd,jm,i)*sfac-gfac;c=gma(12,jd,jm,i)*sfac-gfac
-          if(m7)write(94,10)10**rlog(jd,i),exp(a),exp(b),exp(c)
+c          a=gma(4,jd,jm,i)*sfac-gfac;b=gma(7,jd,jm,i)*sfac-gfac;c=gma(12,jd,jm,i)*sfac-gfac
+c          if(m7)write(94,10)10**rlog(jd,i),exp(a),exp(b),exp(c)
 10      format(f7.1,1p,3(1x,e11.5))
 4000    continue
 5000  continue
@@ -11817,11 +11978,11 @@ c
       return
       end subroutine GailTable
 
-      real function amean11(amag,r,rjb,Vs30,ip,jf,ka)
+      real function amean11(amag,r,rjb,Vs30,jf,ka)
 c Inputs: amag: Mw
 c       r= distance (rjb or rcd, depending on ka)
 c       Vs30 = top 30 m Vs. A or BC is expected.
-c      ip = global period index
+c      ip = global period index not used.
 c      jf = frequency index
 c      ka = 1,2, or 3 depending on which table to use AB06 AB08 or P11
 c     Gets ground motion value (ln PSA) from table
@@ -11849,7 +12010,7 @@ c     check near the edges (in case match of frequencies not exact)
       jfu = jfl + 1
       fracf = 0.
       if (jf.gt.11) go to 15
-      fracf = (alog10 (freq(ip)) - alog10 (f(jfl,ka)) ) /
+      fracf = (alog10 (freq(jf)) - alog10 (f(jfl,ka)) ) /
      *        (alog10 (f(jfu,ka)) - alog10 (f(jfl,ka)) )
 c**   fracf gives interpolation fraction in frequency
 15    continue
@@ -11903,9 +12064,9 @@ c Also, nothing in 2011 models is available for handing soil Vs.
 c change to base e log to fit into standard framework. Convert to units g
       amean11 = amean*sfac -gfac
 c apply the median clamp for some frequencies. Gail email, Mar 23, 2011.
-      if(freq(ip).gt.2.1 .and. freq(ip) .lt.8.)then
+      if(freq(jf).gt.2.1 .and. freq(jf) .lt.8.)then
       amean11=min(amean11,1.792)
-      elseif(freq(ip).gt.90.)then
+      elseif(freq(jf).gt.90.)then
       amean11=min(amean11,0.4055)
       endif
       return

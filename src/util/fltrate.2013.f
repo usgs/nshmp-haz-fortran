@@ -1,4 +1,4 @@
-c-----fltrate.2013.f: calculates rates for characteristic EQ's and
+c-----fltrate.2013.f: calculates rates for characteristic EQs and
 c---- incremental a-values, given slip rates and points of faults
 c --- Correction feb 23 2010: only increase sliprate on dipping normal or reverse flts,
 c --- not on dipping Strike-slip faults. 
@@ -23,7 +23,7 @@ c ID,name,M_char,Recurr_char,weight,A_GR,B_GR,M_min,MMax,Delta_M
 c from Haller request. 2/26. This file is called table.tmp
 c----- v1: this version used for May 2006 sensitivity study maps, reported
 c to IMW workshop in Reno May 31-June 1 2006. From Frankel fltrate
-c --- Input differs from Frankel's in that an additional flag, img, is input.
+c --- Input differs from Frankels in that an additional flag, img, is input.
 c --- img is set to 0 to indicate that input Mmax is to be used rather than
 c --- the computed value. Geologic constraints historical events,...
 c	A global Mmax can override any computed value. We often use 7.5

@@ -342,6 +342,7 @@ c      write(*,*)tarray
       open(unit=1,file=name,status='old')
       write(6,*)'deaggSUBD.2013 (6/10/2013);  input file ',name
       else
+      write(*,*)'deaggSUBD.2013: File not found: ',name
       write(6,*)'deaggSUBD.2013: File not found: ',name
       stop 'Put in working dir and retry'
       endif
