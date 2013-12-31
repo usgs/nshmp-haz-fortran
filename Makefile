@@ -96,6 +96,15 @@ deaggGRID: iosubs
 deaggSUBD: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/deaggSUBD $(SRC)/deaggSUBD.f 
 
+combine_cms: 
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/combine_cms $(SRC)/combine_cms.f 
+
+sum_haz: 
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/sum_haz $(SRC)/sum_haz.f 
+
+checksum09: 
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/checksum09 $(SRC)/checksum09.f 
+
 #	utility
 avg_dist: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/avg_dist $(UTIL)/avg_dist.f $(SRC)/iosubs.o

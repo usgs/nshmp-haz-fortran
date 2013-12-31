@@ -1,4 +1,5 @@
-c--- deaggGRID.2013.f for USGS PSHA runs, 12/19/ 2013. update of deaggGRID.2011.f
+c--- deaggGRID.2013.f for USGS PSHA runs, 12/30/ 2013. update of deaggGRID.2011.f
+c 12/30/2013: made small repairs to cms calcs in BSSA & CB13
 c 12/19/2013: update newer CEUS GMMs to compute CMS.
 c 12/16/2013: Update ASK2013 a1 and vlin for some short periods. from Sanaz R email
 c 11/25: update m_att array of global indexes for attenuation models.
@@ -150,7 +151,7 @@ c ---  Simplest model might be a circular surface with center at each source poi
 c
 c --- Compile with  f95 or gfortran. On Solaris, use -e for extended line length. link to iosubs.o
 c Try this on sun  using Solaris 10 fortran 95:
-c f95 deaggGRID.2013.f -o deaggGRID.2013 -O iosubs_128.o  -e -ftrap=%none
+c f95 deaggGRID.2013.f -o ../bin/deaggGRID.2013 -O iosubs_128.o  -e -ftrap=%none
 c	-Xlist flag for listing and cross-ref table.
 c --- f95 man pages say to compile with -ftrap=%none if -fast flag is used.
 c --- Further notes:
@@ -1290,7 +1291,7 @@ c add three terms corresponding to ss-weight, reverse-weight, and normal-slip we
 c new dec 2005.
 c icode replaces iconv. Icode is more general, and is used with WUS GMPEs to
 c control virtual fault dip and Hanging-Wall versus Footwall site ID.
-c These factors are important in CB12, CY12, and AS12, for example.
+c These factors are important in CB13, CY13, and ASK13, for example.
       read(1,*) iatten(ia),wt(ia,1),wtdist(ia),wt(ia,2),
      &  icode(ia)
 c deep intraslab and ABsub: change to soil attn model if soil vs30 has been input.
@@ -1333,6 +1334,7 @@ c      print *,nper_gmpe,' number of periods having coeffs BSSA'
       ipbssa=k
        if(l_ms)then
 c fill imsp and lmsp arrays with can do information.
+	kmsp(ia) = 21	!need to tell next pgm how many periods may be computed
 	do j=1,npnga
 	if(period.eq.ms_p(j))jms=j
 	ka=2	!index 1 is PGV, not considered in CMS.
@@ -1364,6 +1366,7 @@ c
       print *,'CB13 relation period index ',k,' for period ',per
        if(l_ms)then
 c fill imsp and lmsp arrays with can do information.
+	kmsp(ia) = 21	!need to tell next pgm how many periods may be computed
 	do j=1,npnga
 	ka=1
 	if(period.eq.ms_p(j))jms=j
@@ -2230,6 +2233,7 @@ c CHECK HERE
       endif	!pga or other?
        if(l_ms)then
 c fill imsp and lmsp arrays with can do information.
+	kmsp(ia) = 21	!need to tell next pgm how many periods may be computed
 	do j=1,npnga
 	if(period.eq.ms_p(j))jms=j
 	ka=1	!index 1 
@@ -2334,6 +2338,7 @@ c AS  2008 with updates coded Mar 22 2013. SH.
 	endif
        if(l_ms)then
 c fill imsp and lmsp arrays with can do information.
+	kmsp(ia) = 21	!need to tell next pgm how many periods may be computed
 	do j=1,npnga
 	if(period.eq.ms_p(j))jms=j
 	ka=1	!index 1 
@@ -2374,6 +2379,7 @@ c calculation. not ready dec 17 2013.
 	wus=.true.
         if(l_ms)then
 c fill imsp and lmsp arrays with can do information.
+	kmsp(ia) = 21	!need to tell next pgm how many periods may be computed
 	do j=1,npnga
 	 if(period.eq.ms_p(j)) jms=j
 	 ka=1	!index 1 
@@ -10473,6 +10479,7 @@ c Play it again, Dave, for the CMS
         call y_bssa13_no_site_amps( m, r_pga4nl, mech,  c, Mref(indx_pga), 
      :           Rref(indx_pga), dc3CATW(indx_pga),
      :           e, Mh(indx_pga), pga4nl) 
+            r = sqrt(rjb**2+h(jper)**2)	!fic. depth concept.
         c(1)=c1(jper)
         c(2)=c2(jper)
         c(3)=c3(jper)
@@ -12602,7 +12609,7 @@ c       gndout(1) = sdi_ratio(per(iper),Mw,rhat,Sigmatot,sdisd) + sde
       gndout(3)=gndout(1)-gndx
       endif
 	if(l_ms)then
-	meanspec(ii,jj,jms,kk,ia)=gndx
+	meanspec(ii,jj,jms,kk,ia)=gm
 	sigspec(ii,jj,jms,kk,ia)=Sigmatot
 	endif 
       do ie=1,nfi
@@ -12629,12 +12636,13 @@ c       gndout(1) = sdi_ratio(per(iper),Mw,rhat,Sigmatot,sdisd) + sde
       enddo	!depth of top of rupture loop
       
       if (.not.l_ms)RETURN
-c Play it again, Ken, CB relation for mean spectrum.
+c Play it again, Ken, CB relation for mean spectrum. Note:A1100 has already
+c been computed and will not be recalculated below.
 c
 	do j=1,npnga
 	jp=imsp(ia,j)
 c jp is the index in Pd() of the jth period used to define the mean spectrum.
-        if ( iq.ne.jp.and.lmsp(ia,j)) then
+        if ( jms.ne.jp.and.lmsp(ia,j)) then
 c effects that are independent of depth, of M, and of R or distance.
 C*****Style-of-fauting term
       f_flt_F = c7(jp)*Frv + c8(jp)*Fnm
@@ -12675,20 +12683,20 @@ C*****Hypo depth term
       ENDIF
       IF (Mw .LE. 4.5) THEN
         F_mag = c0(jp) + c1(jp)*Mw
-        F_magp = c0(22) + c1(22)*Mw
+c        F_magp = c0(22) + c1(22)*Mw
       ELSEIF (Mw .LE. 5.5) THEN
         F_mag = c0(jp) + c1(jp)*Mw + c2low(jp)*(Mw-4.5)
-        F_magp = c0(22) + c1(22)*Mw + c2low(22)*(Mw-4.5)
+c        F_magp = c0(22) + c1(22)*Mw + c2low(22)*(Mw-4.5)
       ELSEIF (Mw .LE. 6.5) THEN
         F_mag = c0(jp) + c1(jp)*Mw + c2low(jp)*(Mw-4.5) + 
      &c2(jp)*(Mw-5.5)
-        F_magp = c0(22) + c1(22)*Mw + c2low(22)*(Mw-4.5) + 
-     &c2(22)*(Mw-5.5)
+c        F_magp = c0(22) + c1(22)*Mw + c2low(22)*(Mw-4.5) + 
+c     &c2(22)*(Mw-5.5)
       ELSE
         F_mag = c0(jp) + c1(jp)*Mw + c2low(jp)*(Mw-4.5) + 
      &c2(jp)*(Mw-5.5) + c3(jp)*(Mw-6.5)
-        F_magp = c0(22) + c1(22)*Mw + c2low(22)*(Mw-4.5) + 
-     &c2(22)*(Mw-5.5) + c3(22)*(Mw-6.5)
+c        F_magp = c0(22) + c1(22)*Mw + c2low(22)*(Mw-4.5) + 
+c     &c2(22)*(Mw-5.5) + c3(22)*(Mw-6.5)
       ENDIF
 c magnitude dependent faulting term...
 C.....Note: Magnitude limits and equation have been changed
@@ -12707,41 +12715,41 @@ C.....f_HW_M
 C.....Note: Equation for f_HW_M has been changed
       IF (Mw.le.5.5) THEN
         f_HW_M=0.
-        f_HW_Mp=0.
+c        f_HW_Mp=0.
       ELSEIF (Mw.le.6.5) THEN 
         f_HW_M= (Mw-5.5)*(1+a2(jp)*(Mw-6.5))
-        f_HW_Mp= (Mw-5.5)*(1+a2(22)*(Mw-6.5))
+c        f_HW_Mp= (Mw-5.5)*(1+a2(22)*(Mw-6.5))
       ELSE
         f_HW_M= 1. + a2(jp)*(Mw-6.5)
-        f_HW_Mp= 1. + a2(22)*(Mw-6.5)
+c        f_HW_Mp= 1. + a2(22)*(Mw-6.5)
       ENDIF
 C*****Dip term
 C.....Dip term has been changed
       IF (Mw.le.4.5) THEN
         F_Dip= c14(jp)* DIP
-        F_Dipp= c14(22)* DIP
+c        F_Dipp= c14(22)* DIP
       ELSEIF (Mw.le.5.5) THEN 
         F_Dip= c14(jp)* (5.5 - Mw)* Dip
-        F_Dipp= c14(22)* (5.5 - Mw)* Dip
+c        F_Dipp= c14(22)* (5.5 - Mw)* Dip
       ELSE
         F_Dip= 0.
-        F_Dipp= 0.
+c        F_Dipp= 0.
       ENDIF
 
       IF (Mw.le.5.5) THEN
         F_Hhyp= c13low(jp) * f_Hhyp_H
-        F_Hhypp= c13low(22) * f_Hhyp_H
+c        F_Hhypp= c13low(22) * f_Hhyp_H
       ELSEIF (Mw.le.6.5) THEN        
         F_Hhyp= (c13low(jp)+ (c13hi(jp) - c13low(jp))*(Mw-5.5))* 
      &           f_Hhyp_H
-        F_Hhypp= (c13low(22)+ (c13hi(22) - c13low(22))*(Mw-5.5))* 
-     &           f_Hhyp_H
+c        F_Hhypp= (c13low(22)+ (c13hi(22) - c13low(22))*(Mw-5.5))* 
+c     &           f_Hhyp_H
       ELSE
         F_Hhyp= c13hi(jp) * f_Hhyp_H
-        F_Hhypp= c13hi(22) * f_Hhyp_H
+c        F_Hhypp= c13hi(22) * f_Hhyp_H
       ENDIF
       F_atn=0.0
-      F_atnp=0.0	!initialize. For large R, this term will go negative.
+c      F_atnp=0.0	!initialize. For large R, this term will go negative.
 c R1, R2 used with hanging wall effects
         R1= W * cosdip
         R2= 62.*Mw - 350.
@@ -12760,16 +12768,16 @@ c standardize Rx and Rrup to OpenSHA sept 10 2013.
 C*****Distance term
       R = SQRT(Rrup**2 + c6(jp)**2)
       F_dis = (c4(jp) + c5(jp)*Mw)*LOG(R)
-      F_disp = (c4(22) + c5(22)*Mw)*LOG(R)
+c      F_disp = (c4(22) + c5(22)*Mw)*LOG(R)
 
 C*****Hanging-wall term Skip this for first goaround. SH 12/2012 (skipping assumes vertical dip)
 C     Jennifer Donahues HW Model plus CB08 distance taper 
       f1_Rx= h1(jp) + h2(jp)*(Rx/R1) + h3(jp)*((Rx/R1)**2)
       f2_Rx= h4(jp) + h5(jp)*((Rx-R1)/(R2-R1)) + 
      +       h6(jp)*((Rx-R1)/(R2-R1))**2
-      f1_Rxp= h1(22) + h2(22)*(Rx/R1) + h3(22)*((Rx/R1)**2)
-      f2_Rxp= h4(22) + h5(jp)*((Rx-R1)/(R2-R1)) + 
-     +       h6(22)*((Rx-R1)/(R2-R1))**2
+c      f1_Rxp= h1(22) + h2(22)*(Rx/R1) + h3(22)*((Rx/R1)**2)
+c      f2_Rxp= h4(22) + h5(jp)*((Rx-R1)/(R2-R1)) + 
+c     +       h6(22)*((Rx-R1)/(R2-R1))**2
 
 C.... CB08 distance taper modified to v3 Dec 3, 2012.
        IF (Rrup.eq.0.0) THEN
@@ -12788,18 +12796,18 @@ c this effect user should run both cases and treat as logic tree branches SH Dec
         f_HW_R= (max(f2_Rx, 0.0))* f_HW_Rrup
       ENDIF
       F_HW= c9(jp)* f_HW_R * f_HW_M * f_HW_Z * f_HW_Dip
-      F_HWp= c9(22)* f_HW_R * f_HW_Mp * f_HW_Z * f_HW_Dipp
+c      F_HWp= c9(22)* f_HW_R * f_HW_Mp * f_HW_Z * f_HW_Dipp
 C*****Anelastic attenuation term: modified May 13 2013 SH.
       if(Rrup.gt.80.)then
       F_atn=c15(jp)*(Rrup-80.)
-      F_atnp=c15(22)*(Rrup-80.)
+c      F_atnp=c15(22)*(Rrup-80.)
 	endif
 C*****For the first period (loop), computer A1100 *****************************
 C........Shallow site conditions term for ROCK PGA (i.e., Vs30 = 1100 m/s)
 C........Rock PGA
-
-         A1100(ii,jj,kk) = EXP(F_magp + F_disp + F_fltp + F_HWp + 
-     +               F_site_1100 + F_sedp + F_Hhypp + F_Dipp + F_atnp)
+c
+c         A1100(ii,jj,kk) = EXP(F_magp + F_disp + F_fltp + F_HWp + 
+c     +               F_site_1100 + F_sedp + F_Hhypp + F_Dipp + F_atnp)
 
 
 C*****Site term for other iper values 

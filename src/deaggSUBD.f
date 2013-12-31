@@ -1,4 +1,7 @@
 c--- program deaggSUBD.2013.f from deaggSUBD.2011.f for web 2013 interactive deagg tool.
+c 12/24/2013: PGArock revised in BCHydro subroutine. Affects soil runs. 
+c 12/18/2013: This code has been modified to work with gfortran (M. Moschetti)
+c 12/18/2013: remove some ip (period) dimensions from arrays where not used.
 c 11/15/2013: put in some anelastic atten. into AB03 for T>1s and R>400km. This
 c is a proposal and has not been approved by staff. Furthermore, this change
 c has not been imported into hazSUBXnga yet.
@@ -100,7 +103,7 @@ c --- GMPEs are listed in the input file. For long period analysis, a different 
 c --- of GMPEs is used than for shorter-period analysis. The corresponding input files
 c --- have extension "LP" to indicate that they should be used in that instance.
 c--- to compile on SUN Solaris system: cc -c iosubs.c 
-c                 f95 -o deaggSUBD.2013 deaggSUBD.2013.f  -fast -e -ftrap=%none
+c                 f95 -o ../bin/deaggSUBD.2013 deaggSUBD.2013.f  -fast -e -ftrap=%none
 c
 c  The last ftrap flag seems to be necessary for many runs to avoid fatal errors. 
 c
@@ -159,7 +162,7 @@ c--- period=0 indicates PGA
       real, dimension(2):: ztop
       real, dimension(2,npmx) :: sumwt
       real, dimension (0:37) :: perka
-      integer, dimension(10):: iperg,iperk,ipers
+      integer :: iperg,iperk,ipers
 c type replaces structure & requires gfortran or f95 to compile. It is included
 c so that this code has compatibility with Linux cluster computer compilers. For one-sta
 c Subduction deagg, we dont use iosubs or "type"  variables.
@@ -220,7 +223,7 @@ c      real, dimension (17,33,10,0:9) :: hazmsp,epsmsp,rmsp,mmsp
 c meanspec and sigmaspec: for each source. accumulate in meanspecs. 
       real, dimension(21) :: meanspec,sigspec,rho_jb        !for each request. Fills inside each GMPE subroutine.
        integer, dimension(12):: nmag0
-       integer itype,iftype,iperab(19)
+       integer itype,iftype,iperab
        integer, dimension(10):: delCi
        real, dimension(22):: NAAper
       dimension npts(5)
@@ -234,7 +237,7 @@ c meanspec and sigmaspec: for each source. accumulate in meanspecs.
       real, dimension (16,16,10,0:4):: rbar,mbar,ebar,haz
       real prob5(16,16,10,0:4,5),magminn
       real period,piriod,xlev     !piriod=gregor approximation march 14 2007
-       logical v30a,cascadia,abb03(7,7), rock,soil,go_gail/.false./,go_norm/.false./
+       logical v30a,cascadia,abb03(7), rock,soil,go_gail/.false./,go_norm/.false./
 c initial set of predefined periods T at which mean spectrum is to be determined. Oct 28 2010.
 c Note, ms_p(1)=0.00, but on output ms_p(1) is 0.01 s. This is because most relations do not distinguish
 c these.
@@ -340,9 +343,8 @@ c      write(*,*)tarray
       inquire(file=name,exist=isok)
       if(isok)then
       open(unit=1,file=name,status='old')
-      write(6,*)'deaggSUBD.2013 (6/10/2013);  input file ',name
+      write(6,*)'deaggSUBD.2013 (12/18/2013);  input file ',name
       else
-      write(*,*)'deaggSUBD.2013: File not found: ',name
       write(6,*)'deaggSUBD.2013: File not found: ',name
       stop 'Put in working dir and retry'
       endif
@@ -566,7 +568,7 @@ c This is a modification May 9 2013. SH.
        endif
        write(6,*)ia,delCi(ia),' ia and  BC_Hydro GM uncert. branch'
        if(l_ms)then
-       m_att(ia) = 30        !associate NAASub with global GMPE index 30 in combine_cms.
+       m_att(ia) = 28        !associate NAASub with global GMPE index 28 in combine_cms.
 c fill imsp and lmsp arrays with can do information.
         imsp(ia,1)=1
         lmsp(ia,1)=.true.        !can do pga or 0.01s SA equivalent
@@ -649,7 +651,7 @@ c  c       write(6,*)'Sadigh model with rock coeffs.'
          j=j+1
          enddo
          if(j.gt.7)stop 'period doesnt match standard set'
-         ipers(ip)=j      !period index for Sadigh and perhaps other relations.
+         ipers=j      !period index for Sadigh and perhaps other relations.
        if(l_ms)then
 c fill imsp and lmsp arrays with can do information.
         do j=1,npnga
@@ -675,9 +677,9 @@ cc       write(6,*)'Period map for Sadigh ',j
       stop 'For this period please remove the Kanno relation from input file'
       endif
       enddo
-       iperk(ip)=ka
-       m_att(ia)=28        !kanno global index 48.     
-c      write(6,*)ip,iperk(ip),' Kanno 10/06 ip map'
+       iperk=ka
+       m_att(ia)=39        !kanno global index 39.     
+c      write(6,*)ip,iperk,' Kanno 10/06 ip map'
        if(l_ms)then
 c fill imsp and lmsp arrays with can do information.
         do j=1,npnga
@@ -714,8 +716,8 @@ cc       write(6,*)'Note: Using gregor 0.333 T for 0.3 s analysis'
          enddo
 c Gregor period set needs to be interpolated to the nga T values.
          if(j.gt.25)stop 'period doesnt match standard Gregor set'
-         iperg(ip)=j      !period index for Gregor subduction
-         m_att(ia)=29
+         iperg=j      !period index for Gregor subduction
+         m_att(ia)=40
 c updated Gregor logic Jan 2007. Steve Harmsen         
        if(l_ms)then
 c fill imsp and lmsp arrays with can do information.
@@ -737,13 +739,13 @@ c fill imsp and lmsp arrays with can do information.
 c------- AB03 type
             elseif(iatten(ia).eq.4.or.abs(iatten(ia)).eq.5) then
 cc       write(6,*)'Atkinson Boore 2003 subduction model'
-        abb03(ip,ia)=.true.
+        abb03(ia)=.true.
          j=1
          dowhile(period.ne.perab(j).and.j.le.18)
          j=j+1
          enddo
          if(j.gt.18)stop 'period doesnt match standard AB subduction set'
-         iperab(ip)=j      !period index for Sadigh and perhaps other relations.
+         iperab=j      !period index for Sadigh and perhaps other relations.
          if(iatten(ia).eq.4)then
 cc       write(6,*)'Using ABsub with Cascadia coef, period map is ',j
 c      headr%name(6)='ABsub Cascadia'
@@ -1059,8 +1061,8 @@ c always use R_cd or Rrup as the distance measure. No subduct. relations use R_j
         
        if(weight.lt.0.0001)goto 270      !some relations downweighed with distance
        meanspec=0.0
-      if(abb03(ip,ia))then
-      call getABsub(iperab(ip),iclass,0,vs30,xmag,dist,gnd,sigmaf,pcorab)
+      if(abb03(ia))then
+      call getABsub(iperab,iclass,0,vs30,xmag,dist,gnd,sigmaf,pcorab)
       elseif(iatten(ia).eq.2) then
 c the 2nd arg, 0, refers to subduction or interface. 0 for subduction. Added oct 26
 c
@@ -1072,14 +1074,14 @@ c
              call zhao(ipzh,xmag,rcd,gnd,sigmaf,ivs, 0,hslab)
 c Zhao: the second-to-last argument, 0, indicates compute for subduction, not for in-slab source.
       elseif(iatten(ia).eq.8) then
-      call kanno(iperk(ip),gnd,sigmaf,xmag,rcd,vsfac)
+      call kanno(iperk,gnd,sigmaf,xmag,rcd,vsfac)
 c--- following are Sadigh forms. Might allow a near-source sigma someday.
          elseif(iatten(ia).eq.3)then
-               call getSadighR(ipers(ip),xmag,rcd,gnd,sigmaf,0.,0.)
+               call getSadighR(ipers,xmag,rcd,gnd,sigmaf,0.,0.)
          elseif(iatten(ia).eq.-3)then
-               call getSadighS(ipers(ip),xmag,rcd,gnd,sigmaf,0.,0.)
+               call getSadighS(ipers,xmag,rcd,gnd,sigmaf,0.,0.)
        elseif(iatten(ia).eq.16)then
-             call Gregor06(iperg(ip),xmag,rcd,vs30,gnd,sigmaf)
+             call Gregor06(iperg,xmag,rcd,vs30,gnd,sigmaf)
 c gregor 2006 only works for subduction, is therefore outputting "gnd2"
 c add BCHydro Nov 2012. from hazSUBXnga.f code.
       elseif(iatten(ia).eq.20)then
@@ -3469,6 +3471,7 @@ c also have to be redefined. (a1,a2) represents a siteamp smoothing range (units
       end 
 
       subroutine getNAAsub(iq, Fevnt, Ffaba, xmag, R, zH, sigmaf, gm, delCi, Vs30)
+c Modified Dec 24. Repair PGArock. SH.
 c This is Abrahamson 2010 BCHydro Subduction model that was developed using the dataset of 
 c acceleration response spectra of the geometrical mean 5% spectral damping. The coefficients
 c  have been written for periods: pga, 0.050, 0.075,0.100, 0.150,0.200,0.250,0.300,0.400,
@@ -3503,12 +3506,12 @@ c Note delCi changes the median by about 57%. It affects a magnitude dep. as wel
         real theta15(22), theta16(22)
         real delC(3), delC1, dy_sdi, rhat,sdisd,sde,sdi_ratio
         real :: fac_sde
-        real xmag, R, zH, fterm
+        real xmag, R, zH, fterm,ftermp
         integer Fevnt, Ffaba, delCi, c4/10/, ip, iq, j,jp
         real c1/7.8/, c/1.88/, n/1.18/
         real theta3/0.1/, theta4/0.9/, theta5/0.0/, theta9/0.4/
-        real fMag,PGArock,gm, Rmax
-        real fDepth,  fSite, Vs30, VsStar
+        real fMag,fMagp,PGArock,gm, Rmax
+        real fDepth, fDepthp, fSite, Vs30, VsStar
         real sigma/0.772/,sigmaf
         logical sdi
         parameter (sqrt2=1.414213562)
@@ -3562,19 +3565,18 @@ C        Define DelC1
                 print *, 'Error in delC1'
         endif
 C                
-C        Calculate Magnitude Scaling Factor fMag(M)
+C        Calculate Magnitude Scaling Factor fMag(M). Also for PGA fMagp
         if(xmag.le.c1+delC1) then 
                 fMag = theta4*(xmag-(c1+delC1))+theta13(iq)*(10-xmag)**2
+                fMagp = theta4*(xmag-(c1+delC1))+theta13(1)*(10-xmag)**2
         else !its greater
                 fMag = theta5*(xmag-(c1+delC1))+theta13(iq)*(10-xmag)**2
+                fMagp = theta5*(xmag-(c1+delC1))+theta13(1)*(10-xmag)**2
         endif
 C        
 C         Calculate Depth Scaling Factor fDepth(zH)
-        if(Fevnt > 1.or.Fevnt < 0) then 
-                print *,'Error in Fevnt term'
-        else        
                 fDepth = theta11(iq)*(zH-60)*Fevnt
-        endif
+                fDepthp = theta11(1)*(zH-60)*Fevnt
 C       
 C        Calculate Forearc/Backarc Scaling fFaba
         if(Ffaba .gt. 1 .or. Ffaba .lt. 0) then 
@@ -3584,11 +3586,14 @@ C        Calculate Forearc/Backarc Scaling fFaba
         if(Fevnt.eq.1 .and. Ffaba.eq.1) then ! its a backarc site loc and intraplate src.
                 Rmax = max(R, 85.0)
                 fterm = (theta7(iq)+theta8(iq)*alog(Rmax/40))	!*Ffaba
+                ftermp = (theta7(1)+theta8(1)*alog(Rmax/40))	!*Ffaba
         elseif (Ffaba.eq.1)then !its a backarc  and interface src . 
                 Rmax = max(R, 100.0)
                 fterm = (theta15(iq)+theta16(iq)*alog(Rmax/40))	!*Ffaba
+                ftermp = (theta15(1)+theta16(1)*alog(Rmax/40))	!*Ffaba
         else        !forearc site or the site is unknown. No effect.
                 fterm=0.0
+                ftermp=0.0
         endif
 C
 C        Calculate Site Scaling Factor        fSite
@@ -3600,9 +3605,15 @@ c     compute VsStar
         endif
 C
 C Calculate PGArock
-        PGArock = theta12(iq)*alog(1000./vlin(iq))+b(iq)*n*alog(1000./vlin(iq))
 C        
         if(Vs30.lt.Vlin(iq)) then ! non-linear site response
+c PGArock is like gm below except there is no site term. This was not in
+c original code. I believe it is correct. BCHydro document says PGArock is
+c the median PGA for Vs30 = 1000 m/s. 
+        PGArock = theta1(1)+theta4*delC1+(theta2(1)+theta14(1)*Fevnt+theta3*(xmag-7.8))*
+     1  alog(R+c4*exp((xmag-6)*theta9))+theta6(1)*R+theta10(1)*Fevnt+fMagp+
+     2       fDepthp +ftermp 
+        PGArock = exp(PGArock)	!it will be logged next line.
                 fSite = theta12(iq)*alog(VsStar/vlin(iq)) - b(iq)*alog(PGArock+c)+b(iq)*alog(PGArock+c*(VsStar/vlin(iq))**n)
         else ! linear site repsonse
                 fSite = theta12(iq)*alog(VsStar/vlin(iq))+b(iq)*n*alog(VsStar/vlin(iq))
@@ -3656,9 +3667,7 @@ C         Calculate Depth Scaling Factor fDepth(zH)
 C
 C        Calculate Site Scaling Factor        fSite
 C
-C Calculate PGArock. why is PGArock frequency dependent?
-        PGArock = theta12(j)*alog(1000./vlin(j))+b(j)*n*alog(1000./vlin(j))
-C        
+C   PGArock has been previously computed and you don't need to recompute it.     
         if(Vs30.lt.Vlin(j)) then ! non-linear site response
                 fSite = theta12(j)*alog(VsStar/vlin(j)) - b(j)*alog(PGArock+c)+b(j)*alog(PGArock+c*(VsStar/vlin(j))**n)
         else ! linear site repsonse
