@@ -206,7 +206,7 @@ p_branch=1
 ../bin/hazallXL.v2 ../conf/combine/shear_zones.g.1hz.p
 ../bin/hazallXL.v2 ../conf/combine/shear_zones.g.5hz.p
 ../bin/hazallXL.v2 ../conf/combine/shear_zones.g.pga.p
-# combine all WUS grid sources, except  
+# combine all WUS grid sources, except shear zones 
 ../bin/hazallXL.v2 ../conf/combine/wus_2014.g.5hz
 ../bin/hazallXL.v2 ../conf/combine/wus_2014.g.1hz
 ../bin/hazallXL.v2 ../conf/combine/wus_2014.g.pga
@@ -225,6 +225,9 @@ p_branch=1
 ../bin/hazallXL.v2 ../conf/combine/wus_2014.g.5hz.epimerge
 ../bin/hazallXL.v2 ../conf/combine/wus_2014.g.1hz.epimerge
 ../bin/hazallXL.v2 ../conf/combine/wus_2014.g.pga.epimerge
+../bin/hazallXL.v2 ../conf/combine/shear.5hz.epimerge
+../bin/hazallXL.v2 ../conf/combine/shear.1hz.epimerge
+../bin/hazallXL.v2 ../conf/combine/shear.pga.epimerge
 fi
 
 # CA model - from PP

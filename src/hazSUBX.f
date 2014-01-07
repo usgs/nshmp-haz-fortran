@@ -1,4 +1,7 @@
 c--- program hazSUBXnga.test.f : long header version
+C Jan 7, 2014:  Calculate PGArock in getNAAsub. Corrected Jan 7 2013
+c May 9, 2013: use the icode variable to store BCHydro delCi instruction. Previously only the
+c		central branch (delCi=2) was permitted. Set izpar=1 for PACNW to get 20 km depth to top
 c April 23, 2013: remove dependency on input file name for logic flow. Previously, 'cascadia' in file
 c name made anything >M8.7 a characteristic or space-filling rupture. Now, if you want a space filling
 c rupture, make the itype a 1 (not a 2). 1 means characteristic in hazFX and also in hazSUBX. Also,
@@ -90,7 +93,7 @@ c--- Most of geometry-related code written by R. Wesson, USGS. Original code by 
 c --- USGS. 2006 & 2007 revisions by Steve Harmsen, USGS.
 c--- this version handles multiple periods and gnd motion relations
 c--- to compile on SUN Solaris: cc -c iosubs.c 
-c                 f95 -o hazSUBXnga.test hazSUBXnga.test.f iosubs.o -fast -e -ftrap=%none
+c                 f95 -o hazSUBXnga.test hazSUBXnga.test.f iosubs_128.o -fast -e -ftrap=%none
 c
 c  The last ftrap flag seems to be necessary for many runs to avoid fatal errors. 
 c
@@ -176,7 +179,7 @@ c  ar=aspect ratio for floating ruptures.
       character*4 sname(33),date*8,time*10,zone*5
       real*8 dp,pr0,emax/3.0/, sqrt2/1.4142135623/
       real vs30,pr00,prl,prlr,prr,rtot,eps
-      integer readn,nrec,i,ival(8),ivs,immax/1/,npd,nper,delCi,backarc
+      integer readn,nrec,i,ival(8),ivs,immax/1/,npd,nper,backarc
 c ivs indicator variable for NEHRP class, using Zhao subroutine, added May 21 2007
       character nameout*78,name*80,adum*80
       common/mech/ss,rev,normal,obl
@@ -190,11 +193,11 @@ c         nrec = -100 = grid of stations with deterministic output. added aug 7.
 c a report will be generated if source is big (isbig .true.) and close (isclose .true.)      
 c These are relative words, and have the right meaning in below context.
       logical grid,isok      !grid=true if stations form a regular grid.
-c iconv() is not used in this code. However, it is read in.
-      dimension prob(250,20,npmx),xlev(20,npmx),out(800000), nlev(npmx),
-     + iatten(npmx,5),iconv(npmx,5)
+       real prob(250,20,npmx),xlev(20,npmx),out(800000)
+c icode() is now used in this version of hazSUB with the BCHydro (mod May 9 2013).
+       integer, dimension (npmx,5):: iatten,icode,delCi
       real, dimension (npmx) :: period,perx,safix
-      integer, dimension(npmx) :: nattn,ifp
+      integer, dimension(npmx) :: nlev,nattn,ifp
       real, dimension(8):: fac_sde
       real,dimension(12):: a,b,dmag,cmag,crate,wtm
       real,dimension(22):: perz
@@ -324,7 +327,7 @@ c      write(*,*)tarray
       inquire(file=name,exist=isok)
       if(isok)then
       open(unit=1,file=name,status='old')
-      write(6,*)'HazSUBXnga.test updated Apr 23 2013;  input file ',name
+      write(6,*)'HazSUBXnga.test updated May 9 2013;  input file ',name
       write(6,*)'Date of run ',date,' at ',time
       else
       write(6,*)'hazSUBXnga.test: File not found: ',name
@@ -504,13 +507,13 @@ c cannot have both deaggregation and determinstic output. Safe to use same unit 
 c--- loop through atten relations for that period
          do 20 ia=1,nattn(ip)
             write(6,580)
-     +      "Type of atten. relation, weight, mb to M conv. "
+     +      "Type of atten. relation, weight, icode. "
             read(1,*) iatten(ip,ia),wt(ip,ia,1),wtdist(ip,ia),
-     +      wt(ip,ia,2),iconv(ip,ia)
+     +      wt(ip,ia,2),icode(ip,ia)
             write(6,*) iatten(ip,ia),wt(ip,ia,1),wtdist(ip,ia),
-     +      wt(ip,ia,2),iconv(ip,ia)
+     +      wt(ip,ia,2),icode(ip,ia)
               sumwt(1,ip)=sumwt(1,ip)+wt(ip,ia,1)
-              sumwt(2,ip)=sumwt(1,ip)+wt(ip,ia,2)
+              sumwt(2,ip)=sumwt(2,ip)+wt(ip,ia,2)
 c--------  Geomatrix interface atten.
          if(abs(iatten(ip,ia)).eq.2) then
          j=1
@@ -572,7 +575,6 @@ c------- Sadigh type
 c vsfac used for site-amp in  the Kanno et al. relation.
         vsfac=alog10(vs30)          
        elseif(iatten(ip,ia).eq.20)then
-      izpar=1
       ka=1
 c New BC Hydro Subd GMPE Jan 2011. For spectral period <=0.02 s, use the pga model.
       if(period(ip).le.0.02)then
@@ -588,8 +590,17 @@ c New BC Hydro Subd GMPE Jan 2011. For spectral period <=0.02 s, use the pga mod
       endif
       enddo
        ipernaa(ip)=ka     
-       write(6,*)period(ip),ip,ipernaa(ip),' Abrahamson BC Hydro ip map'
+       write(6,*)period(ip),ip,ipernaa(ip),' BC_Hydro ip map'
        go_norm=.true.
+       izpar=1
+c for NAA relation, use epistemic branch stored in "icode". If icode is invalid, use central branch
+c This is a modification May 9 2013. SH.
+       if(icode(ip,ia).gt.0 .and. icode(ip,ia).lt.4)then
+       delCi(ip,ia)=icode(ip,ia)
+       else
+       delCi(ip,ia)=2	!a default value (central branch)
+       endif
+       write(6,*)ia,delCi(ip,ia),' ia and  BC_Hydro GM uncert. branch'
        elseif(iatten(ip,ia).eq.21)then
       ka=1
 c New atkinson-macias (BSSA,2009) GMPE nov 2012. For spectral period <=0.02 s, use the pga model.
@@ -701,7 +712,7 @@ c convert sa to sd
    30    xlev(k,ip)= alog(xlev(k,ip))
    40 continue
 ccccccccccccccccccccccccccccccccccc
-c warn the user if atten model weights dont sum to 1.0.
+c warn the user if atten model weights don't sum to 1.0.
       do ip=1,nper
       if(sumwt(1,ip).lt.0.99.or.sumwt(1,ip).gt.1.01)then
       write(6,*)'Unusual sum of att. model wts for inner annulus ',sumwt(1,ip)
@@ -818,7 +829,7 @@ ccccccccccccccccccccccccccccccccccc
 c depth of inslab seismicity.
             hslab = 50.      !not used for subduction. hi is used (param)
 
-c no longer building a table of p(). Just get the mean and sd when you need em
+c no longer building a table of p(). Just get the mean and sd when you need 'em
 c mod oct 19 2006. SH
 ccccccccccccccccccccccccccccccccccccccccccc
 
@@ -893,7 +904,7 @@ c store this in m= 24 bin.
 c      endif
       write(6,*)' Cumulative annual rate of subd events: ',rtot
       write(6,*)' This is equivalent to recurr. interval of ',1./rtot,' yrs'
-c---Heres the guts
+c---Here's the guts
 c
 c---loop through receiver sites 250 at a time. Why 250 at a time? big mystery.
       i = 0
@@ -1062,11 +1073,11 @@ c add BCHydro Nov 2012. from hazSUBXnga.f code.
       elseif(iatten(ip,ia).eq.20)then
 c Norm Abrahamson BC Hydro program Jan 20 2011. Testing. 
       kevnt=0;
-      delCi=2	!2 is main branch. 1 is low 3 is high.
-      zH = ztop(izpar)
-c      print *,zH,izpar, ' going in to getNAAsub hypo depth (km)'
+c      delCi=2	!2 is main branch. 1 is low 3 is high.
+       zH = ztop(izpar)
+c      print *,zH,' going in to getNAAsub hypo depth (km)'
       
-      call getNAAsub(ip, ipernaa(ip), kevnt, kbackarc, xmag, rcd, zH, sigmaf, gnd, delCi, vs30)
+      call getNAAsub(ip, ipernaa(ip), kevnt, kbackarc, xmag, rcd, zH, sigmaf, gnd, delCi(ip,ia), vs30)
 c kevnt=0 interface, not for in-slab source. kbackarc=1 is back-arc. This setting needs
 c to be geometry dependent in final version.
 	elseif(iatten(ip,ia).eq.21)then
@@ -2460,10 +2471,10 @@ c      if(iq.eq.3.and.dist0.lt.30.)write(39,*) dist0,exp(gnd),exp(amp),pganl
       end subroutine getGeom
 
       subroutine getABsub(ip,iq,ir,islab,vs30,xmag,dist0,gnd,sigmaf,p_corr)
-c from At&Boore BSSA aug 2003, p1715.  C-site and D-site look good apr 11 2007. SH.
+c from Atkinson &Boore BSSA aug 2003, p1715.  C-site and D-site look good apr 11 2007. SH.
 c Modify 5hz and add 2.5 hz coeffs., 10/10/2008. AB BSSA erratum Oct 2008. 
 c Affects Global but not cascadia. 10/17 also modify 2 hz and 3.33 hz coeffs for global.
-c
+c Nov 20 2013: 2-s and 3-s modified if p_corr
 c Apr 11 2007: added CD and DE boundary response, like the BC boundary
 c This modification yields a smoother transition between site classes. SH.
 c
@@ -2602,6 +2613,12 @@ c      sigma=sig(iq)
           dist2= sqrt(dist*dist + delta*delta)
           gnd= gnd+co3*depth+co4*dist2
      &         -g*alog10(dist2)
+c Mod nov 20 2013: if requested, drop the large-distance rolloff for 2s SA to keep
+c curve below the 1-s median curve.
+     	if(p_corr .and. period.gt.1.0 .and. dist.gt.400.) then
+     	 gnd = gnd -.001*(dist-400.)
+     	 endif
+c end Mod Nov 20 2013.
 c--- calculate rock PGA for C site amp
 c--- Cascadia subduction. rpga units are cm/s/s.
        rpga= r1+ r2*xmag0 + r3*depth+ r4*dist2- g*alog10(dist2)
@@ -2919,7 +2936,7 @@ c in between.
       afac=0.0
       hfac=0.      !dont use the correction term for crustal events.
       sigma=sigt(ip)
-c crustal events: havent coded up the xmcor term. use interface for now.
+c crustal events: haven't coded up the xmcor term. use interface for now.
         xmcor = qi(ip)*(xmag-xmagc)**2 + wi(ip)
       endif
       r= dist+ c(ip)*exp(d(ip)*xmag)
@@ -3289,6 +3306,7 @@ c  have been written for periods: pga, 0.050, 0.075,0.100, 0.150,0.200,0.250,0.3
 c 0.500, 0.600, 0.750, 1.000, 1.500, 2.000, 2.500, 3.000, 4.000, 5.000, 6.000, 7.500, 10.000.
 c
 c
+c Jan 7 2014: pgaRock has been corrected. SHarmsen. PgaRock is Norms PGA1000.
 c For values of T=0.02sec, use PGA values
 c Recommended values for DelC1 is -0.5, 0.0, 0.5
 c PGA1000 = Median PGA value for a Vs30 1,000 m/sec
@@ -3306,6 +3324,7 @@ c sigmaf - 	sigmaf = 1/sigma/sqrt2
 c gm  - 	logged SA ground motion (units g)
 c delCi = 	Integer indicator for low middle hi branch, 1 2 or 3 resp.
 c***************************************************************************************************
+c Note delCi changes the median by about 57%. It affects a magnitude dep. as well.
 	implicit none
 	real sqrt2
 	parameter (sqrt2=1.414213562)
@@ -3319,12 +3338,12 @@ c*******************************************************************************
 	integer Fevnt, Ffaba, delCi, c4/10/, ip, iq
 	real c1/7.8/, c/1.88/, n/1.18/
 	real theta3/0.1/, theta4/0.9/, theta5/0.0/, theta9/0.4/
-	real fMag,PGArock,gm
+	real fMag,PGArock,gm, fMagp,fDepthp,ftermp, fSitep
 	real fDepth,  fSite, Vs30, VsStar
 	real Rmax
 	real sigma/0.772/,sigmaf
 	logical sdi
-c NAAper = period set for Norms BC Hydro subduction model. 0.00 for 0 s (PGA) to 0.02 s SA
+c NAAper = period set for Norm's BC Hydro subduction model. 0.00 for 0 s (PGA) to 0.02 s SA
 	NAAper =(/0.00, 0.050, 0.075,0.100, 0.150,0.200,0.250,0.300,0.400,
      + 0.500, 0.600, 0.750, 1.000, 1.500, 2.000, 2.500, 3.000, 4.000, 5.000, 6.0, 7.500, 10.0/)
 	vlin = (/865.1,1053.5,1085.7,1032.5,877.6,748.2,654.3,587.1,503.0,456.6,430.3,410.5,400.0,
@@ -3375,15 +3394,18 @@ C
 C	Calculate Magnitude Scaling Factor fMag(M)
 	if(xmag.le.c1+delC1) then 
 		fMag = theta4*(xmag-(c1+delC1))+theta13(iq)*(10-xmag)**2
+		fMagp = theta4*(xmag-(c1+delC1))+theta13(1)*(10-xmag)**2
 	else !its greater
 		fMag = theta5*(xmag-(c1+delC1))+theta13(iq)*(10-xmag)**2
+		fMagp = theta5*(xmag-(c1+delC1))+theta13(1)*(10-xmag)**2
 	endif
 C	
 C 	Calculate Depth Scaling Factor fDepth(zH)
 	if(Fevnt > 1.or.Fevnt < 0) then 
 		print *,'Error in Fevnt term'
 	else	
-		fDepth = theta11(iq)*(zH-60)*Fevnt
+		fDepth = theta11(iq)*(zH-60.)*Fevnt
+		fDepthp = theta11(1)*(zH-60.)*Fevnt
 	endif
 C
 C	Calculate Forearc/Backarc Scaling fFaba
@@ -3394,11 +3416,14 @@ C	Calculate Forearc/Backarc Scaling fFaba
 	if(Fevnt.eq.1 .and. Ffaba.eq.1) then ! its a backarc site loc and intraplate src.
 		Rmax = max(R, 85.0)
 		fterm = (theta7(iq)+theta8(iq)*alog(Rmax/40))	!*Ffaba
+		ftermp = (theta7(1)+theta8(1)*alog(Rmax/40.))	!*Ffaba
 	elseif (Ffaba.eq.1)then !its a backarc  and interface src . 
 		Rmax = max(R, 100.0)
-		fterm = (theta15(iq)+theta16(iq)*alog(Rmax/40))	!*Ffaba
+		fterm = (theta15(iq)+theta16(iq)*alog(Rmax/40.))	!*Ffaba
+		ftermp = (theta15(1)+theta16(1)*alog(Rmax/40.))	!*Ffaba
 	else	!forearc site or the site is unknown. No effect.
 		fterm=0.0
+		ftermp=0.0
 	endif
 C
 C	Calculate Site Scaling Factor	fSite
@@ -3409,8 +3434,14 @@ c     compute VsStar
 		VsStar = Vs30
 	endif
 C
-C Calculate PGArock
-	PGArock = theta12(iq)*alog(1000./vlin(iq))+b(iq)*n*alog(1000./vlin(iq))
+C Calculate PGArock. Rewritten Jan 7 2013.  "BAD" looks bad, and is incorrect!
+c BAD:	PGArock = theta12(iq)*alog(1000./vlin(iq))+b(iq)*n*alog(1000./vlin(iq))
+c GOOD:
+		fSitep = -0.06078691	!=theta12(1)*alog(1000./vlin(1))+b(1)*n*alog(1000./vlin(1))
+	PGArock = theta1(1)+theta4*delC1+(theta2(1)+theta14(1)*Fevnt+theta3*(xmag-7.8))*
+     1	alog(R+c4*exp((xmag-6.)*theta9))+theta6(1)*R+theta10(1)*Fevnt+fMagp+fDepthp+
+     2       ftermp + fSitep
+         PGArock= exp(PGArock)
 C	
 	if(Vs30.lt.Vlin(iq)) then ! non-linear site response
 		fSite = theta12(iq)*alog(VsStar/vlin(iq)) - b(iq)*alog(PGArock+c)+b(iq)*alog(PGArock+c*(VsStar/vlin(iq))**n)
