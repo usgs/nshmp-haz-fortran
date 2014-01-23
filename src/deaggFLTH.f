@@ -1,4 +1,9 @@
-c--- program deaggFLTH.2013.f; 12/18/2013; Use  with 2nd gen NGA relations, or others.
+c--- program deaggFLTH.2013.f; 01/03/2014; Use  with 2nd gen NGA relations, or others.
+c Jan 22 2014: Correct sigma_aleatory in Idriss2013 to         sig = 1.18 + 0.035*alog(T) - 0.06 * xmagc       !see P Powers email jan 21 2014
+c 01/04/2014: continue with clustered event. Amean11 clamp revisions from PPowers.
+c 12/31/2013: reviving "cluster_me". Just compute probability of exc for each scenario. 
+c		No rbar, mbar, ebar. The
+c		probability will be used to rescale the independent-event probabilities.
 c 12/18/2013: updated to run with gfortran (M.Moschetti).
 c 12/17/2013: in ASK13, add hardrock median calcs at periods defining the CMS
 c 12/16/2013: update some a1 coeffs in ASK13 model for short periods. Email from Sanaz R.
@@ -373,7 +378,7 @@ c p() has about 4 or 5 decimal place accuracy which is likely good enough.
       real, dimension(3,8,5) :: prob_s, r_s, m_s, eps_s
 	integer jms,iptoro,nlev,iReg
        common/gail3/freq(13)
-      real, dimension(8):: dmin
+      real, dimension(8):: dmin,prob_c
       real, dimension(12) :: pdSilva
 c wind used to determine if additional epistemic uncert will be added to
 c or subtracted from log(median) of each relation for that period
@@ -465,7 +470,7 @@ c      character*4 gname(5)	!grouped cluster region-name
       common/dipinf/dipang,cosDELTA,cdipsq,cyhwfac,cbhwfac
 c hardrock is true if Vs30 >=2000 m/s or greater (why not 1500 m/s)
 c      common/hardrock/hardrock
-	common/cluster/prob_s,r_s,m_s,eps_s
+	common/cluster/prob_s
       common/epistemic/l_gnd_ep,gnd_ep,ide,ime
       common/fault/x,y,u,v
       common/ms/ia,jms,npnga,l_ms,lmsp,imsp,meanspec,sigspec
@@ -485,7 +490,7 @@ c some arrays for BSSA NGAW model 11/2012
       real, dimension (990,4,nfltmx) :: u,v      
       real, dimension (10) :: dmbranch,wtbranch,grp_rate
       real,dimension(11):: pertoro
-      real prd(105),prob(3,5),mbarc(5),rbarc(5),ebarc(5),wt(10,2),wtdist(10)
+      real prd(105),prob(5,10),mbarc(5),rbarc(5),ebarc(5),wt(10,2),wtdist(10)
 	real gweight(5) 
 	real baz	!back-azimuth tmp storage.
       integer, dimension(10):: iatten,irab
@@ -755,7 +760,7 @@ c new apr 2008, argument to control whether to deagg individual GMPE logic-tree 
 	endif	
 	dea_attn = i .gt.0
       write (6,61)name
-61      format('# *** deaggFLTH.2013  vers. 12/17/2013 log file. ',/,
+61      format('# *** deaggFLTH.2013  vers. 01/22/2014 log file. ',/,
      +'# *** Input control file: ',a)
 c Below bypasses are based on input-file name. Bypass wont work if file names change
       byeext=index(name,'brange').gt.0
@@ -833,7 +838,6 @@ c Should be revised.
       cluster=.true.
       ngroup=abs(wind)
       r_s=0.; m_s=0.; e_s=0.; prob_s=0.0
-c      n_s=0
       endif      !if additional epistemic sigma is read in or model clustering is asked for: one or the other
 c but not both at least initially
        if(nfi.ne.3.and.nfi.ne.1)then
@@ -1802,8 +1806,10 @@ c of recurrence, to fault dip, or other issues.
         endif
         if(cluster)then
         wtscene(imag,igroup(ift))=relwt(ift,imag)
- 	if(jseg(ift).eq.1)gweight(igroup(ift))=gweight(igroup(ift))+relwt(ift,imag)
- 	print *,igroup(ift),gweight(igroup(ift))
+ 	if(jseg(ift).eq.1)then
+ 	gweight(igroup(ift))=gweight(igroup(ift))+relwt(ift,imag)
+ 	print *,'igroup, gweight: ',igroup(ift),gweight(igroup(ift))
+ 	endif
         if(ift.eq.1)then
         rate_cl=crate(ift,imag)
         grp_rate(igroup(1)) = grp_rate(igroup(1))+rate_cl*relwt(1,imag)
@@ -2108,14 +2114,14 @@ ccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccc
       icnt=1
       prob = 0.1e-20      !initialze the array to negligible
-      if(cluster)then
-      write(6,*)'CLUSTERED EVENT WEIGHTS * RATES: '
-      do i=1,3
-      write(6,885)i,grp_rate(i)
-      enddo
+c      if(cluster)then
+cc      write(6,*)'CLUSTERED EVENT WEIGHTS * RATES: '
+c      do i=1,3
+c      write(6,885)i,grp_rate(i)
+c      enddo
 c	write(6,*)'jsegmin jsegmax ',jsegmin,jsegmax
 885      format('group # ',i1,' rate*wt = ',f8.5)
-      endif	!write out group weight * rate. added diagnostic june 5 2007
+c      endif	!write out group weight * rate. added diagnostic june 5 2007
 c---Here's the guts
 c
 c---For deagg, one receiver site.
@@ -4367,7 +4373,7 @@ c        read(5,*) idum
       enddo      !imag index
         endif
 ccccccccccccccccc
-cc-- characteristic without uncertainties
+cc-- characteristic without uncertainties. remove cluster for the most part 1/02/2014
       if((itype(ift).eq.1).and.(itest(ift).eq.1)) then
       do imag=1,nmagf(ift)      !new 6/06 consolidate mag variation for given fault
         xmag= cmag(ift,imag)
@@ -4375,10 +4381,10 @@ cc-- characteristic without uncertainties
 c cluster model new may 16 2007. Base cluster on mag and geographic branch for Char. 
 c Characteristic w/o uncert is the only valid eq source cluster model
       if(cluster)then
-      ks=imag
-      kg=igroup(ift)
-      rate= 1	!weights will be treated differently, using wtscene(*,*)
-      else
+       ks=imag
+       kg=igroup(ift)
+       rate= 1.	!weights will be treated differently, using wtscene(*,*)
+       else
 c relative rate nov 2006. SH. But not for cluster model. May 2007.
         rate= relwt(ift,imag) * crate(ift,imag)
       ks=1
@@ -4410,6 +4416,7 @@ c relative rate nov 2006. SH. But not for cluster model. May 2007.
 c      if(slist)write(30+i,399)rjb,xmag,rate,ift,depth0(ift),imag
         ip=1
       R_x = dmin(4)	!new signed distance, 10/2007
+      prx_t=0.0	!acumulate prob of exc from clustered events.
         do 3203 ia=1,nattn
         rrup= dmin(3)
         if(rjb.gt.dmax)goto 3203
@@ -4669,14 +4676,15 @@ c clamp is relying on the iq index. Some CEUS models now have different set than
       if(temp1.lt.0.) goto 3203      !no more calcs once p<0
       if(cluster)then
             prx=weight*temp1
-            eps = -temp*sqrt2
+c            eps = -temp*sqrt2
             prob_s(jseg(ift),ks,kg)=prob_s(jseg(ift),ks,kg)+prx
-            r_s(jseg(ift),ks,kg)= r_s(jseg(ift),ks,kg)+rrup*prx
-            m_s(jseg(ift),ks,kg)= m_s(jseg(ift),ks,kg)+xmag*prx
-            eps_s(jseg(ift),ks,kg)= eps_s(jseg(ift),ks,kg)+eps*prx 
+            endif	!accumulate in prob_s. Will be used later.
+c            r_s(jseg(ift),ks,kg)= r_s(jseg(ift),ks,kg)+rrup*prx
+c            m_s(jseg(ift),ks,kg)= m_s(jseg(ift),ks,kg)+xmag*prx
+c            eps_s(jseg(ift),ks,kg)= eps_s(jseg(ift),ks,kg)+eps*prx 
 c            print *,prx,rrup,xmag,eps,jseg(ift),ks,kg,' clamped below 3sig'       
 cc            n_s  (jseg(ift),ks,kg)=n_s(jseg(ift),ks,kg)+1     
-      else
+c      else
       wttmp=weight*rate
       cfac=wttmp*temp1
         prob(1,kg)= prob(1,kg)+ cfac
@@ -4756,7 +4764,7 @@ c
       prx= temp1 -ptail(ka)
       enddo
       endif      !eps <emax
-      endif      !if cluster
+c      endif      !if cluster
         goto 3203
       endif !if clamping is in effect
       elseif(iatt.eq.12)then
@@ -4775,14 +4783,15 @@ c
        endif
       if(cluster)then
             prx=weight*p(ipr)
-                eps= -pr*sqrt2
+c                eps= -pr*sqrt2
            prob_s(jseg(ift),ks,kg)=prob_s(jseg(ift),ks,kg)+prx
-            r_s(jseg(ift),ks,kg)= r_s(jseg(ift),ks,kg)+rrup*prx
-            m_s(jseg(ift),ks,kg)= m_s(jseg(ift),ks,kg)+xmag*prx
-            eps_s(jseg(ift),ks,kg)= eps_s(jseg(ift),ks,kg)+eps*prx 
+           endif
+c            r_s(jseg(ift),ks,kg)= r_s(jseg(ift),ks,kg)+rrup*prx
+c            m_s(jseg(ift),ks,kg)= m_s(jseg(ift),ks,kg)+xmag*prx
+c            eps_s(jseg(ift),ks,kg)= eps_s(jseg(ift),ks,kg)+eps*prx 
 c            print *,prx,rrup,xmag,eps,jseg(ift),ks,kg,' not clamped'         
 cc            n_s  (jseg(ift),ks,kg)=n_s(jseg(ift),ks,kg)+1     
-      else
+c      else
 c apply gmuncert weight here. aug 4 2008
       cfac = wttmp*p(ipr)*gmwt(ifn)
         prob(ifn,kg)= prob(ifn,kg)+ cfac
@@ -4871,20 +4880,39 @@ c
       prx= temp-ptail(ka)
       enddo
       endif      !eps <emax
-        endif      !if cluster
+c        endif      !if cluster
 3201      continue
       enddo      !files
- 3203   continue
+c if clustered events we next convert segment rates 
+c  to mean rates in prob() array
+c 
+ 3203   continue	!ia index
 3303      continue	!if char event rate is tiny skip above calcs and go here
       enddo      !imag set
         endif
 ccccccccccccccccccc
  850  continue
-c all faults have been dealt with; if clustered events we next convert segment rates to mean rates in prob() array
-c New May 17 2007. 
        if(cluster)then
-       call cluster_me(prob,rbarc,mbarc,ebarc,wtscene,nscene,ngroup,jsegmin,jsegmax)
-       endif
+	print *,prob_s(1,1:3,1),' 1 g1'
+	print *,prob_s(1,1:3,2),' 1 g2'
+	print *,prob_s(1,1:3,3),' 1 g3'
+	print *,prob_s(2,1:3,1),' 2 g1'
+	print *,prob_s(2,1:3,2),' 2 g2'
+	print *,prob_s(2,1:3,3),' 2 g3'
+	print *,prob_s(3,1:3,1),' 3 g1'
+	print *,prob_s(3,1:3,2),' 3 g2'
+	print *,prob_s(3,1:3,3),' 3 g3'
+	
+       call cluster_me(prob_c,wtscene,nscene,ngroup,jsegmin,jsegmax)
+	pr_cl=0.0
+      do j=1,ngroup
+            pr_cl=pr_cl+prob_c(j)*rate_cl	!*gweight(j)
+            print *,prob_c(j),gweight(j)
+            enddo	!j=..ngroup
+      print *,' probability of exc  from cluster_me: ',pr_cl
+      print *,' prob_c: ',(prob_c(j),j=1,ngroup)
+        endif
+c  All faults have been dealt with; 
  860    continue
 67      format(/,'#Station ',f7.4,1x,f10.4,1x,a,' vs30 ',f6.1)       
 
@@ -4892,8 +4920,8 @@ c New May 17 2007.
   100 continue
 c      dum=dtime(tarray)
        ip=1
-      if(cluster)then
-      fac=rate_cl
+c      if(cluster)then
+c      fac=rate_cl
 c      do js=1,3
 c      do ks=1,8
 cc      do kg=1,5
@@ -4903,17 +4931,34 @@ cc            enddo
 cc            enddo
 cc            enddo	!js   
 
-      do ifn=1,ngroup
+c      do ifn=1,ngroup
 c geographic or dip-uncert branch weights in gweight. central branch has 70% weight. Gweight is
 c internally applied in deagg whereas differnt gfiles were written for the main hazard calcs
 c and gweight was applied during the summation (combine... files)
-      prx=prob(1,ifn)*fac*gweight(ifn)
+c      prx=prob(1,ifn)*fac*gweight(ifn)
 c backazimuth for clustered events. choose one?
-      if(prx.gt.tiny)write(41,27)
-     + rbarc(ifn),mbarc(ifn),ebarc(ifn),prx,baz_tbd,'New Madrid SZ '//g_name(ifn)
+c      if(prx.gt.tiny)write(41,27)
+c     + rbarc(ifn),mbarc(ifn),ebarc(ifn),prx,baz_tbd,g_name(ifn)
 c also write to unit 21 when act is together
-      enddo	!ifn index
-      else
+c      enddo	!ifn index
+c      else	!no cluster below
+	if(cluster)then
+	tmp=0.0
+       do ieps=1,10
+       do im=1,immax
+       do ir=1,17
+       tmp=tmp+haz(ir,im,ieps,1,0)
+       enddo
+       enddo
+       enddo
+	print *,'Cluster rescaling. pr_cl and haz =',pr_cl,tmp
+       if(tmp.gt.0.)tmp=pr_cl/tmp
+	haz=haz*tmp
+	ebar=ebar*tmp
+	mbar=mbar*tmp
+	rbar=rbar*tmp
+	prob5=prob5*tmp
+	endif
        do ifn=1,nfi
        do ieps=1,10
        ie=ieps
@@ -5035,7 +5080,7 @@ c only check on individual atten components if the mean hzard exceeds tiny.
        endif	!outer prx .gt. tiny
 27      format(1x,f9.3,1x,f7.3,1x,f5.2,1x,e11.5,1x,f8.2,1x,a32,1x,i2)
 	enddo	!iflt
-	endif	!cluster or not?
+c	endif	!cluster or not? No longer.
        close(21)
        if(l_ms)then
 c       close(31)		!mean spectrum file. new oct 2010.
@@ -8396,7 +8441,7 @@ c Written by C. Mueller, USGS.
       return
       end function KPSCR
 
-       subroutine cluster_me(prob,rbarc,mbarc,ebarc,wtscene,nscene,ngroup,j1,j2)
+       subroutine cluster_me(prob,wtscene,nscene,ngroup,j1,j2)
 c this routine computes prob. of exceedance for clustered events grouped into ngroup groups
 c from rate of exceedance for individual sources stored in prob_s in input
 c Sources are combined, zero or one from jseg(1), one from jseg(2), and zero or one from jseg(3), 
@@ -8411,117 +8456,56 @@ c      prob_s = probability of ground motion exceedance from one event in a
 c group setting.
 c  j1 = minimum segment number, 1 or 2
 c  j2 = maximum segment number, 2 or 3. (this needs work, if two segments,  their numbers must be consecutive)
+c ia =  current GMM index
 c
 c There is 1 period, 1 ground motion levels, ngroup=1 to 5 groups
-c This subroutine was written to solve the current model space for NMSZ only. There could easily be
-c different sets to consider for other sources, but because of time constraints and limits to my imagination,
-c I kept the solution focussed on this source. Steve Harmsen, May 17 2007
+c This subroutine was written to solve the current model space for NMSZ or Wasatch-SLC only. 
       parameter ( npmx=1)  
-	common/cluster/prob_s,r_s,m_s,eps_s
-      real, dimension(3,8,5) :: prob_s, r_s, m_s, eps_s
+	common/cluster/prob_s
+      real, dimension(3,8,5) :: prob_s
 c      integer, dimension(npmx) :: ngroup
       integer :: ngroup
       integer i_anom/0/      !keep tract of anomalous rates. hope this is zero
-      real   prob(3,5),mbarc(5),rbarc(5),ebarc(5)
+      real   prob(*)	!prob : store p_ex in each group,1,...,ngroup
 c pfac might be used, from Gabe Toro email. (?)
       real*8 p,pfac,q(4),qq(4)
 c qq() stores fraction of prob that is associated with src(dim1, segment). Not finished jul 13 2010.
        real wtscene(8,5)
-       real, dimension(3):: rbar,ebar,mbar,wbar
+c       real, dimension(3):: rbar,ebar,mbar,wbar
 c prob_s: dim1= segment #, 1 to 3, dim2=ks=scenario
 c convert for groups, for scenarios
        nseg_c=j2-j1+1
       ip=1		!1 spectral period.
-c      do igp=1,ngroup
-c       k=1		!1 gm level for deagg. Aug 2008
+      do igp=1,ngroup
+       k=1		!1 gm level for deagg. Aug 2008
 c ps stores sum of scenario rates
-c      ps=0.0
+      ps=0.0
 c      wtsc=0.
 c      rbarc(igp)=0.
 c      mbarc(igp)=0.
 c      ebarc(igp)=0.
-c      do j=1,nscene
-c      p=0.0
-c      rbar=0.
-c      mbar=0.
-c      ebar=0.
-c      i=1
-c      pmax=0
-c      rmin=10000.
-c      qtot=1.0
-c      do isrc=j1,j2	!nsrc=2 or 3
-c      q(i)=prob_s(isrc,j,igp)
+      do j=1,nscene
+      p=0.0
+      i=1
+       do isrc=j1,j2	!nsrc=2 or 3
+       q(i)=prob_s(isrc,j,igp)
 c      if(q(i).gt.0)then
 c these are the avg distance, mag ,epsilon averaged over GMPM uncert.
-c      r_s(isrc,j,igp)=r_s(isrc,j,igp)/q(i)
-c      m_s(isrc,j,igp)=m_s(isrc,j,igp)/q(i)
-c      eps_s(isrc,j,igp)=eps_s(isrc,j,igp)/q(i)
-c      if(r_s(isrc,j,igp).lt.rmin)then
-c      rmin=r_s(isrc,j,igp)
-c      imin=isrc
-c      endif
-c      if(q(i).gt.pmax)then
-c      pmax=q(i)
-c      imax=isrc
-c      endif
-c      p=p+q(i)
-c      endif    !q(i)>0
-c      qtot=qtot*q(i)
-c      ebar(i)= eps_s(isrc,j,igp)
-c      rbar(i)= r_s(isrc,j,igp)
-c      mbar(i)= m_s(isrc,j,igp)
-c      i=i+1
-c      enddo	!isrc=j1,j2
-c      pfac=p
-c      if(nseg_c.eq.3)then
-c      p= p +qtot -q(1)*q(2) -q(1)*q(3) -q(2)*q(3)
-c the below quantities, qq and wbar, are proportions that I never quite found a use for.
-c      qq(1)=q(1)-0.5*(q(1)*q(2)+q(1)*q(3))+qtot/3.0
-c      qq(2)=q(2)-0.5*(q(1)*q(2)+q(2)*q(3))+qtot/3.0
-c      qq(3)=q(3)-0.5*(q(2)*q(3)+q(1)*q(3))+qtot/3.0
-c      wbar(1)=qq(1)/p; wbar(2)=qq(2)/p; wbar(3)=qq(3)/p
-c      else 
-c      p= p-qtot
-c      qq(1)=q(1)-0.5*qtot
-c      qq(2)=q(2)-0.5*qtot
-c      wbar(1)=qq(1)/p; wbar(2)=qq(2)/p
-c      endif
+       p=p+q(i)
+       i=i+1
+       enddo	!isrc
+      if(nseg_c.eq.3)then
+      p= p  - q(1)*q(2) -q(1)*q(3) -q(2)*q(3)
+      else 
+      p= p - q(1)*q(2)
+      endif
 c above includes all cross terms for this limited model
-c Gabe Toro's weight factor, from an email of aug 19 2008. How to use?
-c	if(pfac.gt.1.e-15)then
-c	pfac=p/pfac
-c	else
-c	pfac=1.0
-c	endif
-c      if(p.ge.1.0001)then
-c Flow should not arrive here, but if so, assume 10 events a year. That should be bad enough
-c      ps =10.*wtscene(j,igp) + ps
-c      i_anom=i_anom+1
-c      write(*,*)q
-c      write(*,*)p,isite,j,k,igp,ip
-c      if(i_anom.gt.10)stop
-c      else
-c      wtsc=wtsc+wtscene(j,igp)
-c	pf=wtscene(j,igp)*p
-c      ps = ps +pf
-c      do k=1,nseg_c
-c      rbarc(k,igp)=rbarc(k,igp)+pf*rbar(k)
-c      mbarc(k,igp)=mbarc(j,igp)+pf*mbar(k)
-c     ebarc(k,igp)=ebarc(j,igp)+pf*ebar(k)
-c      endif
-c     enddo	!j=scenarios index jmax=8?
+	pf=wtscene(j,igp)*p
+       ps = ps +pf
 c prob stores the probability of exceedance from all scenarios in each group. 
-c      prob(j,igp)=ps
-c	if(ps.gt.0.)then
-c      rbarc(j,igp)=rbarc(j,igp)/ps(j)
-c      mbarc(j,igp)=mbarc(j,igp)/ps(j)
-c      ebarc(j,igp)=ebarc(j,igp)/ps(j)
-c      endif
-c      enddo	!ngroup 5 or less
-c      if(i_anom.gt.0)then
-c      write(*,*)'Cluster_me had ',i_anom, ' high rates. Should be 0'
-c      write(*,*)'This outcome should be examined further '
-c      endif
+       enddo	!j=1,nscene
+       prob(igp)=ps
+       enddo	!igp=1,ngroup
       return
       end subroutine cluster_me
       
@@ -9730,7 +9714,8 @@ c This sigma may be revised.
 	T = max(period(iper),0.05)
 	T = min(T,3.0)
 	xmagc=max(5.0,min(xmag,7.5))
-	sig = 1.28 + 0.05*alog(T) - 0.08 * xmagc
+        sig = 1.18 + 0.035*alog(T) - 0.06 * xmagc       !see P Powers email jan 21 2014
+C	sig = 1.28 + 0.05*alog(T) - 0.08 * xmagc
           sigmaf= 1./sig/sqrt2
           vscap=min(vs30,1200.)
 c-- 
@@ -12067,10 +12052,12 @@ c Also, nothing in 2011 models is available for handing soil Vs.
 c change to base e log to fit into standard framework. Convert to units g
       amean11 = amean*sfac -gfac
 c apply the median clamp for some frequencies. Gail email, Mar 23, 2011.
-      if(freq(jf).gt.2.1 .and. freq(jf) .lt.8.)then
-      amean11=min(amean11,1.792)
+      if(freq(jf).gt.2.1 .and. freq(jf) .lt.40.)then
+c 3 g limit
+      amean11=min(amean11,1.099)
       elseif(freq(jf).gt.90.)then
-      amean11=min(amean11,0.4055)
+c 1.5 g limit PGA      
+      amean11=min(amean11,0.405)
       endif
       return
       end function  amean11

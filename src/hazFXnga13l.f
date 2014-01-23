@@ -1,4 +1,7 @@
-c--- program  hazFXnga13l.f; 12/16/2013; Use  with NGA relations, or others.
+c--- program  hazFXnga13l.f; 01/03/2014; Use  with NGA relations, or others.
+c 1/22/2014: correct aleatory sigma in Idriss NGA-W(2).
+c 01/03/2014: Use same median clamps in amean11 as are used in other CEUS GMMs. PPowers
+c 		noticed some discrepencies in earlier versions of this code.
 c 12/16/2013: Update ASK2013 a1 and vlin for some short periods. from Sanaz R email
 c OCT 1, 2013: use Mcap of 7.5 on s.d. computation in Idriss2013.
 c 9/17/2013	In ASK13, Ry0 is always -1. (previously some cases Ry0=dmin(5)=-1)
@@ -781,7 +784,7 @@ c adum could be sa(g) or pgv (cm/s). need flexible format
             endif
       endif
       write (6,61)date,time,name
-61      format('# *** hazFXnga13l 12/16/2013 log file. Pgm run on ',a,' at ',a,/,
+61      format('# *** hazFXnga13l 01/22/2014 log file. Pgm run on ',a,' at ',a,/,
      +'# *** Input control file: ',a)
       if(poly)write(6,*)'hazFXnga13l: Polygon file &npts: ',polygon,npmax
 c Below bypasses are based on file name. Bypass wont work if file names change
@@ -8139,10 +8142,11 @@ c Also, nothing in 2011 models is available for handing soil Vs.
 c change to base e log to fit into standard framework. Convert to units g
       amean11 = amean*sfac -gfac
 c apply the median clamp for some frequencies. Gail email, Mar 23, 2011.
-      if(freq(jf).gt.2.1 .and. freq(jf) .lt.8.)then
-      amean11=min(amean11,1.792)
+      if(freq(jf).gt.2.1 .and. freq(jf) .lt.40.)then
+c      amean11=min(amean11,1.792)
+      amean11=min(amean11,1.099)	!corrected clamp value
       elseif(freq(jf).gt.90.)then
-      amean11=min(amean11,0.4055)
+      amean11=min(amean11,0.405)
       endif
       return
       end function  amean11
@@ -8636,6 +8640,8 @@ c           SA2=SA*exp(sigma(ipgk))
       end function y_ngaw2_no_site_amps
 c >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>      
       subroutine getIdriss2013(iper,ip,xmag,rrup,vs30,gndout,sigmaf)
+c Jan 22 2014: correct aleatory sigma to conform to Eq Spectra article. Different
+c    from his 2008 GMPE.
 c Oct 1 2013: When computing sd, use Mcap 7.5 Mlow 5.0
 c Dec 3 2012: for pga and many periods to 10s. Updated 4/2013.
 c ip is period index in calling program. 
@@ -8700,7 +8706,8 @@ c This sigma may be revised.
       sig=sigma_fx
       else
       xmagc=max(5.0,min(xmag,Mcap))
-      sig = 1.28 + 0.05*alog(T) - 0.08 * xmagc
+c      sig = 1.28 + 0.05*alog(T) - 0.08 * xmagc
+	sig = 1.18 + 0.035*alog(T) - 0.06 * xmagc	!see P Powers email jan 21 2014
       endif	!special study can fix all sigma at a specified value. jan 7 2012.
           sigmaf= 1./sig/sqrt2
           vscap=min(vs30,1200.)

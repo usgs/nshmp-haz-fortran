@@ -1,4 +1,7 @@
 c--- program hazSUBXnga.test.f : long header version
+c Jan 21 2014: Correct NAAsub (BCHydro) sigma to 0.74.
+c Jan 21, 2014: NAAsub: DelC has been corrected to Kofi Addo email of Jan 13.
+c Jan 17 2014: Add 1.5s coeffs to AM09 and to ABsub. 
 C Jan 7, 2014:  Calculate PGArock in getNAAsub. Corrected Jan 7 2013
 c May 9, 2013: use the icode variable to store BCHydro delCi instruction. Previously only the
 c		central branch (delCi=2) was permitted. Set izpar=1 for PACNW to get 20 km depth to top
@@ -209,10 +212,10 @@ c name must include 'cascadia' for these arrays to be filled.
       integer itype,iftype
       dimension npts(5)
       real, dimension(2):: ztop
-      real, dimension (10):: perab,percbc
+      real, dimension (11):: perab,percbc
       real,dimension(6):: ptail
       real, dimension(13):: pergeo
-      real, dimension(15):: pdAM	!Atkinson Macias
+      real, dimension(16):: pdAM	!Atkinson Macias
       real, dimension(23) :: perba
       dimension rate(50,12),ratem(50)
       dimension nrup(50,12)
@@ -228,11 +231,11 @@ c from ba_02apr07_usnr.xls coef file. use for nonlinear site response, getgeom
      + 1.500, 2.000, 3.000, 4.000, 5.000, 7.500,10.0/)
 C extend getgeom to long periods.
 c coeffs from Bob Youngs' spreadsheet in email of Nov 17 2008.
-      pdAM = (/0.0,0.05,0.1,0.2,0.3,0.4,0.5,1.,2.,2.5,3.,4.,5.,7.7,10./)
+      pdAM = (/0.0,0.05,0.1,0.2,0.3,0.4,0.5,1.,1.5,2.,2.5,3.,4.,5.,7.7,10./)
       pergeo= (/0.,0.2,1.0,0.1,0.3,0.5,2.0,0.4,0.75,1.5,3.,4.,5./)      
-      perab= (/0.,0.2,1.0,0.1,0.3,0.4,0.5,0.75,2.0,3.0/)      
+      perab= (/0.,0.2,1.0,0.1,0.3,0.4,0.5,0.75,1.5,2.0,3.0/)      
 c percbc is spectral period set for Crouse91.
-	percbc = (/0.0,0.1,0.2,0.3,0.5,0.75,1.0,2.0,3.,4.0/)
+	percbc = (/0.0,0.1,0.2,0.3,0.5,0.75,1.0,2.0,3.,4.0,-1./)
        perx = (/0.,0.2,1.0,0.1,0.3,0.5,2.0,-1./)
 c gregor period set, perg
 c the 2006 version of perg below. 0.0 replaces 0.01-s for consistency with others
@@ -650,11 +653,11 @@ c------- AB03 type
          write(6,*)'Atkinson Boore 2003 subduction model'
         abb03(ip,ia)=.true.
          j=1
-         dowhile(period(ip).ne.perab(j).and.j.lt.10)
+         dowhile(period(ip).ne.perab(j).and.j.lt.11)
          j=j+1
          enddo
-         if(j.gt.10)stop 'period doesnt match standard AB subduction set 10-2008'
-         iperab(ip)=j      !period index for Sadigh and perhaps other relations.
+         if(j.gt.11)stop 'period doesnt match standard AB subduction set 10-2008'
+         iperab(ip)=j      !period index for ABsub and perhaps other relations.
          if(iatten(ip,ia).eq.4)then
          write(6,*)'Using ABsub with Cascadia coef, period map is ',j
       headr%name(6)='ABsub Cascadia'
@@ -2472,6 +2475,7 @@ c      if(iq.eq.3.and.dist0.lt.30.)write(39,*) dist0,exp(gnd),exp(amp),pganl
 
       subroutine getABsub(ip,iq,ir,islab,vs30,xmag,dist0,gnd,sigmaf,p_corr)
 c from Atkinson &Boore BSSA aug 2003, p1715.  C-site and D-site look good apr 11 2007. SH.
+c add 1.5s coeffs jan 17 2014. SH. Anelastic attn coeff is -0.0009. Less than 1s but not the geo. avg
 c Modify 5hz and add 2.5 hz coeffs., 10/10/2008. AB BSSA erratum Oct 2008. 
 c Affects Global but not cascadia. 10/17 also modify 2 hz and 3.33 hz coeffs for global.
 c Nov 20 2013: 2-s and 3-s modified if p_corr
@@ -2496,7 +2500,7 @@ c sigmaf = sigma factor = 1.0/sigma/sqrt2/aln10
 c            where sigma is the log_10 aleatory sigma.
 c  Coeffs for 8 spectral pds. also 3s available for interface
 c modified for gfortran, f95 Oct 2006
-      parameter (np=10,sqrt2=1.4142136,gfac=2.9912261,aln10=2.30258509)
+      parameter (np=11,sqrt2=1.4142136,gfac=2.9912261,aln10=2.30258509)
 c gfac = log10(980)
 	logical p_corr
 c these are two frequencies where special pleading was introduced 10-2008 BSSA.
@@ -2518,9 +2522,9 @@ c
 c interface, names start with s for "Subduction". s1g global, s1 cascadia only.
 c
       real,dimension(np):: pcor,s1,s1g,s2,s3,s4,s5,s6,s7,ssig
-      real perab(10),period,sde,dy_sdi
+      real perab(11),period,sde,dy_sdi
 c array constructors oct 2006. 2.5 hz is element number 6 of 10. 1.33 hz is el. 8
-      perab= (/0.,0.2,1.0,0.1,0.3,0.4,0.5,0.75,2.0,3.0/)      
+      perab= (/0.,0.2,1.0,0.1,0.3,0.4,0.5,0.75,1.5,2.0,3.0/)      
 c  Inslab coeffs not used here but provided for ref.
 c      c1w=(/-0.04713,0.51589,-1.02133,0.43928,0.26067,0.-0.16568,-2.39234,-3.70012/)
 c      c1= (/ -0.25,0.40,-0.98,0.160,0.195,-0.172,-2.250,-3.64/)
@@ -2537,23 +2541,23 @@ c 10/17/2008: Cubic Splines were used for several 3.33 and 2 hz Global-estimatio
 c Interested in the details? See intAB03.f for src code uses Numerical recipes. 
 c      s1g=(/2.991,2.6638,2.1442,2.7789,2.5816,2.5249,2.3857867,2.1907,2.301/) prior
 c s1g has been recomputed for 2.0, 2.5, 3.33 and 5hz. Ditto s2g ,...
-      s1g=(/2.991,2.5711536,2.1442,2.7789,2.6168785,2.6175463,2.536019,2.288355,2.1907,2.301/)
-      s1=(/2.79,2.54,2.18,2.5,2.516,2.50,2.418,2.241635,2.33,2.36/)
-      s2=(/.03525,.12386,.1345,.09841,.1373,0.1477,.1444,0.14504924,.07148,.02237/)
-      s2g=(/.03525,0.13976128,.1345,.09841,0.13694176,0.13179871,0.1324168,0.13728201,.07148,.02237/)
-      s3=(/.00759,.00884,.00521,.00974,.00789,0.00728,.00671,5.9208343E-3,.00224,.00012/)
-      s3g=(/.00759,7.79948E-3,.00521,.00974,8.12251E-3,8.32052E-3,7.951397E-3,6.429092E-3,.00224,.00012/)
-      s4=(/-0.00206,-.0028,-0.0011,-.00287,-.00252,-0.00235,-.00195,-1.5903986E-3,0.,0./)
-      s4g=(/-0.00206,-2.49985E-3,-0.0011,-.00287,-2.6353553E-3,-2.6501498E-3,-2.4560375E-3 ,-1.7370114E-3,0.,0./)
-      s5=(/0.19,0.15,0.10,0.15,0.14,0.13,0.12,0.106354214,0.10,0.10/)
-      s5g=(/0.19,0.13666,0.10,0.15,0.1429013,0.14334,0.13579784,0.11287035,0.10,0.10/)
-      s6= (/0.24,0.23,0.30,0.23,0.253,0.37,0.277,0.34101113,.25,0.25/)
-      s6g= (/0.24,0.32338,0.30,0.23,0.30005046,0.27662,0.32512766,0.2953982,.25,0.25/)
+      s1g=(/2.991,2.5711536,2.1442,2.7789,2.6168785,2.6175463,2.536019,2.288355,2.1714007,2.1907,2.301/)
+      s1=(/2.79,2.54,2.18,2.5,2.516,2.50,2.418,2.241635,2.2677445,2.33,2.36/)
+      s2=(/.03525,.12386,.1345,.09841,.1373,0.1477,.1444,0.14504924,0.09763566,.07148,.02237/)
+      s2g=(/.03525,0.13976128,.1345,.09841,0.13694176,0.13179871,0.1324168,0.13728201,0.09763566,.07148,.02237/)
+      s3=(/.00759,.00884,.00521,.00974,.00789,0.00728,.00671,5.9208343E-3,3.4726615E-3,.00224,.00012/)
+      s3g=(/.00759,7.79948E-3,.00521,.00974,8.12251E-3,8.32052E-3,7.951397E-3,6.429092E-3,3.4726615E-3,.00224,.00012/)
+      s4=(/-0.00206,-.0028,-0.0011,-.00287,-.00252,-0.00235,-.00195,-1.5903986E-3,0.0,0.,0./)
+      s4g=(/-0.00206,-2.49985E-3,-0.0011,-.00287,-2.6353553E-3,-2.6501498E-3,-2.4560375E-3 ,-1.7370114E-3,0.0000,0.,0./)
+      s5=(/0.19,0.15,0.10,0.15,0.14,0.13,0.12,0.106354214,0.1,0.10,0.10/)
+      s5g=(/0.19,0.13666,0.10,0.15,0.1429013,0.14334,0.13579784,0.11287035,0.1,0.10,0.10/)
+      s6= (/0.24,0.23,0.30,0.23,0.253,0.37,0.277,0.34101113,0.2707519,.25,0.25/)
+      s6g= (/0.24,0.32338,0.30,0.23,0.30005046,0.27662,0.32512766,0.2953982,0.2707519,.25,0.25/)
 c s7 corresponds to site class E 
-      s7=(/0.29,0.25,0.55,0.2,0.319,0.38,0.416,0.53479433,0.4,0.36/)
-      s7g=(/0.29,0.33671,0.55,0.2,0.29974141,0.29329,0.34473022,0.49243947,0.4,0.36/)
-      ssig=(/0.23,0.28,0.34,0.27,0.286,0.29,0.31,0.34,0.34,0.36/)
-        pcor=       (/-0.00298,-0.00290,-0.00536,0.,-0.00225,0.,0.,0.,0.,-0.0052/)
+      s7=(/0.29,0.25,0.55,0.2,0.319,0.38,0.416,0.53479433,0.46225562,0.4,0.36/)
+      s7g=(/0.29,0.33671,0.55,0.2,0.29974141,0.29329,0.34473022,0.49243947,0.46225562,0.4,0.36/)
+      ssig=(/0.23,0.28,0.34,0.27,0.286,0.29,0.31,0.34,0.34,0.34,0.36/)
+        pcor=       (/-0.00298,-0.00290,-0.00536,0.,-0.00225,0.,0.,0.,-2.224601E-3,0.,-0.0052/)
       period = perab(iq)
 c Determine gnd as fcn of dist, M, period, iclass, Vs30
       if(period.ne.0.)then
@@ -2615,7 +2619,9 @@ c      sigma=sig(iq)
      &         -g*alog10(dist2)
 c Mod nov 20 2013: if requested, drop the large-distance rolloff for 2s SA to keep
 c curve below the 1-s median curve.
-     	if(p_corr .and. period.gt.1.0 .and. dist.gt.400.) then
+	if(p_corr.and.period.eq.1.5 .and. dist.gt.200.)then
+	gnd = gnd - 0.001*(dist-200.)	!more anelas. atten than at 2 and 3 s but less than 1s
+     	elseif(p_corr .and. period.gt.1.5 .and. dist.gt.400.) then
      	 gnd = gnd -.001*(dist-400.)
      	 endif
 c end Mod Nov 20 2013.
@@ -2660,7 +2666,8 @@ c--- DE boundary.
       endif          
 c log base 10 to base e
           gnd= gnd * aln10
-       if(p_corr.and.dist0.gt.200.)gnd=gnd+pcor(iq)*(dist0-200.0)
+c the below "Peterson correction" is not used in this version of the code.
+c       if(p_corr.and.dist0.gt.200.)gnd=gnd+pcor(iq)*(dist0-200.0)
 	if(sdi)then
        sde=gnd+fac_sde(ip)	!fac_sde is log(T**2/(4pisq))
        rhat = min(10.,exp(sde)/dy_sdi)	!10 is an upper bound for rhat.
@@ -3300,15 +3307,17 @@ c Written by C. Mueller, USGS.
 
 
       subroutine getNAAsub(ip, iq, Fevnt, Ffaba, xmag, R, zH, sigmaf, gm, delCi, Vs30)
-c This is Abrahamson 2010 BCHydro Subduction model that was developed using the dataset of 
+c This is Abrahamson 2012 BCHydro Subduction model that was developed using the dataset of 
 c acceleration response spectra of the geometrical mean 5% spectral damping. The coefficients
 c  have been written for periods: pga, 0.050, 0.075,0.100, 0.150,0.200,0.250,0.300,0.400,
 c 0.500, 0.600, 0.750, 1.000, 1.500, 2.000, 2.500, 3.000, 4.000, 5.000, 6.000, 7.500, 10.000.
 c
 c
 c Jan 7 2014: pgaRock has been corrected. SHarmsen. PgaRock is Norms PGA1000.
+c Jan 21, 2014: DelC has been corrected to Kofi Addo email of Jan 13. Effect of this change
+c 	on PGA and 5hz medians is approx 20% raise.
 c For values of T=0.02sec, use PGA values
-c Recommended values for DelC1 is -0.5, 0.0, 0.5
+c Old (out of date) Recommended values for DelC1 is -0.5, 0.0, 0.5
 c PGA1000 = Median PGA value for a Vs30 1,000 m/sec
 c***************************************************************************************************
 c The parameters are defined as:
@@ -3325,25 +3334,31 @@ c gm  - 	logged SA ground motion (units g)
 c delCi = 	Integer indicator for low middle hi branch, 1 2 or 3 resp.
 c***************************************************************************************************
 c Note delCi changes the median by about 57%. It affects a magnitude dep. as well.
+c delC is made period dependent, Jan 21 2014.
 	implicit none
 	real sqrt2
 	parameter (sqrt2=1.414213562)
         common/sdi/sdi,dy_sdi,fac_sde
-	real, dimension(22):: NAAper,b,theta1, theta2, theta6, theta7, theta8, vlin
-	real theta10(22), theta11(22), theta12(22), theta13(22), theta14(22)
-	real theta15(22), theta16(22)
-	real delC(3), delC1, dy_sdi, rhat,sdisd,sde,sdi_ratio
+	real, dimension(22):: NAAper,b,theta1, theta2, theta6, theta7, theta8, vlin,
+     + theta10, theta11, theta12, theta13, theta14, theta15, theta16
+	real delC(3,22), delC1, dy_sdi, rhat,sdisd,sde,sdi_ratio
         real, dimension(8):: fac_sde
 	real xmag, R, zH, fterm
-	integer Fevnt, Ffaba, delCi, c4/10/, ip, iq
+	integer Fevnt, Ffaba, delCi, c4/10/, ip, iq,i
 	real c1/7.8/, c/1.88/, n/1.18/
 	real theta3/0.1/, theta4/0.9/, theta5/0.0/, theta9/0.4/
 	real fMag,PGArock,gm, fMagp,fDepthp,ftermp, fSitep
 	real fDepth,  fSite, Vs30, VsStar
 	real Rmax
-	real sigma/0.772/,sigmaf
+	real sigma/0.74/,sigmaf	!sigma changed from 0.77 jan 21 2014 SH. Addo email, jan 20 2014
 	logical sdi
-c NAAper = period set for Norm's BC Hydro subduction model. 0.00 for 0 s (PGA) to 0.02 s SA
+	data delC /0.,0.2,0.4,	!pga
+     +	 0.,0.2,0.4,0.,0.2,0.4,0.,0.2,0.4,0.,0.2,0.4,0.,0.2,0.4,0.,0.2,0.4,0.,0.2,0.4,	!to 0.3s
+     + -.1,.1,.3, -.1,.1,.3,-.1,.1,.3,	!to 0.6s
+     + -0.2,0.,0.2, -0.2,0.,0.2,-0.2,0.,0.2,	!0.75 to 1.5s
+     + -0.3,-0.1,0.1,-0.3,-0.1,0.1,		!2 to 2.5s
+     + -0.4,-0.2,0., -0.4,-0.2,0.,-0.4,-0.2,0.,-0.4,-0.2,0.,-0.4,-0.2,0.,-0.4,-0.2,0./	!3 to 10s 
+Cc NAAper = period set for Norm's BC Hydro subduction model. 0.00 for 0 s (PGA) to 0.02 s SA
 	NAAper =(/0.00, 0.050, 0.075,0.100, 0.150,0.200,0.250,0.300,0.400,
      + 0.500, 0.600, 0.750, 1.000, 1.500, 2.000, 2.500, 3.000, 4.000, 5.000, 6.0, 7.500, 10.0/)
 	vlin = (/865.1,1053.5,1085.7,1032.5,877.6,748.2,654.3,587.1,503.0,456.6,430.3,410.5,400.0,
@@ -3382,11 +3397,14 @@ c NAAper = period set for Norm's BC Hydro subduction model. 0.00 for 0 s (PGA) t
      2                    0.300, 0.300, 0.300/)
         theta16 = (/-1.00, -1.18, -1.36, -1.36, -1.30, -1.25, -1.17, -1.06, -0.78, -0.62, -0.50,
      1                  -0.34, -0.14, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00/) 
-        delC = (/-0.5, 0.0,0.5/)
-     
-C	Define DelC1
+c        delC = (/-0.5, 0.0,0.5/)	!out of date needs to be period dependent. SH Jan 17 2014.
+c	Define DelC1
+c	do i=1,22
+c	print *,Naaper(i),delC(2,i),' period delC center branch'
+c	enddo
+c	stop	!temp
 	if(delCi.le.3.and.delCi.gt.0) then
-		delC1 = delC(delCi)
+		delC1 = delC(delCi,iq)
 	else 
 		print *, 'Error in delC1'
 	endif
@@ -3470,6 +3488,7 @@ C Calulate ground motion of Base Function
 	subroutine getAtkinsub(ipg,ip,rcd,M,vs30,backarc,gnd,sigmaf)
 	real rcd,M,vs30,gnd,sigma,sfac,gfac,gnd0,gndp,gnd0p,pganl
 c Atkinson and Macias (BSSA, 2009) for great cascadia subduction eqs M>=7.5
+c add 1.5s coeffs SH Jan 17 2014. Interpolate on log(T).
 c	input variables:
 c	ipg = global ip index used with site amplification calculation.
 c	ip = index corresponding to  spectral period (s)
@@ -3487,7 +3506,7 @@ c	sigma = sig_lnY based on Campbell&Bozorgnia
 c	coded Nov 7 2012 S Harmsen USGS harmsen@usgs.gov
 c
 	integer np
-	parameter (np=15)
+	parameter (np=16)
 	parameter (gfac=6.8875526,sfac=2.3025851,sqrt2=1.4142136)
         common/sdi/sdi,dy_sdi,fac_sde
         real dy_sdi,rhat, sigmaf,sdisd
@@ -3496,23 +3515,23 @@ c base10 to natural logs. cm/s/s to g
 	logical sdi
 	integer backarc,ip,ipq
 	real, dimension(np):: fr,pd,c0,c1,c2,c2b,c3,c4,sig
-	sig =(/0.24,0.26,0.27,0.27,0.27,0.27,0.27,0.29,0.30,0.30,
+	sig =(/0.24,0.26,0.27,0.27,0.27,0.27,0.27,0.29,0.2958,0.30,0.30,
      + 0.30,0.3,0.32,0.35,0.38/)
-     	c0=(/5.006,5.843,5.490,4.746,4.303,4.167,3.999,3.621,3.241,3.104,2.978,
+     	c0=(/5.006,5.843,5.490,4.746,4.303,4.167,3.999,3.621,3.3987143,3.241,3.104,2.978,
      + 2.814,2.671,2.489,2.338/)
      	c1=(/-1.5573,-1.9391,-1.6257,-1.1691,-0.9322,-0.8854,
-     + -0.8211,-0.7376,-0.6741,-.6585,-0.6431,-0.6108,-0.5942,-0.6412,-0.6311/)
+     + -0.8211,-0.7376,-0.7004549,-0.6741,-.6585,-0.6431,-0.6108,-0.5942,-0.6412,-0.6311/)
        c2=(/-0.00034,0.0,-0.00115,-0.00212,-0.00231,-0.00211,-0.00195,
-     + -0.00128,-0.00081,-0.00063,-0.00057,-0.00046,-0.00040,-0.00003,0.0/)
+     + -0.00128,-1.0050676E-3,-0.00081,-0.00063,-0.00057,-0.00046,-0.00040,-0.00003,0.0/)
        c2b=(/-0.0015,-.0015,-0.00225,-0.00332,-.00331,-0.00281,-0.00225,
-     + -0.00158,-0.00083,-0.00065,-0.00059,-0.00048,-0.00041,-0.000032,0.0/)
+     + -0.00158,-1.1412782E-3,-0.00083,-0.00065,-0.00059,-0.00048,-0.00041,-0.000032,0.0/)
 c c2b first attempt at decay in backarc region. hybridizing two Atkinson papers       
-      c3=(/0.1774,0.1813,0.1736,0.1593,0.1713,0.1802,0.1870,0.2116,0.2696,0.2990,
+      c3=(/0.1774,0.1813,0.1736,0.1593,0.1713,0.1802,0.1870,0.2116,0.24552783,0.2696,0.2990,
      + 0.3258,0.3490,0.3822,0.4760,0.5357/)
-      c4 = (/0.0827,0.0199,0.0261,0.0432,0.0270,0.0258,0.0271,0.0328,
+      c4 = (/0.0827,0.0199,0.0261,0.0432,0.0270,0.0258,0.0271,0.0328,9.869471E-3,
      + -0.0064,-0.0074,-0.0103,-0.0299,-0.0417,-0.0629,-0.0737/)
-      fr = (/99.,20.,10.,5.,3.16,2.5,2.,1.0,0.5,0.4,0.32,0.25,0.2,0.13,0.10/)
-      pd = (/0.01,0.05,0.1,0.2,0.3,0.4,0.5,1.,2.,2.5,3.,4.,5.,7.7,10./)
+      fr = (/99.,20.,10.,5.,3.16,2.5,2.,1.0,0.667,0.5,0.4,0.32,0.25,0.2,0.13,0.10/)
+      pd = (/0.01,0.05,0.1,0.2,0.3,0.4,0.5,1.,1.5,2.,2.5,3.,4.,5.,7.7,10./)
 c h term from M
 	h=M**2-3.1*M-14.55	!eqn 6
 	xm=M-8.0

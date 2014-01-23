@@ -1,4 +1,7 @@
-c--- deaggGRID.2013.f for USGS PSHA runs, 12/30/ 2013. update of deaggGRID.2011.f
+c--- deaggGRID.2013.f for USGS PSHA runs, 1/22/ 2014. update of deaggGRID.2011.f
+c Jan 22 2014: Correct Idriss sigma_aleatory to conform to Eq Spectra article
+c Jan 22 2014: correct BCHydro delC for intraplate. Central branch delC=-0.3 now.
+c 1/07/ 2014: repair site term in PGArock, getNAAsub
 c 12/30/2013: made small repairs to cms calcs in BSSA & CB13
 c 12/19/2013: update newer CEUS GMMs to compute CMS.
 c 12/16/2013: Update ASK2013 a1 and vlin for some short periods. from Sanaz R email
@@ -683,7 +686,7 @@ c add 10th argument, flag whether deagg of individual atten models is requested
 	prob5=0.
 	write (6,61)namein,l_ms,dea_attn
 	lmsp = .false.
-61	format('deaggGRID.2013 (11/25/2013) log file. ',/,
+61	format('deaggGRID.2013 (01/22/2014) log file. ',/,
      + '# Control file:',a,' Mean spectrum? ',l4,' indiv. attn models? ',l4)
 c Initialize truncated normal array Pex, store in p().
 c The indep. variable is a real*8 to reduce discretization error.
@@ -8605,7 +8608,8 @@ c loop on magnitude
 	do jj=1,nmag
 C*****Magnitude dependent terms
 	if(.not.fix_sigma)then
-        sig = 1.28 + 0.05*alog(T) - 0.08 * xmag
+        sig = 1.18 + 0.035*alog(T) - 0.06 * xmagc       !see P Powers email jan 21 2014
+c        sig = 1.28 + 0.05*alog(T) - 0.08 * xmag
           sigmaf= 1./sig/sqrt2
           endif
          gndm=gnd0+a2(iper)*xmag+a3(iper)*(8.5-xmag)**2
@@ -8816,7 +8820,7 @@ c wtor = weights to top of Benioff zone (km). these are applied in main, to rate
 	real c1/7.8/, c/1.88/, n/1.18/
 	real theta3/0.1/, theta4/0.9/, theta5/0.0/, theta9/0.4/
 	real fMag,fMagp,PGArock,gm,f0,f1
-	real fDepth,  fDepthp, fSite, Vs30, VsStar, xm10
+	real fDepth,  fDepthp, fSite, fSitep, Vs30, VsStar, xm10
 	real Rmax
 	real sigma/0.772/,sigmaf
 c lines from hazgrid. table production
@@ -8864,9 +8868,10 @@ c lines from hazgrid. table production
      2                    0.300, 0.300, 0.300/)
         theta16 = (/-1.00, -1.18, -1.36, -1.36, -1.30, -1.25, -1.17, -1.06, -0.78, -0.62, -0.50,
      1                  -0.34, -0.14, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00/) 
-        delC = (/-0.5, 0.0,0.5/)
+        delC = (/-0.4, -0.3,-0.2/)		! changed jan 22 so that central branch has -0.3 offset See P Powers
        ip = 1	!only one spectral period in deagg code
 C	Define DelC1
+		fSitep = -0.06078691	!=theta12(1)*alog(1000./vlin(1))+b(1)*n*alog(1000./vlin(1))
 	if(delCi.le.3.and.delCi.gt.0) then
 		delC1 = delC(delCi)
 	else 
@@ -8947,7 +8952,7 @@ c original code. I believe it is correct. BCHydro document says PGArock is
 c the median PGA for Vs30 = 1000 m/s. 
 	PGArock = pga0 + (theta2(1)+theta14(1)*Fevnt+theta3*(xmag-7.8))*
      1	alog(R+c4*exp((xmag-6.)*theta9))+theta6(1)*R+fMagp+
-     2       fDepthp +ftermp 
+     2       fDepthp +ftermp + fSitep	!added fSitep jan 7 2014.
         PGArock=exp(pgaRock)	!units g
 c ! non-linear site response
 	 fSite = f0 - b(iq)*alog(PGArock+c)+b(iq)*alog(PGArock+c*(VsStar/vlin(iq))**n)
@@ -9046,7 +9051,7 @@ c original code. I believe it is correct. BCHydro document says PGArock is
 c the median PGA for Vs30 = 1000 m/s. 
 	PGArock = pga0 + (theta2(1)+theta14(1)*Fevnt+theta3*(xmag-7.8))*
      1	alog(R+c4*exp((xmag-6.)*theta9))+theta6(1)*R+fMagp+
-     2       fDepthp +ftermp 
+     2       fDepthp +ftermp + fSitep
         PGArock=exp(pgaRock)	!units g
 c ! non-linear site response
 	 fSite = f0 - b(jp)*alog(PGArock+c)+b(jp)*alog(PGArock+c*(VsStar/vlin(jp))**n)

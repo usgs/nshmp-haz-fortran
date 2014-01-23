@@ -1,4 +1,8 @@
 c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  01/07/ 2014. Long header version.
+c Jan 22 2014: Correct Idriss sigma_aleatory to conform to Eq Spectra article
+c Jan 21 2014: Correct NAAsub (BCHydro) sigma to 0.74.
+c Jan 21, 2014: NAAsub: Central DelC has been corrected to -0.3 for all periods 
+c intraplate source. More work will be needed when we get info from K Addo.
 c Jan 7, 2014: slight modification of getNAAsub for PGArock. from Peter Powers email.
 c
 c Jan 3 2014: Apply same high-limit (40 hz) median clamp in AB06',A08',Pez11.
@@ -10,7 +14,7 @@ c Aug 29 2013: standardize Rrup and Rx to OpenSHA from P.Powers notes. This mod
 c affects ASK13, CB13 and CY13. It does not affect other GMMs.
 c 9/10/2013: In CB13, zbot is initialized for the first time. Several unused subroutines removed.
 c 8/28/2013: CB13: always calculate phi_lnY(22) early in subroutine. It is needed
-c		for all spectral periods sigma.
+c		for all spectral periods' sigma.
 c 8/27/2013: Include an mmin matrix option. Previously code just had an mmax distribution. This option
 c		is invoked if maxmat=-2. not finished
 c 8/27/2013: update c0 vector in CB13 model.
@@ -79,7 +83,7 @@ c      icode=0 90 =>d; 1=>80 d, 2=>70 d, and so on. Index 32.
 c Add GK12 model with basin effect. index 39. Q_s is 435 everywhere in the initial model setup.
 c this version has the long header records (896 instead of 308 byte)
 c 11/16/2012: add NAAsub corresponding to the BCHYDRO GMPE of 2010. Index=31. For intraplate sources.
-c       we dont intend to use NAAsub for subduction sources in this code (see hazSUBXnga.test)
+c       we don't intend to use NAAsub for subduction sources in this code (see hazSUBXnga.test)
 c GetGeom  : use BA nonlinear siteamp, from AF hazgridXGT.f. 
 c GetABsub: do not modify. Use the original 2003 formulation of siteamp. Some corrections to getABsub
 c were discovered by Pengsheng and fixed in this code Jan 9, 2013. SHarmsen.
@@ -120,7 +124,7 @@ c   that the calculation of rjbmean was for a M(SRL) or M(A) relation.
 c   
 c Dec 18 2008: vulnerability in output file names for the .m and .p files is finally repaired.
 c Nov 20 2008: add Zhao et al. atten. for inslab and interface source. Need variety of models at LP Sa, but
-c      	AB03 is only good to 3 s. Zhaos inslab goes to 5 s Sa.
+c      	AB03 is only good to 3 s. Zhao's inslab goes to 5 s Sa.
 c Nov 19 2008: increase set of periods available with Geomatrix inslab attn.
 c mod Oct 22 2008. M (saturation) limit at 8.0 (AB03, BSSA v93 #4, p 1709)
 c August 2008: Mmax may be treated as a distribution for the cases iflt=3 and iflt=4.
@@ -639,7 +643,7 @@ c available periods for CB as of Mar 2008. pga=0.0 here. Displacement per is -2
      +0.25,0.30,0.35,0.40,0.45,0.50,0.60,0.70,0.80,0.90,1.00,1.10,1.20,
      +1.30,1.50,1.70,2.00,2.20,2.50,3.00,3.50,4.00,4.50,5.00/)
 c perabs: period set for ab slab-zone (deep) eqs.
-c ab06 frequencies, these dont seem to be extremely close to 1/T
+c ab06 frequencies, these don't seem to be extremely close to 1/T
       abfrq = (/2.00e-01,2.50e-01,3.20e-01,4.00e-01,5.00e-01,6.30e-01,8.00e-01,1.00e+00,
      1       1.26e+00,1.59e+00,2.00e+00,2.52e+00,3.17e+00,3.99e+00,5.03e+00,6.33e+00,
      1       7.97e+00,1.00e+01,1.26e+01,1.59e+01,2.00e+01,2.52e+01,3.18e+01,4.00e+01,
@@ -858,7 +862,7 @@ c *** NEW 11/05 **** Enter soil Vs30 condition  ******NEW*******
       if(override_vs)vs30=vs30d
 c use Chiou-Youngs 10-2007 default depth to 1 km/s rock. Z1 Units: m.
         Z1cal = exp(-7.15/4 * log(((VS30/1000.)**4 + .57094**4)/(1.360**4 + .57094**4)))
-c     Norm Abrahamsons CA z1 reference (eq 18). z1_ref is in units km.
+c     Norm Abrahamson's CA z1 reference (eq 18). z1_ref is in units km.
        z1_ref = exp ( -7.67/4. * alog( (Vs30**4 + 610.**4)/(1360.**4+610.**4) ) ) / 1000.
 	z1_refr=exp ( -7.67/4. * alog( (1180.**4 + 610.**4)/(1360.**4+610.**4) )) / 1000.
 c z1_refr added 8/13/2013. Z1 for hard rock. This value is .0028 km or 2.8 m
@@ -938,7 +942,7 @@ c check reasonableness of distribution
       stop 'and retry with improved weights'
       endif
 c large tormin could be associated with deep Benioff zone. For crustal
-c earthquakes, this check isnt very interesting.
+c earthquakes, this check isn't very interesting.
       if(tormin.lt.0..or.(tormin.gt.202..and.xmin.lt.-100..and.ymin.gt.20.))stop'Top of rupture distribution
      +  not reasonble. Please reenter'
 c Very deep eqs are possible under Bolivia, Java Sea and other places. Dont
@@ -1038,7 +1042,7 @@ c
 c--- ibmat=1 uses b-value matrix
 c--- maxmat = 1 uses Mmax matrix. mmax>1 uses zones of Mmax. New April 2013.
 c --  maxmat = -1, use min of Mmax matrix and magmax scalar value input below
-c-- set each to zero if you dont want these
+c-- set each to zero if you don't want these
 c New nov 14 07L add field Mtaper (real variable). If M>Mtaper, multiply rate by wtgrid(k)
 c to include CA
 c      write(6,*) "enter iflt,ibmat,maxmat, Mtaper"
@@ -1047,7 +1051,7 @@ c New nov 14 07L add field Mtaper (real variable). If M>Mtaper, multiply rate by
 c to include CA
       read (1,*) iflt,ibmat,maxmat,Mtaper
       if(maxmat.gt.nzonex)stop'maximum number of Mmax zones is exceeded'
-c New sept 2008: Use logical variable finite to control whether its handled as a point src.
+c New sept 2008: Use logical variable finite to control whether it's handled as a point src.
       if(iflt.le.0.and.iflt.ne.-2)then
       finite=.false.
       iflt=abs(iflt)
@@ -2186,7 +2190,7 @@ c xwide(i) is max distance at which Rjb is zero (hw on)
 c The flush subroutine dumps buffered print material. Gfortran OK with subr. not with function.
         call flush(6)
 c If flush works for your computer, you can look at log file before the big grid gets underway.
-c---Heres the guts
+c---Here's the guts
       icnt=1
       do 100 i=1,nrec
        asum= 0.0	!matrix math
@@ -2392,7 +2396,7 @@ c one ground-motion level for deagg work, i.e., k=1.
 c kk = 1 and ifn = 1 for ceus.
       ebar(ir,im,ip,kk,ifn)=ebar(ir,im,ip,kk,ifn)+e0_ceus(ii,m,ip)*asumm
       elseif(slab)then
-c kk is probably 1 and ifn = 1 for intraslab. kk or depth could vary but it doesnt USGS.
+c kk is probably 1 and ifn = 1 for intraslab. kk or depth could vary but it doesn't USGS.
 c For some countries we have run separate depths with different infiles (50 100 150 km etc) 
       ebar(ir,im,ip,kk,ifn)=ebar(ir,im,ip,kk,ifn)+e0_sub(ii,m,ip,kk)*asumm
       endif
@@ -3092,7 +3096,7 @@ c not ready for nga code. out of date relation in 2008. Use getCamp2003
 cccccccccccccccccccccc
       subroutine getAB95(ip,iq,ia,ndist,di,nmag,
      &   magmin,dmag,sigmanf,distnf)
-c adapt to nga style. new problem: gettab. This routine doesnt seem to be used.
+c adapt to nga style. new problem: gettab. This routine doesn't seem to be used.
 c I dont ever see iatten 5 in CEUS input files for 2002. always getFEA. Check? SH
 c not ready. july 28 2006. Using iatten 5 for AB95 with table lookup.
       Write(6,*)'hazgridXnga13l: getAB95 should not be called. No array 
@@ -3287,7 +3291,7 @@ ccccccccccccccccccccccccc
       subroutine getSomer(ip,iq,ir,ia,ndist,di,nmag,
      & magmin,dmag,sigmanf,distnf)
 c---- Somerville et al (2001) for CEUS. Coeffs for pga, 0.2 and 1.0s +4 other T sa
-c --- adapted to nga style, include coeff values rather than read em in
+c --- adapted to nga style, include coeff values rather than read 'em in
 c ir controls rock conditions:
 c ir=1 BC or firm rock
 c ir=2 hard rock
@@ -3609,7 +3613,7 @@ cccccccccccccccc
       subroutine getGeom(ip,ir,ia,slab,ndist,di,nmag,
      &     magmin,dmag,vs30)
 c  Geomatrix (Youngs et al. intraslab). modified to NGA style.
-c Nov 19 2008: add several periods out to 5s from Youngs email and spreadsheet
+c Nov 19 2008: add several periods out to 5s from Youngs' email and spreadsheet
 c Oct 2008: limit M to 8 following AB03 suggestion (BSSA p 1709). However,
 c Geomatrix specified no upper limit. There are no data for inslab prediction
 c for these very large M
@@ -3719,7 +3723,7 @@ c        g3= rockf* gc3(i1) + soilf*gc3s(iq)
 c        g4= rockf* 1.7818  + soilf*1.097 
 c        ge= rockf* 0.554   + soilf*0.617
 c        gm= rockf* gmr     + soilf*gms
-c linear combinations of coeffs doesnt cut it. highly nonlinear response fcn.
+c linear combinations of coeffs doesn't cut it. highly nonlinear response fcn.
       stop' No plan for your ir into getGeom'
       endif
       period = pergeo(iq)
@@ -4100,7 +4104,7 @@ c
      + -0.0824,-.0758,-.086,-0.0848,-.0838/) !paper's c12
       c13= (/0.414,.478,.543,0.460,0.482,0.49511834,
      + 0.508,0.551,.414,0.43,.443/)  !paper's c13
-c clamp for 2s set to 0 as per Ken Campbells email of Aug 18 2008.
+c clamp for 2s set to 0 as per Ken Campbell's email of Aug 18 2008.
       clamp= (/3.0,6.0,0.,6.,6.,6.,3.0,0.,6.,6.,6./)
       period = perx(iq)
        cmagsig= 7.16
@@ -4188,7 +4192,7 @@ cccccc
       subroutine getBJF97(ip,iq,ia,ndist,di,nmag,
      & magmin,dmag,sigmanf,distnf)
 c prepared for the general vs30 case july 26 2006 (no nonlinear site resp here) SH
-c also prepared for 7 periods. based on Frankels getBJF97     
+c also prepared for 7 periods. based on Frankel's getBJF97     
       parameter (np=7,sqrt2=1.4142136,pi=3.141592654)
       real magmin,perx(8),sigma_fx,sigmaf
       common/fix_sigma/fix_sigma,sigma_fx	!add option to fix sigma_aleatory.
@@ -7995,6 +7999,7 @@ c the Pezeshk article is in base10 logarithm units. we work in natural log units
       
 c the BCHydro relation to use with deep intraplate sources Nov 2012
       subroutine getNAAsub(ip,iq,ia,Fevnt,Ffaba,ndist,di,nmag,magmin,dmag,delCi)
+c modified jan 21 2014. DelC is period dependent now.
 c adapted to hazgrid by precomputing tables. SHarmsen Nov 15 2012.
 c This is Abrahamson 2010 BCHydro Subduction model that was developed using the dataset of 
 c acceleration response spectra of the geometrical mean 5% spectral damping. The coefficients
@@ -8037,9 +8042,12 @@ c wtor = weights to top of Benioff zone (km). these are applied in main, to rate
       real fMag,fMagp,PGArock,gm,f0,f1
       real fDepth,  fDepthp, fSite, fSitep, Vs30, VsStar, xm10
       real Rmax
-      real sigma/0.772/,sigmaf
+      real sigma/0.74/,sigmaf	!sigma reduced jan 21 2014.
       real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
+c the new period dependent offsets Jan 21 2014. From Addo email of Jan 13 2014
+	data delC /-.4,-.3,-.2/	!pga but for now assume all periods
+     +	  
 c lines from hazgrid. table production
        common/prob/p(25005),plim,dp2   !table of complementary normal probab
       common / atten / pr, xlev, nlev, icode, wt, wtdist
@@ -8085,13 +8093,13 @@ c lines from hazgrid. table production
      2                    0.300, 0.300, 0.300/)
         theta16 = (/-1.00, -1.18, -1.36, -1.36, -1.30, -1.25, -1.17, -1.06, -0.78, -0.62, -0.50,
      1                  -0.34, -0.14, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00/) 
-        delC = (/-0.5, 0.0,0.5/)
+c        delC = (/-0.5, 0.0,0.5/)	!old per.-independent delC. Out of date
 c site term for rock pga where rock is 1000 m/s
 		fSitep = -0.06078691	!=theta12(1)*alog(1000./vlin(1))+b(1)*n*alog(1000./vlin(1))
      
 C      Define DelC1
       if(delCi.le.3.and.delCi.gt.0) then
-      	delC1 = delC(delCi)
+      	delC1 = delC(delCi)		!period independent Jan 22 2014
       else 
       	print *, 'Error in delC1'
       	stop 'please call repairman'
@@ -9602,7 +9610,8 @@ c loop on magnitude
 C*****Magnitude dependent terms. Sandwich xmagc between 5 and 7.5
       if(.not.fix_sigma)then
       xmagc=max(5.0,min(xmag,Mcap))
-        sig = 1.28 + 0.05*alog(T) - 0.08 * xmagc
+c        sig = 1.28 + 0.05*alog(T) - 0.08 * xmagc	!out of date changed Jan 22 2014
+	sig = 1.18 + 0.035*alog(T) - 0.06 * xmagc	!see P Powers email jan 21 2014
           sigmaf= 1./sig/sqrt2
           endif
          gndm=gnd0+a2(iper)*xmag+a3(iper)*(8.5-xmag)**2
