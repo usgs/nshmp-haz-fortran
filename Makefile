@@ -68,6 +68,8 @@ hazgridXnga5: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga5 $(SRC)/hazgridXnga5.f $(SRC)/iosubs.o
 hazgridXnga13l: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga13l $(SRC)/hazgridXnga13l.f $(SRC)/iosubs.o
+hazgridXnga13lidOld: iosubs
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga13lidOld $(SRC)/hazgridXnga13lidOld.f $(SRC)/iosubs.o
 hazgridXnga13l_test: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga13l_test $(SRC)/hazgridXnga13l_test.f $(SRC)/iosubs.o
 hazgridXnga13l_deep: iosubs
