@@ -48,7 +48,7 @@ DET/wasatchSLCseg.clu.char.1hz
 0.
 1.
 0.12 5          !M aleatory variability, sigma=0.12, 5 steps on either side of 0, each sigma*0.4
-   1  3  3 1 1   Wasatch fault, Salt Lake City Warm Springs-section.M from SRL
+   1  3  1 1 1   Wasatch fault, Salt Lake City Warm Springs-section.M from SRL
  6.23     7.69E-4 0.36    1.6140054E+15
      50.0000    19.58  0.    12.0786
    74
@@ -126,7 +126,7 @@ DET/wasatchSLCseg.clu.char.1hz
 40.77040785 -111.89076981
 40.77004421 -111.89083041
 40.76889267 -111.89131527
-   1  1  3 1 2   Wasatch fault, Salt Lake City tear flt
+   1  1  1 1 2   Wasatch fault, Salt Lake City tear flt
   4.4000    .000769 0.36
 90. 5. 1.  5.
 23
@@ -153,7 +153,7 @@ DET/wasatchSLCseg.clu.char.1hz
 40.77460827 -111.84425672
 40.77473321 -111.84300736
 40.77498308 -111.84132071
-   1  3  3 1 3   Wasatch fault, Salt Lake City East Bench&Cottonwood sections
+   1  3  1 1 3   Wasatch fault, Salt Lake City East Bench&Cottonwood sections
   6.900    .000769 0.36
 50. 19.58 0. 36.
 186
