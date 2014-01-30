@@ -1,0 +1,29 @@
+0 		    Template for ceus characteristic (rlme) a-grid files
+24.6 50. .1
+-115. -65. .1
+760 1
+1 5 1 1             dtor fix at 5 km
+1 00 0
+5. 1000. 
+34.400000 35.100000 0.100000  a-grid extents 
+-91.000000 -90.200000 0.100000
+0 7.700000 7.700000 0.1 3.0     Characteristic magnitude
+2 0 0  0
+../conf/CEUS/gridded/GR_DOS/Marianna_RLME.xls.agrid
+1. 0
+45.000000     fixed-strike angle. Dont use avg distance in meanrjb.bin
+1
+2.0 0. 0. 1 sec SA
+../out/Marianna_RLME_2014.770.2s
+20
+.0025 .00375 .00563 .00844 .0127 .0190 .0285 .0427 .0641 .0961 .144 .216 .324 .487 .730 1.09 1.64 2.46 3.69 5.54
+9
+2  0.11 500. 0.00 1 Toro Mw atten.
+7  0.10 500. 0.00 0 somerville
+6  0.06 500. 0.16 0 FEA
+10 0.11 500. 0.17 0 Campbell hybrid, BC
+15 0.06 500. 0.00 0 Silva
+19 0.11 500. 0.17 0 TP05
+35 0.08 500. 0.00 0 A08'
+37 0.15 500  0.20 0 Pez11
+36 0.22 500. 0.30 0 AB06'
