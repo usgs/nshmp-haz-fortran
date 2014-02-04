@@ -1,8 +1,9 @@
-c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  01/24/ 2014. Long header version.
+c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  01/31/ 2014. Long header version.
 c ABsub: added 1.5s coeffs Jan 24 2014 SH. see AB03slab.1p5s.f in my Srcf dir.
-c
+c  jan31 2014: include 1.5s for the three "GailTable" tables
 c  Jan 24, 2014: getAB06: Add coeffs for 1.5s jan 24 2014 SH. See AB06.1p5s.f for the details.
 c Jan 24, 2014: getCampCEUS: include interpo. coeffs for 1.5s spectral period see "campCEUS.1p5s.f" for details
+c jan 31, 2014: getSomer: add 1.5s coeffs. (CEUS relation used for finite src)
 c Jan 24, 2014: getSilva: include interpo. coeffs for 1.5s spectral period see "silva.1p5s.f" for details
 c Jan 23, 2014: getToro: include interpo. coeffs for 1.5s spectral periodsee "toro.1p5s.f" for details.
 c Jan 22 2014: Correct Idriss sigma_aleatory to conform to Eq Spectra article
@@ -20,7 +21,7 @@ c Aug 29 2013: standardize Rrup and Rx to OpenSHA from P.Powers notes. This mod
 c affects ASK13, CB13 and CY13. It does not affect other GMMs.
 c 9/10/2013: In CB13, zbot is initialized for the first time. Several unused subroutines removed.
 c 8/28/2013: CB13: always calculate phi_lnY(22) early in subroutine. It is needed
-c		for all spectral periods' sigma.
+c		for all spectral periods sigma.
 c 8/27/2013: Include an mmin matrix option. Previously code just had an mmax distribution. This option
 c		is invoked if maxmat=-2. not finished
 c 8/27/2013: update c0 vector in CB13 model.
@@ -89,7 +90,7 @@ c      icode=0 90 =>d; 1=>80 d, 2=>70 d, and so on. Index 32.
 c Add GK12 model with basin effect. index 39. Q_s is 435 everywhere in the initial model setup.
 c this version has the long header records (896 instead of 308 byte)
 c 11/16/2012: add NAAsub corresponding to the BCHYDRO GMPE of 2010. Index=31. For intraplate sources.
-c       we don't intend to use NAAsub for subduction sources in this code (see hazSUBXnga.test)
+c       we dont intend to use NAAsub for subduction sources in this code (see hazSUBXnga.test)
 c GetGeom  : use BA nonlinear siteamp, from AF hazgridXGT.f. 
 c GetABsub: do not modify. Use the original 2003 formulation of siteamp. Some corrections to getABsub
 c were discovered by Pengsheng and fixed in this code Jan 9, 2013. SHarmsen.
@@ -535,7 +536,7 @@ c the sum will be put back into single precision array called "out" prior to wri
 c above spectral period vectors are associated with various NGA and other
 c atten models. perka corresponds to Kanno et al. added Nov 8 2006.      
       dimension aperiod(108),ival(8)
-      integer, dimension (npmx) :: nattn,iper,iperb,iperab,ipertp,isilva,ipcb13,ipbssa
+      integer, dimension (npmx) :: nattn,iper,iperb,iperab,ipertp,isilva,ipcb13,ipbssa,icampCEUS
       integer, dimension(npmx,3):: ifp
 c      real, dimension (16,20,10,npmx,5) :: prob5
       real, dimension(0:35) :: pdgk
@@ -576,7 +577,8 @@ c Idriss 2012 GMPE periods in perId12
       perx_pl= (/0.0,0.2,1.0,0.1,0.3,0.5,1.5,2.0,0.04,0.4/)	!add 1.5s jan 24 2014.
 c pergeo Geomatrix inslab periods available Nov 19 2008.
          pergeo= (/0.,0.2,1.0,0.1,0.3,0.5,2.0,.4,0.75,1.5,3.,4.,5./)    
-       perx= (/0.,0.2,1.0,0.1,0.3,0.5,2.0,-1./)      
+       perx= (/0.,0.2,1.0,0.1,0.3,0.5,1.5,2.0/)      
+       perCampCEUS = (/0.01,0.2,1.0,0.1,0.3,0.4,0.5,1.5,2.0,.03,.04,.05/)
 c pdgk = period set for GK12 model.
       pdgk= (/0.,0.01,0.02,0.03,0.04,0.06,0.08,0.1,0.12,0.14,
      &         0.16,0.18,0.20,0.22,0.24,0.27,0.30,0.33,
@@ -616,8 +618,7 @@ c PerCB13 = period set for the CB13 NGAW(2) GMM.
      + 0.5,0.75,1.,1.5,2.,3.,4.,5.,7.5,10.,0.,-1./)
 
 c per_camp available spectral periods for CampCEUS (2003). PGA is 0.0 s here.
-      per_camp = (/0.00,0.2,1.0,0.1,0.3,0.4,
-     + 0.5,1.5,2.0,.03,.04,.05/)
+      per_camp = (/0.00,0.2,1.0,0.1,0.3,0.4,0.5,1.5,2.0,.03,.04,.05/)
       abper = (/5.0000, 4.0000, 3.1250, 2.5000, 2.0000, 1.5873, 1.5,1.2500, 1.0000,
      1 0.7937, 0.6289, 0.5000, 0.4, 0.3, 0.2506, 0.2000, 0.1580,
      1 0.1255, 0.1, 0.0791, 0.0629, 0.0499, 0.0396, 0.0315, 0.0250,
@@ -650,7 +651,7 @@ c available periods for CB as of Mar 2008. pga=0.0 here. Displacement per is -2
      +0.25,0.30,0.35,0.40,0.45,0.50,0.60,0.70,0.80,0.90,1.00,1.10,1.20,
      +1.30,1.50,1.70,2.00,2.20,2.50,3.00,3.50,4.00,4.50,5.00/)
 c perabs: period set for ab slab-zone (deep) eqs.
-c ab06 frequencies, these don't seem to be extremely close to 1/T
+c ab06 frequencies, these dont seem to be extremely close to 1/T
       abfrq = (/2.00e-01,2.50e-01,3.20e-01,4.00e-01,5.00e-01,6.30e-01,0.667,8.00e-01,1.00e+00,
      1       1.26e+00,1.59e+00,2.00e+00,2.52e+00,3.17e+00,3.99e+00,5.03e+00,6.33e+00,
      1       7.97e+00,1.00e+01,1.26e+01,1.59e+01,2.00e+01,2.52e+01,3.18e+01,4.00e+01,
@@ -1520,7 +1521,7 @@ c
         endif
         dowhile(fr.gt.a11fr(kf)+.01)
         kf=kf+1
-        if(kf.gt.13)stop' period not in A06,A08,P11 set'
+        if(kf.gt.14)stop' period not in A06,A08,P11 set'
         enddo
         freq(ip)=a11fr(kf)
         ia08(ip)=kf
@@ -1611,17 +1612,21 @@ c add 13 spectral periods for Zhao et al. end of local mods. Nov 20 2008.
       write(6,*)'Frankel relation called with hardrock coeffs, A-like Vs30'
       write(6,*)' period index is ',iq,' in perx_pl'
       elseif(ipiaa.eq.10)then	!campbell ceus
-      ka=1
-      dowhile(abs(per-per_camp(ka)).gt.0.002)
+        if(per.le.0.01) then 
+          ka=1
+        else
+          ka=2
+          dowhile(abs(per-per_camp(ka)).gt.0.002)
 c add several periods july 17 2008
-      ka=ka+1
-      if(ka.gt.12)then
-      write(6,*)'Input spectral period not available for CampCEUS model'
-      stop 'please remove CampCEUS from the input file for this period'
-      endif
-      enddo
-      write(6,*)'period index in CampCEUS is ',ka
-      iq=ka
+            ka=ka+1
+            if(ka.gt.12)then
+              write(6,*)'Input spectral period not available for CampCEUS model'
+              stop 'please remove CampCEUS from the input file for this period'
+            endif
+          enddo
+          write(6,*)'period index in CampCEUS is ',ka
+          icampCEUS(ip)=ka
+        endif
       oktogo=.true.
       endif
 c new AB06 from Oliver, also T&P, from Oliver Boyd
@@ -1793,11 +1798,11 @@ c Put soil formulation in separate subroutine.
       call getCamp2003(ip,iq,ia,ndist,di,nmag,magmin,dmag,sigmanf,distnf) 
       write(6,*)'Camp&Bozorgnia 2003 WUS attenuation set up OK'   
       elseif(ipia.eq.10.and.oktogo)then
-      call getCampCEUS(ip,iq,1,ia,ndist,di,nmag,magmin,dmag, sigmanf,distnf)
+      call getCampCEUS(ip,icampCEUS(ip),1,ia,ndist,di,nmag,magmin,dmag, sigmanf,distnf)
       ceus=.true.
       write(6,*)'Campbell CEUS hybrid attenuation firmrock setup complete'
       elseif(ipia.eq.-10.and.oktogo)then
-      call getCampCEUS(ip,iq,2,ia,ndist,di,nmag,magmin,dmag, sigmanf,distnf)
+      call getCampCEUS(ip,icampCEUS(ip),2,ia,ndist,di,nmag,magmin,dmag, sigmanf,distnf)
       write(6,*)'Campbell CEUS hybrid attenuation HR site setup complete'
       ceus=.true.
       elseif(ipia.eq.11.and.oktogo) then
@@ -3104,7 +3109,7 @@ c not ready for nga code. out of date relation in 2008. Use getCamp2003
 cccccccccccccccccccccc
       subroutine getAB95(ip,iq,ia,ndist,di,nmag,
      &   magmin,dmag,sigmanf,distnf)
-c adapt to nga style. new problem: gettab. This routine doesn't seem to be used.
+c adapt to nga style. new problem: gettab. This routine doesnt seem to be used.
 c I dont ever see iatten 5 in CEUS input files for 2002. always getFEA. Check? SH
 c not ready. july 28 2006. Using iatten 5 for AB95 with table lookup.
       Write(6,*)'hazgridXnga13l: getAB95 should not be called. No array 
@@ -3300,11 +3305,12 @@ ccccccccccccccccccccccccc
       subroutine getSomer(ip,iq,ir,ia,ndist,di,nmag,
      & magmin,dmag,sigmanf,distnf)
 c---- Somerville et al (2001) for CEUS. Coeffs for pga, 0.2 and 1.0s +4 other T sa
-c --- adapted to nga style, include coeff values rather than read 'em in
+c --- adapted to nga style, include coeff values rather than read em in
+c add 1.5s coeffs jan 31 2014. SH.
 c ir controls rock conditions:
 c ir=1 BC or firm rock
 c ir=2 hard rock
-      parameter (np=7,sqrt2=1.414213562)
+      parameter (np=8,sqrt2=1.414213562)
       real magmin,period
       logical deagg,sp
       common/depth_rup/ntor,dtor(3),wtor(3),wtor65(3)
@@ -3320,17 +3326,17 @@ c perx(8) corresponds to PGV which is not set up for Somerville. Could check
 c if that relation has a PGV model. SH July 31 2006.
       real a1(np),a1h(np),a2(np),a3(np),a4(np),a5(np),a6(np)
       real a7(np),sig0(np),clamp(np)
-      perx = (/0.,0.2,1.0,0.1,0.3,0.5,2.0,-1./)
-      a1 = (/0.658,1.358,-0.0143,1.442,1.2353,0.8532,-0.9497/)
-      a1h = (/0.239,0.793,-0.307,0.888,0.6930,0.3958,-1.132/)
-      a2 = (/0.805,0.805,0.805,0.805,0.805,0.805,0.805/)
-      a3 = (/-0.679,-.679,-.696,-.679,-.67023,-.671792,-0.728/)
-      a4 = (/0.0861,0.0861,.0861,.0861,0.0861,.0861,.0861/)
-      a5 = (/-0.00498,-.00498,-0.00362,-.00498,-.0048045,-.00442189,-0.00221/)
-      a6 = (/-0.477,-.477,-0.755,-.477,-.523792,-.605213,-.946/)
-      a7 = (/0.,0.,-0.102,0.,-.030298,-.0640237,-.140/)
-      sig0 = (/0.587,0.611,0.693,0.595,.6057,.6242,0.824/)
-      clamp = (/3.,6.,0.,6.,6.,6.,0./)
+      perx = (/0.,0.2,1.0,0.1,0.3,0.5,1.5,2./)
+      a1 = (/0.658,1.358,-0.0143,1.442,1.2353,.8532, 0.7696301,-0.9497/)
+      a1h = (/0.239,0.793,-0.307,0.888,0.6930,0.3958,-0.5614739,-1.132/)
+      a2 = (/0.805,0.805,0.805,0.805,0.805,0.805,0.805,0.805/)
+      a3 = (/-0.679,-.679,-.696,-.679,-.67023,-.671792,-0.7147188,-0.728/)
+      a4 = (/0.0861,0.0861,.0861,.0861,0.0861,.0861,.0861,.0861/)
+      a5 = (/-0.00498,-.00498,-0.00362,-.00498,-.0048045,-.00442189,-2.7952031E-3,-0.00221/)
+      a6 = (/-0.477,-.477,-0.755,-.477,-.523792,-.605213,-0.8667278,-.946/)
+      a7 = (/0.,0.,-0.102,0.,-.030298,-.0640237,-0.124228574,-.140/)
+      sig0 = (/0.587,0.611,0.693,0.595,.6057,.6242,0.7696301,0.824/)
+      clamp = (/3.,6.,0.,6.,6.,6.,0.,0./)
 c compute SOmerville median and dispersion estimates.
       dist1= sqrt(50.*50.+ 6.*6.)
 c set up erf matrix p as ftn of dist,mag,period,level,flt type,atten type
@@ -4084,8 +4090,7 @@ c wtor = weights applied to top of CEUS seismicity (km).
       real,dimension(np):: c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,
      1 clamp,c1h,c11,c12,c13,perx
 c
-       perx = (/0.01,0.2,1.0,0.1,0.3,0.4,
-     + 0.5,1.5,2.0,.03,.04,.05/)
+       perx = (/0.01,0.2,1.0,0.1,0.3,0.4,0.5,1.5,2.0,.03,.04,.05/)
       c1= (/0.4492,.1325,-.3177,.4064,-0.1483,-0.17039,
      + -0.1333,-0.86206603,-1.2483,1.68,1.28,0.87/)
       c1h= (/0.0305,-0.4328,-.6104,-0.1475,-.6906,-0.67076736,
@@ -7555,8 +7560,8 @@ c As of July 2009, sigma is not modified, only median (gnd), in this function.
 
 cccccccccccccccc
       subroutine getAB06p(ip,iq,fr,ia,ndist,di,nmag,magmin,dmag)
-c 13 periods incl PGV.
-c added Nov 1 2012.
+c 14 periods incl PGV.
+c added Nov 1 2012. incl 1.5s jan 31 2014
 c Period indexes ip = counter index. iq = index associated with clamp
 c fr = frequency (Hz) and code in Atkinson Lexicon 99 = pga; 89 =pgv.
 c 
@@ -7581,7 +7586,7 @@ c e0_ceus not saving a depth of rupture dim, not sens. to this
       integer nlev(8),icode(8,10)
        character*32 name
            clamp = (/3.,6.,0.,6.,6.,6.,0.,6.,6./)
-        name ='GR/AB06revA_Rcd.dat'
+        name ='GR/AB06revA_Rcd.rev'	!include 1.5s explicitly
         name=trim(name)
              open(3,file=name,status='old',err=202)
         call GailTable(2)
@@ -7589,7 +7594,7 @@ c-- loop through magnitudes.
 c Fixed sigma_aleatory all spectral periods & all M.
              sigma = 0.3*2.303
        jf=ia08(ip)
-        print *,'calling GailTable GR/AB06revA_Rcd.dat fr,jf=',fr,jf
+        print *,'calling GailTable GR/AB06revA_Rcd.rev fr,jf=',fr,jf
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
        sigmaf=1.0/sigma/sqrt2
       do 104 m=1,nmag
@@ -7651,14 +7656,14 @@ c the depth to top is relevant to this GMPE. So the kk slot may receive depth-de
 cccccccccccccccc
       subroutine getA08p(ip,iq,fr,ia,ndist,di,nmag,magmin,dmag)
 c 13 periods incl PGV.
-c added Oct 31 2012.
+c added Oct 31 2012. 1.5s added jan 31 2014
 c Period indexes ip = counter index. iq = index associated with clamp
 c fr = frequency (Hz) and code in Atkinson Lexicon 99 = pga; 89 =pgv.
 c 
 c 
 c Table GR/A08revA_Rjb.dat assumes hardrock model .
 c clamp on upper-bound ground accel is applied here. As in original hazgridX code.
-        parameter (sqrt2=1.414213562, pi=3.141592654,np=13)
+        parameter (sqrt2=1.414213562, pi=3.141592654,np=14)
         logical et,deagg,sp,lceus_sigma  !sp = short period but not pga?
         common/ceus_sig/lceus_sigma,ceus_sigma
       common/geotec/vs30,dbasin
@@ -7676,7 +7681,7 @@ c e0_ceus not saving a depth of rupture dim, not sens. to this
       integer nlev(8),icode(8,10)
        character*32 name
            clamp = (/3.,6.,0.,6.,6.,6.,0.,6.,6./)
-        name ='GR/A08revA_Rjb.dat'
+        name ='GR/A08revA_Rjb.rev'	!include 1.5s explicitly
         name=trim(name)
              open(3,file=name,status='old',err=202)
         call GailTable(1)
@@ -7684,7 +7689,7 @@ c-- loop through magnitudes.
 c Fixed sigma_aleatory all spectral periods & all M.
              sigma = 0.3*2.303
        jf=ia08(ip)
-        print *,'calling GailTable A08revA_Rjb fr,jf=',fr,jf
+        print *,'calling GailTable A08revA_Rjb.rev fr,jf=',fr,jf
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
        sigmaf=1.0/sigma/sqrt2
       do 104 m=1,nmag
@@ -7745,8 +7750,8 @@ c the depth to top is immaterial to this GMPE. So the 1:ntor slots all receive t
 
 cccccccccccccccc
       subroutine getPez11(ip,iq,fr,ia,ndist,di,nmag,magmin,dmag)
-c 13 periods incl PGV.
-c added Oct 31 2012.
+c 14 periods incl PGV.
+c added Oct 31 2012. incl 1.5s explicitly jan 31 2014.
 c Period indexes ip = counter index. iq = index associated with clamp
 c fr = frequency (Hz) and code in Atkinson Lexicon 99 = pga; 89 =pgv.
 c ia = attenuation model # for each preiod ip.
@@ -7781,7 +7786,7 @@ c e0_ceus not saving a depth of rupture dim, not sens. to this
 c-- loop through magnitudes.
 c Fixed sigma_aleatory all spectral periods & all M.
        jf=ia08(ip)
-        print *,'calling GailTable P11A_Rcd.dat fr,jf=',fr,jf
+        print *,'calling GailTable P11A_Rcd.rev fr,jf=',fr,jf
       do 104 m=1,nmag
       xmag0= magmin + (m-1)*dmag
 c mag-dependent sigma. First convert mb_Lg to Mw if called on to do so.
@@ -8044,7 +8049,7 @@ c wtor = weights to top of Benioff zone (km). these are applied in main, to rate
       real, dimension(22):: b,theta1, theta2, theta6, theta7, theta8, vlin
       real theta10(22), theta11(22), theta12(22), theta13(22), theta14(22)
       real theta15(22), theta16(22)
-      real dtor,wtor,wtor65,delC(3), delC1,di,p,e0_sub,magmin,dmag
+      real dtor,wtor,wtor65,delC, delC1,di,p,e0_sub,magmin,dmag
       real dbasin, fac, xmag, R, Rep, zH, zHp, fterm,ftermp,tmp,plim,dp2,pga0,gm0,weight
       integer ntor,Fevnt, Ffaba, delCi, c4/10/,iq,ndist,ii,im,ir
       integer ip,ia,nmag,ipr,k,kk
@@ -8058,7 +8063,7 @@ c wtor = weights to top of Benioff zone (km). these are applied in main, to rate
       real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
 c the new period dependent offsets Jan 21 2014. From Addo email of Jan 13 2014
-	data delC /-.4,-.3,-.2/	!pga but for now assume all periods
+	data delC /-0.3/	!pga but for now assume all periods
      +	  
 c lines from hazgrid. table production
        common/prob/p(25005),plim,dp2   !table of complementary normal probab
@@ -8105,13 +8110,12 @@ c lines from hazgrid. table production
      2                    0.300, 0.300, 0.300/)
         theta16 = (/-1.00, -1.18, -1.36, -1.36, -1.30, -1.25, -1.17, -1.06, -0.78, -0.62, -0.50,
      1                  -0.34, -0.14, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00/) 
-c        delC = (/-0.5, 0.0,0.5/)	!old per.-independent delC. Out of date
 c site term for rock pga where rock is 1000 m/s
 		fSitep = -0.06078691	!=theta12(1)*alog(1000./vlin(1))+b(1)*n*alog(1000./vlin(1))
      
 C      Define DelC1
       if(delCi.le.3.and.delCi.gt.0) then
-      	delC1 = delC(delCi)		!period independent Jan 22 2014
+      	delC1 = delC		!period independent Jan 22 2014
       else 
       	print *, 'Error in delC1'
       	stop 'please call repairman'
@@ -10969,13 +10973,14 @@ c modified f2 to eqn (3.11)
       
       fsb  = alog(amp_total)   ! Natural log!!
       
-! dont reset z1 to -9.9 Do hardwire delta_z1 = 0.0 in this version:
+! dont reset z1 to -9.9 
 c      z1 = -9.9
       delta_z1 = 0.0
       irelation=1
 c need to rework code with irelation some day. SH. z1 must be in units m below.
 c        if (irelation == 1 .or. irelation == 2) then
           delta_z1 = z1 - mu1_vs30(v30, irelation)
+	delta_z1=delta_z1*0.001	!to put in units km. changed jan 31 2014
 c          if(per.eq.1..and.rjb.lt.10.)print *,r,delta_z1,' r,delta_z1', z1,mu1_vs30(v30, irelation)
 c        else
 c          delta_z1 = 0.0

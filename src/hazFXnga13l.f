@@ -1,4 +1,8 @@
-c--- program  hazFXnga13l.f; 01/03/2014; Use  with NGA relations, or others.
+c--- program  hazFXnga13l.f; 01/24/2014; Use  with NGA relations, or others.
+c of the below optimistic comments, only getToro was finished jan 24.
+c  Jan 24, 2014: getAB06: Add coeffs for 1.5s jan 24 2014 SH. See AB06.1p5s.f for the details.
+c Jan 24, 2014: getCampCEUS: include interpo. coeffs for 1.5s spectral period see "campCEUS.1p5s.f" for details
+c Jan 24, 2014: getToro, getSilva: include interpo. coeffs for 1.5s spectral period see "silva.1p5s.f" for details
 c 1/22/2014: correct aleatory sigma in Idriss NGA-W(2).
 c 01/03/2014: Use same median clamps in amean11 as are used in other CEUS GMMs. PPowers
 c 		noticed some discrepencies in earlier versions of this code.
@@ -10,7 +14,7 @@ c 8/27/2013	CB13: Update c0 vector for PGA and several short-period SA Bozorgnia
 c 8/27/2013	changed z1km to z1_ref in call to ASK
 c 8/21/2013	CB13: Improve Zhyp further for downdip ruptures.
 c 8/20/2013 Inline CB13 coeffs. Begin standardizing Zhyp in CB13.
-c Correction Aug 15 2013: initialize PI in CB13 subroutine (previously wasnt).
+c Correction Aug 15 2013: initialize PI in CB13 subroutine (previously wasn't).
 c		Also, calculate A1100 first time through CB13
 c		
 c 8/13/2013: Use the Rx0 version of ASK13. Set z1_rock = -1 for the hardrock calls of ASK
@@ -31,7 +35,7 @@ c		read in in relwt() has to be the same for all eqs in a group. This is a
 c		fundamental coding limitation. It is not checked internally.
 c 6/27/2013: For the Pezeshk 2012 relation, force rkm to be max(1., rkm). Very
 c              close hypocenters will cause Pezeshk GMPE to issue NaN median value.
-c		For the AB06 GMPE(index 26), force rkm to be max(1.8,rkm)
+c		For the AB06' GMPE(index 26), force rkm to be max(1.8,rkm)
 c 6/11/2013: correct z1 units when calling bssa2013drv. Units are m. Use Chiou Z1cal.
 c 5/21/2013: correct  c11 term in gksa13v2
 c 5/20/2013: Add May 18 BSSA. 
@@ -189,7 +193,7 @@ c      can be important for many relatively long WUS faults.
 c Clustered source model has been checked for characteristic-without-uncertainty-in-M
 c types of ruptures only. Future work, add aleatory uncert to clustered source model.
 c
-c late March: use Zengs mindist1 algorithm for all rjb, rcd dist calculations.
+c late March: use Zeng's mindist1 algorithm for all rjb, rcd dist calculations.
 c 8/12/2009: add getDahle95 for Panama hazard assessments.
 c 3/19/2007: use Frankel HR->FR factors for TP05 at 7 periods (this still needs work at other
 c      periods). Somerville HR revised slightly.
@@ -205,7 +209,7 @@ c when GR-distributed sources and 6.5<=M<=7.0. Testing is nearly complete.
 c  Added GR with 6 < M < 6.5. For these, rupture tops are equally distributed 
 c               at ztor+0,2,4,and 6 km. Revised so that AspectRatio>=1 for all rups,
 c            even those associated with M6.0 sources.
-c Whats in a name?
+c What's in a name?
 c   Some of the downdip rupture branching is triggered or not triggered by
 c a match to part of a filename. This feature definitely needs a more failsafe
 c logic approach. For example, filename containing 'aFault_unseg' is a trigger to
@@ -264,7 +268,7 @@ c NGA. If this code is to work with old subroutines, need to revisit...
 c
 c Some older relations are in the nga-style subroutine format with coeffs 
 c      explicitly included as statements. These are:
-c iatten=0 Truth. This one hasnt been programmed. It is the oldest but least accessible
+c iatten=0 Truth. This one hasn't been programmed. It is the oldest but least accessible
 c iatten=1 Spudich ea, 2000 Extensional-tectonics regions, with BJF97 site amp
 c iatten=2 Toro ea; CEUS 7 periods and BC rock geotech. M has to be Mw. finite fault
 c iatten=-2 Toro ea; CEUS 7 periods and A rock geotech. New 11/06: finite fault
@@ -398,6 +402,7 @@ c p() has about 4 or 5 decimal place accuracy which is likely good enough.
       real prob_s(3,8,ngpmx,20,8)
       real, dimension(8):: dmin,rate_cl,pdSilva2
       real, dimension(11) :: pdSilva
+      real, dimension(10) :: pdToro	!new jan 24. toro period index.
 c wind used to determine if additional epistemic uncert will be added to
 c or subtracted from log(median) of each relation for that period
       real, dimension (6,6) :: dminr
@@ -468,6 +473,7 @@ c
       real dbasin,vs30,pr,rx,ry,dy_sdi
 	real Q,Q_CA, Q_BR	!some Q estimates for the Graizer&Kalkan model
       real, dimension (5) :: prdsom
+      real, dimension (5) :: pdsomerCEUS
       integer nmag,readn,ix,ix0,ix1,iy,iy0,jsegmin/10/,jsegmax/0/,iReg
       character nameout*78,name*60,adum*80,date*8,time*10,zone*5
       character*12 pithy(3),g_name(8),cmt
@@ -518,7 +524,7 @@ c ipertp = map to tabakoli-pezeshsk;iperb = map from input file to boore set of 
 c irab is an index for 4 possible varieties of the AB06 model. 2 for 140 bar & 2 for 200 bar stress
 c irab became 2-D on December 5, 2007. S Harmsen
       integer, dimension(npmx) :: ipercy,iper,nattn,ipera,iperb,icy13,ipcb12,
-     + iperab,ipercb,iperk,ipertp,isilva,isilva2,isomer,ngroup,nfi,iperdahl,
+     + iperab,ipercb,iperk,ipertp,isilva,isilva2,isomer,isomerCEUS,itoro,ngroup,nfi,iperdahl,
      + ia06,ia08,ip11,ipgk,indbssa,idriss,ipas13 !new models Mar 2011 to dec 2012
 c      real, dimension (22):: Percb13,PerIMIdriss
       real, dimension (23):: Percb13
@@ -530,7 +536,7 @@ c      real, dimension (22):: Percb13,PerIMIdriss
       integer, dimension (nfltmx) :: itype,npts,npts1,iftype,ibtype
       logical, dimension(npmx,iamx) :: nga,wus02,ceus02,ceus11     
 c logical variables for subsets of attenuation models should help narrow
-c the search more efficiently.   CEUS11 added mar 18 2011: Gail Atkinsons 3 new
+c the search more efficiently.   CEUS11 added mar 18 2011: Gail Atkinson's 3 new
 C CENA models, with indexes 25, 26, and 27. 
 c Benioff or deep-seismicity relations n/a here: see gridded hazard code hazgridXnga2.f      
 c new 6/06: potentially variable a and b values for up to 12 branches for each fault
@@ -577,6 +583,7 @@ c Abrahamson Silva 2012 model 22 perios
 c Silva period set.
       pdSilva=(/0.,0.04,0.05,0.1,0.2,0.3,0.4,0.5,1.,2.,5./)
        pdSilva2=(/0.,0.1,0.2,0.3,0.5,1.,2.,5./)
+       pdToro = (/0.,0.2,1.0,0.1,0.3,0.5,2.0,0.04,0.4,1.5/)
 c Tavakoli periods 0 = pga. added 0.04 & 0.4 s july 8 2008 (spline interpolation)
       tpper = (/0.0,.04, 0.05, 0.08, 1.00e-01,1.50e-01,2.00e-01,
      1 0.3, 0.40, 0.5, 0.75, 1.0, 1.50, 2.0, 3.0, 4.0/)
@@ -624,7 +631,7 @@ c 0.0=pga here, equiv to 0.01 in their report. -1=pgv, -2=pgd set. -3  = CAV add
      9              1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.2, 2.4, 2.5, 2.6, 2.8, 
      1              3.0, 3.2, 3.4, 3.5, 3.6, 3.8, 4.0, 4.2, 4.4, 4.6, 4.8, 
      1              5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0 /)
-c prd is the C&Y period set, 106 of em, jan 2009. Same, Oct 2007. PGA=0.0s in our code. 
+c prd is the C&Y period set, 106 of 'em, jan 2009. Same, Oct 2007. PGA=0.0s in our code. 
       prd= (/0.0,0.020,0.022,0.025,0.029,0.030,0.032,0.035,0.036,0.040,0.042,0.044,0.045,0.046,
      10.048,0.050,0.055,0.060,0.065,0.067,0.070,0.075,0.080,0.085,0.090,0.095,0.100,0.110,0.120,
      10.130,0.133,0.140,0.150,0.160,0.170,0.180,0.190,0.200,0.220,0.240,0.250,0.260,0.280,0.290,
@@ -884,7 +891,7 @@ c Units m. Z1cal was modified to equal the CY report eqn 2. Mar 11 2013.
         Z1cal = exp(-7.15/4 *
      1      log(((VS30/1000.)**4 + .57094**4)/(1.360**4 + .57094**4)))
 
-c     Norm Abrahamsons CA z1 reference (eq 18). Same in July 2013 update.
+c     Norm Abrahamson's CA z1 reference (eq 18). Same in July 2013 update.
        z1_ref = exp ( -7.67/4. * alog( (Vs30**4 + 610.**4)/(1360.**4+610.**4) ) ) / 1000.
 	z1_refr=exp ( -7.67/4. * alog( (1180.**4 + 610.**4)/(1360.**4+610.**4) )) / 1000.
 c z1_refr added 8/13/2013. Z1 for hard rock. This value is .0028 km or 2.8 m
@@ -1164,7 +1171,7 @@ c routinely used. Added for special studies Jan 19 2007. SHarmsen.
      1 abs(ipia).eq.6.or.abs(ipia).eq.7.or.abs(ipia).eq.10
        ceus11(ip,ia)=ipia.gt.24.and.ipia.lt.28  !new mar 2011.
       nga(ip,ia)=(ipia.gt.12.and.ipia.lt.19).or.ipia.gt.30
-c kanno et. al. is included with NGA even though its not. But is modern.
+c kanno et. al. is included with NGA even though it's not. But is modern.
 c prepare look-up tables for certain CEUS relations.
         if(ceus11(ip,ia))then
         kf=1
@@ -1322,6 +1329,20 @@ c You can call the hardrock table when Vs30 >= 1500 m/s. But not clear that AB w
            irsilva=1
            endif
         endif
+        if(ipia.eq.2.or.ipia.eq.-2)then
+c toro ceus mod jan 24 2014
+	if(per.le.0.01)then
+	itoro(ip)=1
+	else
+	ka=2
+	dowhile (abs(per-pdToro(ka)) .gt. 0.001)
+	ka=ka+1
+	if(ka.gt.10)stop'no toro relation for that period'
+	enddo
+	itoro(ip)=ka
+	endif
+	endif
+c end toro mod jan 24 2014
         if(ipia.eq.-3)then
 c Somerville IMW, 5 periods
       ka=1
@@ -1869,7 +1890,7 @@ c      write(6,*) "enter number of segment points"
 c      write(6,*) "enter lat,lon for each point"
       tlen(ift)= 0.
 c nodowndip new Oct 17 2007. Include downdip rupture scenarios only if original
-c top of fault is at or near Earth surface. Deep blind thrusts dont need this.
+c top of fault is at or near Earth surface. Deep blind thrusts don't need this.
       nodowndip(ift)=depth0(ift).gt.1.      !km. 
 c Non-daylighting faults will not have additional downdip tops, just 1 at depth0.
 c Below is new apr 3 2007.
@@ -2058,7 +2079,7 @@ ccccccccccccccccccccccccccccccccccc
       enddo
       write(6,*)'jsegmin jsegmax ',jsegmin,jsegmax
       endif      !write out group weight * rate. added diagnostic june 5 2007
-c---Heres the guts
+c---Here's the guts
 c
 c---loop through receiver sites
       do 100 i=1,nrec
@@ -2405,7 +2426,7 @@ c new, possible downdip top surface of rupture. nrupd can be 1, 2 or 3
         cyhwfac=atan(W_rup*0.5*cosDELTA/(dtor1+1.0))/(pi*0.5)
 c--- loop through floating rupture zones
         do 284 irup=1,nrups(m,ift)
-c report rate of eqs * weight applied to logic-tree branch, R,M,rate
+c report rate of eqs * weight applied to logic-tree branch, R,M,rate'
         rjb=dmin2(m,irup,jrup,1)
         isclose=abs(rjb-dmin(1)).lt.0.95
           if(rjb.lt.dcut(1))then
@@ -2528,7 +2549,7 @@ c hanging-wall flag for as08 model added dec 7 2012.
       hwflag=0
       endif
 
-c Although iflag makes a token appearance in SR code, it isnt used. So I dropped iflag (SH).
+c Although iflag makes a token appearance in SR code, it isn't used. So I dropped iflag (SH).
        call AS_072007 ( ip,ipera(ip),xmag, dip0(ift), F_NM,F_RV, W_rup, rRup, rjb,R_x,
      1                     vs30, hwflag, gnd(1), sigma1, dtor1,  vs30_class,
      3                     z1km )
@@ -2571,6 +2592,7 @@ c WUS pre-nga (2002 atten models)
       elseif(ceus02(ip,ia).or. ceus11(ip,ia))then
 c CEUS pre-nga (2002 atten models) added 3 new CENA models defined by tables. Mar 2011
        rjbp=max(rjb,0.11)
+
        if(ipia.eq.25)then
       rkm=rjbp
       jf=ia08(ip)
@@ -2601,9 +2623,9 @@ c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
 c the rest of these are pre-2011 models
        elseif(ipia.eq.2)then
-      call getToro(ip,iq,1,xmag,rjb,gnd,sigma,sigmaf)
+      call getToro(ip,itoro(ip),1,xmag,rjb,gnd,sigma,sigmaf)
       elseif(ipia.eq.-2)then
-      call getToro(ip,iq,2,xmag,rjb,gnd,sigma,sigmaf)
+      call getToro(ip,itoro(ip),2,xmag,rjb,gnd,sigma,sigmaf)
         elseif(ipia.eq.4)then
         call getAB06(ip,iperab(ip),irab(ip,ia),xmag,rrup,gnd,sigma,sigmaf,vs30)
         elseif(ipia.eq.19)then
@@ -2903,7 +2925,7 @@ c hanging-wall flag for as08 model added dec 7 2012.
       hwflag=0
       endif
 
-c Although iflag makes a token appearance in SR code, it isnt used. So I dropped iflag (SH).
+c Although iflag makes a token appearance in SR code, it isn't used. So I dropped iflag (SH).
        call AS_072007 ( ip,ipera(ip),xmag2, dip0(ift), F_NM,F_RV, Width(ift), rRup, rjb,R_x,
      1                     vs30, hwflag, gnd(1), sigma1, dtor,  vs30_class,
      3                     z1km )
@@ -2972,9 +2994,9 @@ c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
 
       elseif(ipia.eq.2)then
-      call getToro(ip,iq,1,xmag2,rjb,gnd,sigma,sigmaf)
+      call getToro(ip,itoro(ip),1,xmag2,rjb,gnd,sigma,sigmaf)
       elseif(ipia.eq.-2)then
-      call getToro(ip,iq,2,xmag2,rjb,gnd,sigma,sigmaf)
+      call getToro(ip,itoro(ip),2,xmag2,rjb,gnd,sigma,sigmaf)
         elseif(ipia.eq.4)then
         call getAB06(ip,iperab(ip),irab(ip,ia),xmag2,rrup,gnd,sigma,sigmaf,vs30)
         elseif(ipia.eq.19)then
@@ -3267,7 +3289,7 @@ c hanging-wall flag for as08 model added dec 7 2012.
       else
       hwflag=0
       endif
-c Although iflag makes a token appearance in SR code, it isnt used. So I dropped iflag (SH).
+c Although iflag makes a token appearance in SR code, it isn't used. So I dropped iflag (SH).
        call AS_072007 ( ip,ipera(ip),xmag, dip0(ift), F_NM,F_RV, W_rup, rRup, rjb,R_x,
      1                     vs30, hwflag, gnd(1), sigma1, dtor1,  vs30_class,
      3                     z1km )
@@ -3334,9 +3356,9 @@ c     print *,gnd,rkm,ip,jf,ka
 c     print *,gnd,rkm,ip,jf,ka
       sigmaf = 1./sqrt2/sigma
       elseif(ipia.eq.2)then
-      call getToro(ip,iq,1,xmag,rjb,gnd,sigma,sigmaf)
+      call getToro(ip,itoro(ip),1,xmag,rjb,gnd,sigma,sigmaf)
       elseif(ipia.eq.-2)then
-      call getToro(ip,iq,2,xmag,rjb,gnd,sigma,sigmaf)
+      call getToro(ip,itoro(ip),2,xmag,rjb,gnd,sigma,sigmaf)
         elseif(ipia.eq.4)then
         call getAB06(ip,iperab(ip),irab(ip,ia),xmag,rrup,gnd,sigma,sigmaf,vs30)
         elseif(ipia.eq.19)then
@@ -3374,7 +3396,7 @@ c not work for this case because truncation is no longer at mu+3sig
       probgt3= (erf(tempgt3)+1.)*0.5
       prr=1./(1.-probgt3)
         if(determ.and.isbig.and.isclose.and.norpt(ip,ia))then
-c write deterministic median if its big and close and you havent written but should
+c write deterministic median if it's big and close and you havent written but should
       write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,
      + ift,xmag,rjb,rrup,wttmp,
      + dtor1,iftype(ift),ifn
@@ -3400,7 +3422,7 @@ c fault segment.
       wttmp=weight*rate
         do ifn=1,nfi(ip)
         if(determ.and.isbig.and.isclose.and.norpt(ip,ia))then
-c write home to mom if its big and close and you havent written but should
+c write home to mom if it's big and close and you havent written but should
       write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,
      + ift,xmag,rjb,rrup,wttmp,
      + dtor1,iftype(ift),ifn
@@ -3428,7 +3450,7 @@ c for individual fault
       fhaz(ift,ifn,ip)=fhaz(ift,ifn,ip)+cfac
 c ifn index is present: 2nd to last frontier. ieps is  an explicit dimension, recomm. by Bazzuro
 c Some attn. models will say a given M,R is a low eps0 combination, others will say a higher eps0.
-c store separate ifn in different records. Why? to give em diff. weights when combining.
+c store separate ifn in different records. Why? to give 'em diff. weights when combining.
       if(eps.lt.emax)then
       ieps=max(1,min(int((eps+2.)*2.),10))
       rbar(ir,im,ieps,ifn,ip)=rbar(ir,im,ieps,ifn,ip)+cfac*rrup
@@ -3643,7 +3665,7 @@ c hanging-wall flag for as08 model added dec 7 2012.
       else
       hwflag=0
       endif
-c Although iflag makes a token appearance in SR code, it isnt used. So I dropped iflag (SH).
+c Although iflag makes a token appearance in SR code, it isn't used. So I dropped iflag (SH).
 c the following call should include Rx rather than trying  to compute Rx.
        call AS_072007 ( ip,ipera(ip),xmag2, dip0(ift), F_NM,F_RV, Width(ift), rRup, rjb,R_x,
      1                     vs30, hwflag, gnd(1), sigma1, dtor,  vs30_class,
@@ -3708,9 +3730,9 @@ c     print *,gnd,rkm,ip,jf,ka
              sigmaf = 1./sqrt2/sigma
       elseif(ipia.eq.2)then
 c        write(6,*)'iq clamp(iq) gnd rrup ip Toro ',iq,clamp(iq),gnd,rrup,ip
-      call getToro(ip,iq,1,xmag2,rjb,gnd,sigma,sigmaf)
+      call getToro(ip,itoro(ip),1,xmag2,rjb,gnd,sigma,sigmaf)
       elseif(ipia.eq.-2)then
-      call getToro(ip,iq,2,xmag2,rjb,gnd,sigma,sigmaf)
+      call getToro(ip,itoro(ip),2,xmag2,rjb,gnd,sigma,sigmaf)
         elseif(ipia.eq.4)then
         call getAB06(ip,iperab(ip),irab(ip,ia),xmag2,rrup,gnd,sigma,sigmaf,vs30)
         elseif(ipia.eq.19)then
@@ -4029,7 +4051,7 @@ c hanging-wall flag for as08 model added dec 7 2012.
       else
       hwflag=0
       endif
-c Although iflag makes a token appearance in SR code, it isnt used. So I dropped iflag (SH).
+c Although iflag makes a token appearance in SR code, it isn't used. So I dropped iflag (SH).
        call AS_072007 ( ip,ipera(ip),xmag, dip0(ift), F_NM,F_RV, Width(ift), rRup, rjb,R_x,
      1                     vs30, hwflag, gnd(1), sigma1, dtor,  vs30_class,
      3                     z1km )
@@ -4065,7 +4087,7 @@ c WUS pre-nga (2002 atten models)
       ifn=1
 c CEUS pre-nga (2002 atten models)
 c
-c CEUS pre-nga (2002 atten models) and Gail Atkinsons latest 2011 models
+c CEUS pre-nga (2002 atten models) and Gail Atkinson's latest 2011 models
 c added 3 new CENA models defined by tables. Mar 2011
        rjbp=max(rjb,0.11)
        if(ipia.eq.25)then
@@ -4094,9 +4116,9 @@ c added 3 new CENA models defined by tables. Mar 2011
       if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
        sigmaf = 1./sqrt2/sigma
       elseif(ipia.eq.2)then
-      call getToro(ip,iq,1,xmag,rjb,gnd,sigma,sigmaf)
+      call getToro(ip,itoro(ip),1,xmag,rjb,gnd,sigma,sigmaf)
       elseif(ipia.eq.-2)then
-      call getToro(ip,iq,2,xmag,rjb,gnd,sigma,sigmaf )
+      call getToro(ip,itoro(ip),2,xmag,rjb,gnd,sigma,sigmaf )
         elseif(ipia.eq.4)then
         call getAB06(ip,iperab(ip),irab(ip,ia),xmag,rrup,gnd,sigma,sigmaf,vs30)
         elseif(ipia.eq.19)then
@@ -4640,6 +4662,7 @@ c Not too useful when soil siteamp has known nonlinear response.
 cccccccccccccccc
       subroutine getToro(iper,ip,ir,xmag0,dist0,gndout,sigma,sigmaf)
 c midcontinent w/moment mag. Adapted to NGA code SH June 2006. 7 periods used in2002.
+c add 1.5s coeffs jan 24 2014. SH. For moment mag here.
 c ip = index in perx() array, 
 c ir=1 use BC rock; ir=2 use hardrock model.
 c Hard-rock in tc1h, otherwise same regression model & coeffs.
@@ -4647,7 +4670,7 @@ c dist0 is rjb (km). Eqn 4 SRL converts to "R_M".
 c median motions are capped. Max motions are not really constrained here.
 c Warning: Clamp business will have to be done in main.
 c replaced data statements with array constructors oct 2006.
-        parameter (sqrt2=1.414213562, pi=3.141592654)
+        parameter (sqrt2=1.414213562, pi=3.141592654,np=10)
 c the gnd_ep branching will not be done for CEUS relations. 
       common/epistemic/l_gnd_ep,gnd_ep,ide,ime
       common/soils/vs30
@@ -4655,25 +4678,26 @@ c the gnd_ep branching will not be done for CEUS relations.
        logical lceus_sigma,l_gnd_ep(8)
       common/ceus_sig/lceus_sigma,ceus_sigma
 
-             real, dimension(7):: tc1,tc2,tc3,tc4,tc5,tc6
-      real, dimension(7):: tc1h,th,tsigma,clamp
-           real   perx(8) , pganl
+             real, dimension(np):: tc1,tc2,tc3,tc4,tc5,tc6
+      real, dimension(np):: tc1h,th,tsigma,clamp
+           real   perx(np) , pganl
            save pganl
 c array constructors
-       perx = (/0.,0.2,1.0,0.1,0.3,0.5,2.0,-1./)
+       perx = (/0.,0.2,1.0,0.1,0.3,0.5,2.0,0.04,0.4,1.5/)
 c Below tc coeffs correspond to midcontinent, equations using moment mag.
-      tc1 = (/2.619,2.295,0.383,2.924,1.8823,1.288,-0.558/)
-      tc1h = (/2.20,1.73,0.09,2.37,1.34,0.8306,-0.74/)      
-      tc2 = (/0.81,0.84,1.42,0.81,0.964,1.14,1.86/)
-      tc3 = (/0.,0.0,-0.2,0.,-0.059,-0.1244,-0.31/)
-      tc4 = (/1.27,0.98,0.90,1.1,0.951,0.9227,0.92/)
-      tc5 = (/1.16,0.66,0.49,1.02,0.601,0.5429,0.46/)
-      tc6 = (/0.0021,0.0042,0.0023,0.004,0.00367,0.00306,0.0017/)
+      tc1 = (/2.619,2.295,0.383,2.92,1.8823,1.2887,-0.558,4.,1.4,-0.16744971/)
+c tc Mw coeffs. 3.33 hz is log-log from the 2.5 and 5 hz values. 
+        tc1h = (/2.20,1.73,0.09,2.37,1.34,0.8313,-0.740,3.68,1.07,-0.39551886/)
+      tc2 = (/0.81,0.84,1.42,0.81,0.964,1.14,1.86,0.80,1.05,1.6773834/)
+      tc3 = (/0.,0.0,-0.2,0.,-0.059,-0.1244,-0.31,0.0,-0.10,-0.26434588/)
+      tc4 = (/1.27,0.98,0.90,1.1,0.951,0.9227,0.92,1.46,0.93,.9116993/)
+      tc5 = (/1.16,0.66,0.49,1.02,0.601,0.5429,0.46,1.77,0.56,0.47245115/)
+      tc6 = (/0.0021,0.0042,0.0023,0.004,0.00367,0.00306,0.0017,0.0013,0.0033,1.9490225E-3/)
       
-           th = (/9.3,7.5,6.8,8.3,7.26,7.027,6.9/)
+           th = (/9.3,7.5,6.8,8.3,7.26,7.027,6.9,10.5,7.1,6.858496/)
 c write sigma in nat log units. Saves a divide
-           tsigma = (/0.7506,0.7506,0.799,.7506,.7506,.7506,0.799/)      
-           clamp = (/3.,6.,4.,6.,6.,6.,6./)
+           tsigma = (/0.7506,0.7506,0.799,.7506,.7506,.7506,0.799,.7506,.7506,0.799/)	
+           clamp = (/3.,6.,0.,6.,6.,6.,0.,6.,6.,0./)
         xmag= xmag0
 c correct mag will be used in calling program. never need to convert here.
       if(lceus_sigma)then
@@ -4956,27 +4980,30 @@ c ir=2 hard rock (2800 m/s?)
 c output gnd=log(median) and sigmaf=1/sigma/sqrt2
 c replaced data statements with array constructors oct 2006.
 c
-      parameter(dist1=50.358713,sqrt2=1.41421356)
+      parameter(np=8,dist1=50.358713,sqrt2=1.41421356)
 c      dist1= sqrt(50.*50.+ 6.*6.) in above parameter statement
       common/epistemic/l_gnd_ep,gnd_ep,ide,ime
       common/ceus_sig/lceus_sigma,ceus_sigma
       real gnd_ep(3,3,8),gndout(3)
       logical lceus_sigma,l_gnd_ep(8)
 
-      real a1(7),a2(7),a3(7),a4(7),a5(7),a6(7),a7(7),sig0(7)
 c enter statements with coeff values.
-             real perx(8),a1h(7)      !a reference set including pgv which wasn't used in 2002
-      perx = (/0.,0.2,1.0,0.1,0.3,0.5,2.0,-1./)
-      a1 = (/0.658,1.358,-0.0143,1.442,1.2353,.8532,-0.9497/)
-      a1h = (/0.239,0.793,-0.307,0.888,0.6930,0.3958,-1.132/)
-      a2 = (/0.805,0.805,0.805,0.805,0.805,0.805,0.805/)
-      a3 = (/-0.679,-.679,-.696,-.679,-.67023,-.671792,-0.728/)
-      a4 = (/0.0861,0.0861,.0861,.0861,0.0861,.0861,.0861/)
-      a5 = (/-0.00498,-.00498,-0.00362,-.00498,-.0048045,-.00442189,-0.00221/)
-      a6 = (/-0.477,-.477,-0.755,-.477,-.523792,-.605213,-.946/)
-      a7 = (/0.,0.,-0.102,0.,-.030298,-.0640237,-.140/)
-      sig0 = (/0.587,0.611,0.693,0.595,.6057,.6242,0.824/)
-c      clamp = (/3.,6.,3.,6.,6.,6.,6./)
+             real perx(8)      !a reference set including pgv which wasn't used in 2002
+c perx(8) corresponds to PGV which is not set up for Somerville. Could check
+c if that relation has a PGV model. SH July 31 2006.
+      real a1(np),a1h(np),a2(np),a3(np),a4(np),a5(np),a6(np)
+      real a7(np),sig0(np),clamp(np)
+      perx = (/0.,0.2,1.0,0.1,0.3,0.5,1.5,2./)
+      a1 = (/0.658,1.358,-0.0143,1.442,1.2353,.8532, 0.7696301,-0.9497/)
+      a1h = (/0.239,0.793,-0.307,0.888,0.6930,0.3958,-0.5614739,-1.132/)
+      a2 = (/0.805,0.805,0.805,0.805,0.805,0.805,0.805,0.805/)
+      a3 = (/-0.679,-.679,-.696,-.679,-.67023,-.671792,-0.7147188,-0.728/)
+      a4 = (/0.0861,0.0861,.0861,.0861,0.0861,.0861,.0861,.0861/)
+      a5 = (/-0.00498,-.00498,-0.00362,-.00498,-.0048045,-.00442189,-2.7952031E-3,-0.00221/)
+      a6 = (/-0.477,-.477,-0.755,-.477,-.523792,-.605213,-0.8667278,-.946/)
+      a7 = (/0.,0.,-0.102,0.,-.030298,-.0640237,-0.124228574,-.140/)
+      sig0 = (/0.587,0.611,0.693,0.595,.6057,.6242,0.7696301,0.824/)
+      clamp = (/3.,6.,0.,6.,6.,6.,0.,0./)
 c compute SOmerville median and dispersion estimates.
       if(lceus_sigma)then
       sig=ceus_sigma	!special study 3/2011
@@ -8707,7 +8734,7 @@ c This sigma may be revised.
       else
       xmagc=max(5.0,min(xmag,Mcap))
 c      sig = 1.28 + 0.05*alog(T) - 0.08 * xmagc
-      sig = 1.18 + 0.035*alog(T) - 0.06 * xmagc	!see P Powers email jan 21 2014
+	sig = 1.18 + 0.035*alog(T) - 0.06 * xmagc	!see P Powers email jan 21 2014
       endif	!special study can fix all sigma at a specified value. jan 7 2012.
           sigmaf= 1./sig/sqrt2
           vscap=min(vs30,1200.)
