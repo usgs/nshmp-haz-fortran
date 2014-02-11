@@ -28,7 +28,7 @@ c sa is the median sa for a given atten model and sd is the std dev. for that mo
         character*88 rec,recold,fi*88,fi2
         indexe = (/6,2,20,7,10,19,25,26,27/)
         indexc = (/2,5,7/)
-        indw = (/33,34,35,36,37/)	!modified 9/20/2013 only 5 relations now
+        indw = (/33,34,35,36,37/)       !modified 9/20/2013 only 5 relations now
         wtw = (/0.22,0.22,0.22,0.22,0.12/)  !modified 9/20/2013 
         indc2 = (/5,7,20,21/)
 c        wtc2 = (/0.25,0.25,0.25,0.25/)
@@ -48,8 +48,9 @@ c        wtc2 = (/0.25,0.25,0.25,0.25/)
 3001        format(i4,t17,a36)
         irec=index(rec,' ')
         call getarg(2,fi)
-        print *,'Enter a 0 if CEUS 2013 file;'
-        print 50,'Enter 1 if this is a 2013 Cascadia SUBDUCTION-Source file;Enter 2 if this is a WUS 2013 source file: '
+        print *,' Enter a 0 if CEUS 2013 file'
+        print *,' Enter 1 if this is a 2013 Cascadia SUBDUCTION source file'
+        print *,' Enter 2 if this is a WUS 2013 source file'
         read *,i
         print *,i
         subduction=i.eq.1
