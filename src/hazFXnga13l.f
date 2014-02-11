@@ -14,7 +14,7 @@ c 8/27/2013	CB13: Update c0 vector for PGA and several short-period SA Bozorgnia
 c 8/27/2013	changed z1km to z1_ref in call to ASK
 c 8/21/2013	CB13: Improve Zhyp further for downdip ruptures.
 c 8/20/2013 Inline CB13 coeffs. Begin standardizing Zhyp in CB13.
-c Correction Aug 15 2013: initialize PI in CB13 subroutine (previously wasn't).
+c Correction Aug 15 2013: initialize PI in CB13 subroutine (previously wasnt).
 c		Also, calculate A1100 first time through CB13
 c		
 c 8/13/2013: Use the Rx0 version of ASK13. Set z1_rock = -1 for the hardrock calls of ASK
@@ -35,7 +35,7 @@ c		read in in relwt() has to be the same for all eqs in a group. This is a
 c		fundamental coding limitation. It is not checked internally.
 c 6/27/2013: For the Pezeshk 2012 relation, force rkm to be max(1., rkm). Very
 c              close hypocenters will cause Pezeshk GMPE to issue NaN median value.
-c		For the AB06' GMPE(index 26), force rkm to be max(1.8,rkm)
+c		For the AB06p GMPE(index 26), force rkm to be max(1.8,rkm)
 c 6/11/2013: correct z1 units when calling bssa2013drv. Units are m. Use Chiou Z1cal.
 c 5/21/2013: correct  c11 term in gksa13v2
 c 5/20/2013: Add May 18 BSSA. 
@@ -193,7 +193,7 @@ c      can be important for many relatively long WUS faults.
 c Clustered source model has been checked for characteristic-without-uncertainty-in-M
 c types of ruptures only. Future work, add aleatory uncert to clustered source model.
 c
-c late March: use Zeng's mindist1 algorithm for all rjb, rcd dist calculations.
+c late March: use Zengs mindist1 algorithm for all rjb, rcd dist calculations.
 c 8/12/2009: add getDahle95 for Panama hazard assessments.
 c 3/19/2007: use Frankel HR->FR factors for TP05 at 7 periods (this still needs work at other
 c      periods). Somerville HR revised slightly.
@@ -209,7 +209,7 @@ c when GR-distributed sources and 6.5<=M<=7.0. Testing is nearly complete.
 c  Added GR with 6 < M < 6.5. For these, rupture tops are equally distributed 
 c               at ztor+0,2,4,and 6 km. Revised so that AspectRatio>=1 for all rups,
 c            even those associated with M6.0 sources.
-c What's in a name?
+c Whats in a name?
 c   Some of the downdip rupture branching is triggered or not triggered by
 c a match to part of a filename. This feature definitely needs a more failsafe
 c logic approach. For example, filename containing 'aFault_unseg' is a trigger to
@@ -268,7 +268,7 @@ c NGA. If this code is to work with old subroutines, need to revisit...
 c
 c Some older relations are in the nga-style subroutine format with coeffs 
 c      explicitly included as statements. These are:
-c iatten=0 Truth. This one hasn't been programmed. It is the oldest but least accessible
+c iatten=0 Truth. This one hasnt been programmed. It is the oldest but least accessible
 c iatten=1 Spudich ea, 2000 Extensional-tectonics regions, with BJF97 site amp
 c iatten=2 Toro ea; CEUS 7 periods and BC rock geotech. M has to be Mw. finite fault
 c iatten=-2 Toro ea; CEUS 7 periods and A rock geotech. New 11/06: finite fault
@@ -536,7 +536,7 @@ c      real, dimension (22):: Percb13,PerIMIdriss
       integer, dimension (nfltmx) :: itype,npts,npts1,iftype,ibtype
       logical, dimension(npmx,iamx) :: nga,wus02,ceus02,ceus11     
 c logical variables for subsets of attenuation models should help narrow
-c the search more efficiently.   CEUS11 added mar 18 2011: Gail Atkinson's 3 new
+c the search more efficiently.   CEUS11 added mar 18 2011: Gail Atkinsons 3 new
 C CENA models, with indexes 25, 26, and 27. 
 c Benioff or deep-seismicity relations n/a here: see gridded hazard code hazgridXnga2.f      
 c new 6/06: potentially variable a and b values for up to 12 branches for each fault
@@ -631,7 +631,7 @@ c 0.0=pga here, equiv to 0.01 in their report. -1=pgv, -2=pgd set. -3  = CAV add
      9              1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.2, 2.4, 2.5, 2.6, 2.8, 
      1              3.0, 3.2, 3.4, 3.5, 3.6, 3.8, 4.0, 4.2, 4.4, 4.6, 4.8, 
      1              5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0 /)
-c prd is the C&Y period set, 106 of 'em, jan 2009. Same, Oct 2007. PGA=0.0s in our code. 
+c prd is the C&Y period set, 106 of em, jan 2009. Same, Oct 2007. PGA=0.0s in our code. 
       prd= (/0.0,0.020,0.022,0.025,0.029,0.030,0.032,0.035,0.036,0.040,0.042,0.044,0.045,0.046,
      10.048,0.050,0.055,0.060,0.065,0.067,0.070,0.075,0.080,0.085,0.090,0.095,0.100,0.110,0.120,
      10.130,0.133,0.140,0.150,0.160,0.170,0.180,0.190,0.200,0.220,0.240,0.250,0.260,0.280,0.290,
@@ -892,7 +892,7 @@ c Units m. Z1cal was modified to equal the CY report eqn 2. Mar 11 2013.
         Z1cal = exp(-7.15/4 *
      1      log(((VS30/1000.)**4 + .57094**4)/(1.360**4 + .57094**4)))
 
-c     Norm Abrahamson's CA z1 reference (eq 18). Same in July 2013 update.
+c     Norm Abrahamsons CA z1 reference (eq 18). Same in July 2013 update.
        z1_ref = exp ( -7.67/4. * alog( (Vs30**4 + 610.**4)/(1360.**4+610.**4) ) ) / 1000.
 	z1_refr=exp ( -7.67/4. * alog( (1180.**4 + 610.**4)/(1360.**4+610.**4) )) / 1000.
 c z1_refr added 8/13/2013. Z1 for hard rock. This value is .0028 km or 2.8 m
@@ -1172,7 +1172,7 @@ c routinely used. Added for special studies Jan 19 2007. SHarmsen.
      1 abs(ipia).eq.6.or.abs(ipia).eq.7.or.abs(ipia).eq.10
        ceus11(ip,ia)=ipia.gt.24.and.ipia.lt.28  !new mar 2011.
       nga(ip,ia)=(ipia.gt.12.and.ipia.lt.19).or.ipia.gt.30
-c kanno et. al. is included with NGA even though it's not. But is modern.
+c kanno et. al. is included with NGA even though its not. But is modern.
 c prepare look-up tables for certain CEUS relations.
         if(ceus11(ip,ia))then
         kf=1
@@ -1892,7 +1892,7 @@ c      write(6,*) "enter number of segment points"
 c      write(6,*) "enter lat,lon for each point"
       tlen(ift)= 0.
 c nodowndip new Oct 17 2007. Include downdip rupture scenarios only if original
-c top of fault is at or near Earth surface. Deep blind thrusts don't need this.
+c top of fault is at or near Earth surface. Deep blind thrusts dont need this.
       nodowndip(ift)=depth0(ift).gt.1.      !km. 
 c Non-daylighting faults will not have additional downdip tops, just 1 at depth0.
 c Below is new apr 3 2007.
@@ -2081,7 +2081,7 @@ ccccccccccccccccccccccccccccccccccc
       enddo
       write(6,*)'jsegmin jsegmax ',jsegmin,jsegmax
       endif      !write out group weight * rate. added diagnostic june 5 2007
-c---Here's the guts
+c---Heres the guts
 c
 c---loop through receiver sites
       do 100 i=1,nrec
@@ -2428,7 +2428,7 @@ c new, possible downdip top surface of rupture. nrupd can be 1, 2 or 3
         cyhwfac=atan(W_rup*0.5*cosDELTA/(dtor1+1.0))/(pi*0.5)
 c--- loop through floating rupture zones
         do 284 irup=1,nrups(m,ift)
-c report rate of eqs * weight applied to logic-tree branch, R,M,rate'
+c report rate of eqs * weight applied to logic-tree branch, R,M,rate
         rjb=dmin2(m,irup,jrup,1)
         isclose=abs(rjb-dmin(1)).lt.0.95
           if(rjb.lt.dcut(1))then
@@ -2551,7 +2551,7 @@ c hanging-wall flag for as08 model added dec 7 2012.
       hwflag=0
       endif
 
-c Although iflag makes a token appearance in SR code, it isn't used. So I dropped iflag (SH).
+c Although iflag makes a token appearance in SR code, it isnt used. So I dropped iflag (SH).
        call AS_072007 ( ip,ipera(ip),xmag, dip0(ift), F_NM,F_RV, W_rup, rRup, rjb,R_x,
      1                     vs30, hwflag, gnd(1), sigma1, dtor1,  vs30_class,
      3                     z1km )
@@ -2927,7 +2927,7 @@ c hanging-wall flag for as08 model added dec 7 2012.
       hwflag=0
       endif
 
-c Although iflag makes a token appearance in SR code, it isn't used. So I dropped iflag (SH).
+c Although iflag makes a token appearance in SR code, it isnt used. So I dropped iflag (SH).
        call AS_072007 ( ip,ipera(ip),xmag2, dip0(ift), F_NM,F_RV, Width(ift), rRup, rjb,R_x,
      1                     vs30, hwflag, gnd(1), sigma1, dtor,  vs30_class,
      3                     z1km )
@@ -3291,7 +3291,7 @@ c hanging-wall flag for as08 model added dec 7 2012.
       else
       hwflag=0
       endif
-c Although iflag makes a token appearance in SR code, it isn't used. So I dropped iflag (SH).
+c Although iflag makes a token appearance in SR code, it isnt used. So I dropped iflag (SH).
        call AS_072007 ( ip,ipera(ip),xmag, dip0(ift), F_NM,F_RV, W_rup, rRup, rjb,R_x,
      1                     vs30, hwflag, gnd(1), sigma1, dtor1,  vs30_class,
      3                     z1km )
@@ -3398,7 +3398,7 @@ c not work for this case because truncation is no longer at mu+3sig
       probgt3= (erf(tempgt3)+1.)*0.5
       prr=1./(1.-probgt3)
         if(determ.and.isbig.and.isclose.and.norpt(ip,ia))then
-c write deterministic median if it's big and close and you havent written but should
+c write deterministic median if its big and close and you havent written but should
       write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,
      + ift,xmag,rjb,rrup,wttmp,
      + dtor1,iftype(ift),ifn
@@ -3424,7 +3424,7 @@ c fault segment.
       wttmp=weight*rate
         do ifn=1,nfi(ip)
         if(determ.and.isbig.and.isclose.and.norpt(ip,ia))then
-c write home to mom if it's big and close and you havent written but should
+c write home to mom if its big and close and you havent written but should
       write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,
      + ift,xmag,rjb,rrup,wttmp,
      + dtor1,iftype(ift),ifn
@@ -3452,7 +3452,7 @@ c for individual fault
       fhaz(ift,ifn,ip)=fhaz(ift,ifn,ip)+cfac
 c ifn index is present: 2nd to last frontier. ieps is  an explicit dimension, recomm. by Bazzuro
 c Some attn. models will say a given M,R is a low eps0 combination, others will say a higher eps0.
-c store separate ifn in different records. Why? to give 'em diff. weights when combining.
+c store separate ifn in different records. Why? to give em diff. weights when combining.
       if(eps.lt.emax)then
       ieps=max(1,min(int((eps+2.)*2.),10))
       rbar(ir,im,ieps,ifn,ip)=rbar(ir,im,ieps,ifn,ip)+cfac*rrup
@@ -3667,7 +3667,7 @@ c hanging-wall flag for as08 model added dec 7 2012.
       else
       hwflag=0
       endif
-c Although iflag makes a token appearance in SR code, it isn't used. So I dropped iflag (SH).
+c Although iflag makes a token appearance in SR code, it isnt used. So I dropped iflag (SH).
 c the following call should include Rx rather than trying  to compute Rx.
        call AS_072007 ( ip,ipera(ip),xmag2, dip0(ift), F_NM,F_RV, Width(ift), rRup, rjb,R_x,
      1                     vs30, hwflag, gnd(1), sigma1, dtor,  vs30_class,
@@ -4053,7 +4053,7 @@ c hanging-wall flag for as08 model added dec 7 2012.
       else
       hwflag=0
       endif
-c Although iflag makes a token appearance in SR code, it isn't used. So I dropped iflag (SH).
+c Although iflag makes a token appearance in SR code, it isnt used. So I dropped iflag (SH).
        call AS_072007 ( ip,ipera(ip),xmag, dip0(ift), F_NM,F_RV, Width(ift), rRup, rjb,R_x,
      1                     vs30, hwflag, gnd(1), sigma1, dtor,  vs30_class,
      3                     z1km )
@@ -4089,7 +4089,7 @@ c WUS pre-nga (2002 atten models)
       ifn=1
 c CEUS pre-nga (2002 atten models)
 c
-c CEUS pre-nga (2002 atten models) and Gail Atkinson's latest 2011 models
+c CEUS pre-nga (2002 atten models) and Gail Atkinsons latest 2011 models
 c added 3 new CENA models defined by tables. Mar 2011
        rjbp=max(rjb,0.11)
        if(ipia.eq.25)then
