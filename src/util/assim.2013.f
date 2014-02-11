@@ -48,9 +48,9 @@ c        wtc2 = (/0.25,0.25,0.25,0.25/)
 3001        format(i4,t17,a36)
         irec=index(rec,' ')
         call getarg(2,fi)
-        print *,' Enter a 0 if CEUS 2013 file'
-        print *,' Enter 1 if this is a 2013 Cascadia SUBDUCTION source file'
-        print *,' Enter 2 if this is a WUS 2013 source file'
+        print *,' Enter 0 for CEUS 2013 source file'
+        print *,' Enter 1 for 2013 Cascadia SUBDUCTION source file'
+        print *,' Enter 2 for WUS 2013 source file'
         read *,i
         print *,i
         subduction=i.eq.1
