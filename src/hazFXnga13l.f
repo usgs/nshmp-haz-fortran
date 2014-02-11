@@ -556,7 +556,7 @@ c value. The customary 0.1 dM wont work when M precision is carried to 2 dec. pl
 c      integer iargc,numarg,hwflag,vs30_class
       integer iargc,numarg,hwflag
 c Below, the array constructor business. No repeat (8*.01) unlike data statement.
-c gfortran required replacement of "data" statements in our Linux PC system. 10/06. SH.
+c gfortran required replacement of data statements in our Linux PC system. 10/06. SH.
 c abper is the set of spectral periods for the AB2006 CEUS model. -1 => PGV
       abper = (/5.0000, 4.0000, 3.1250, 2.5000, 2.0000, 1.5873, 1.2500, 1.0000,
      1 0.7937, 0.6289, 0.5000, 0.3968, 0.3, 0.2506, 0.2000, 0.1580,
@@ -661,7 +661,7 @@ c prd is the C&Y period set, 106 of 'em, jan 2009. Same, Oct 2007. PGA=0.0s in o
      3 'Space Unoccu','BSSA 03/2013','C&B04/13 NGA',
      3 'ChiouY 03/13','Ab-Silva2013','IIdriss 2013','GraizKalkn13',
      4 'GrazKalkan09'/)
-       gname=(/'.g1','.g2','.g3','.g4','.g5','.g6','.g7','.g8'/)
+      gname=(/'.g1','.g2','.g3','.g4','.g5','.g6','.g7','.g8'/)
       nga=.false.
       wus02=.false.
       ceus02=.false.
@@ -812,18 +812,19 @@ c creeping section is also host to california floaters. Parkfield did not ruptur
 c surface. After short discussion with Wesson, I did not include creeping sec
 c set of calif. floaters that always rupture to surface. 
 c      write(6,*)'Enter a zero for grid of sites 1 to 30 for list: '
+c deterministic for nrec<0
       read(1,*)nrec
       if(nrec.lt.0)then
-      determ=.true.
-      if(determ)open(80,file='F'//name,status='unknown')
-      deagg=.false.      ! determ trumps deagg
-      if(nrec.lt.-35)then
-      nrec=0
+        determ=.true.
+        if(determ)open(80,file='F'//name,status='unknown')
+        deagg=.false.      ! determ trumps deagg
+        if(nrec.lt.-35)then
+          nrec=0
+        else
+          nrec=-nrec
+        endif      !gridded or specified stations option
       else
-      nrec=-nrec
-      endif      !gridded or specified stations option
-      else
-      determ=.false.
+        determ=.false.
       endif
       if(nrec.eq.0)then
       grid=.true.
@@ -996,45 +997,45 @@ c---loop through periods
 801      write(6,*)'Period ',per,' underway'
       iper(ip)=k
       if(wind.gt.0.)then
-      cluster=.false.
-      l_gnd_ep(ip)=.true.
-      do im=1,3
-      if(im.eq.1)then
-      write(6,505)mcut(1)
-      elseif(im.eq.2)then
-      write(6,506)mcut(1),mcut(2)
-      else
-      write(6,507)mcut(2)
-      endif
-      write(6,509)dcut(1),dcut(1),dcut(2),dcut(2)
+        cluster=.false.
+        l_gnd_ep(ip)=.true.
+        do im=1,3
+          if(im.eq.1)then
+            write(6,505)mcut(1)
+          elseif(im.eq.2)then
+            write(6,506)mcut(1),mcut(2)
+          else
+            write(6,507)mcut(2)
+          endif
+          write(6,509)dcut(1),dcut(1),dcut(2),dcut(2)
 509      format('3 DeltaGnd, for d < ',f4.1,', ',f4.1,' <=d < ',f4.1,
      + '& d >=',f4.1,' km: ',$) 
-      read(1,*)gnd_ep(1,im,ip),gnd_ep(2,im,ip),gnd_ep(3,im,ip)
+          read(1,*)gnd_ep(1,im,ip),gnd_ep(2,im,ip),gnd_ep(3,im,ip)
 c increase or decrease gm by equal amounts in the atten subroutines
-      write(6,*)gnd_ep(1,im,ip),gnd_ep(2,im,ip),gnd_ep(3,im,ip)
+          write(6,*)gnd_ep(1,im,ip),gnd_ep(2,im,ip),gnd_ep(3,im,ip)
 505      format('Additional epistemic gnd, for M < ',f4.1)
 506      format('Next, for ',f4.1,'<=M < ',f4.1)
 507      format('Finally, for M >= ',f4.1)
-      enddo      !im loop
-      nfi(ip)=3
-      ngroup(ip)=1
-      icc(ip,1)=9+ip
+        enddo      !im loop
+        nfi(ip)=3
+        ngroup(ip)=1
+        icc(ip,1)=9+ip
       elseif(wind.eq.0.)then
-      nfi(ip)=1
-      ifn=1      !always use index 1 for this case.
-      ngroup(ip)=1
-      cluster=.false.
-      icc(ip,1)=9+ip
+        nfi(ip)=1
+        ifn=1      !always use index 1 for this case.
+        ngroup(ip)=1
+        cluster=.false.
+        icc(ip,1)=9+ip
       else
 c current indicator to perform clustering is wind < 0. You can make up to 5 independent clustered-event curves
 c set wind=-1 for one, wind=-2 for 2, ..., wind = -5 for 5. These could be the 5 virtual NMSZ faults in 2002 hz model
 c The use of this variable for different things depending on its sign might be considered clumsy & contemptible.
 c Should be revised.
-      nfi(ip)=1
-      ifn=1
-      cluster=.true.
-      ngroup(ip)= iabs(int(wind))
-      if(ip.gt.1.and.ngroup(ip).ne.ngroup(1))stop'number of cluster groups cannot be period dep.'
+        nfi(ip)=1
+        ifn=1
+        cluster=.true.
+        ngroup(ip)= iabs(int(wind))
+        if(ip.gt.1.and.ngroup(ip).ne.ngroup(1))stop'number of cluster groups cannot be period dep.'
       endif      !if additional epistemic sigma is read in or model clustering is asked for: one or the other
 c but not both at least initially
       nameout= '                                             '
@@ -1043,8 +1044,8 @@ c      write(6,*) "enter name of output file for this period"
  909  format(a)
        isz=index(nameout,' ')-1
       if(determ)then
-      open(66+ip,file=nameout(1:isz)//'.DET')
-      write(66+ip,677)per,date,time,name
+        open(66+ip,file=nameout(1:isz)//'.DET')
+        write(66+ip,677)per,date,time,name
       endif
 677      format('#hazFXnga13l sources. Sp_Per= ',f5.2,' s. Run on ',a,' at ',a,/,
      +'# *** Input control file: ',a,/,
@@ -1052,8 +1053,8 @@ c      write(6,*) "enter name of output file for this period"
      +' Dtor(km) SlipCode EPS_AT')
        do kg=1,ngroup(ip)
        if(cluster)then
-       nameout=nameout(1:isz)//gname(kg)
-       icc(ip,kg)=9+ip+9+kg
+         nameout=nameout(1:isz)//gname(kg)
+         icc(ip,kg)=9+ip+9+kg
        endif
        if(grid)then
       call openwx(ifp(ip,kg,1),nameout)
@@ -1629,8 +1630,9 @@ c combining 25-wt and 50-wt California faults into one file, and the relwt for t
 c 25-wt items is X, then the relwt for the 50-wt items is 2X. This was discussed
 c at a software meeting late Oct 2006. S Harmsen.
 c add moment rate to log file output 11/2010
+c read cluster fault data
       if(cluster)then
-      read(adum,*,err=999,end=999)itype(ift),iftype(ift),nmagf(ift),igroup(ift),jseg(ift)
+        read(adum,*,err=999,end=999)itype(ift),iftype(ift),nmagf(ift),igroup(ift),jseg(ift)
 c May 16 2007: igroup is a new index, for the geographic or other group index for clustering. 
 c Idea is : Do not mix scenarios from different groups.
 c All scenarios within a group must have same recurrence (rate).
@@ -2104,12 +2106,12 @@ c find nearest gridpoint in vs30 array to the site with coords rx,ry
       endif      !inbounds
       endif      !array rather than scalar vs30      
       if(determ)then
-      xmagdet=5.0
-      rjbdet=dmax
-      do ip=1,nper
-      write(66+ip,6684)rx,ry,i,vs30
+        xmagdet=5.0
+        rjbdet=dmax
+        do ip=1,nper
+          write(66+ip,6684)rx,ry,i,vs30
 6684      format('! ',f8.3,1x,f7.3,' site ',i7,' vs30 ',f7.1,' m/s')
-      enddo
+        enddo
       endif
 c following lines omit several site checks for ca and/or extensional faults.
       if(byeca.and.ry.gt.43.9) goto 860
@@ -2672,21 +2674,21 @@ c not work for this case because truncation is no longer at mu+3sig
         goto 282
         endif
       elseif(ipia.eq.12)then
-      call getMota(ip,iper(ip),xmag,rrup,vs30,gnd,sigmaf)
+        call getMota(ip,iper(ip),xmag,rrup,vs30,gnd,sigmaf)
       elseif(ipia.eq.22)then
-      call getDahle95(iperdahl(ip),isoild,xmag,rjb,gnd,sigmaf)
+        call getDahle95(iperdahl(ip),isoild,xmag,rjb,gnd,sigmaf)
       endif
       wttmp=wtbranch(ilt)*weight*rate
         do ifn=1,nfi(ip)
 c for deterministic calcs write the largest M cases from GR distributions.
         if(determ.and.isbig.and.isclose.and.norpt(ip,ia))then
-        write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,ift,xmag,rjb,rrup,
+          write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,ift,xmag,rjb,rrup,
      +     wttmp,dtor1,iftype(ift), ifn
 c	print *,ipia,ift,' ****** CHAR ipia ift *******'
 c there is now a report dont tell it again, Sam. (you could have more than one
 c that is big and close but these are all the same w.r.t. saved params)
-      if(ifn .eq. nfi(ip)) norpt(ip,ia)=.false.
-      endif
+          if(ifn .eq. nfi(ip)) norpt(ip,ia)=.false.
+        endif
 c679      format(e11.5,1x,e11.5,1x,i2,1x,i3,1x,f6.2,1x,f7.1,1x,f7.1,1x,e11.5,
 c     + f5.1,1x,i2,1x,i1)
 679      format(e11.5,1x,e11.5,1x,i5,1x,i7,1x,f6.2,1x,f7.1,1x,f7.1,1x,e11.5,
@@ -3053,28 +3055,28 @@ c deaggregation for the special case. not prepared oct 30 2007.
       wttmp=wt1wt2*weight*rate
         do ifn=1,nfi(ip)
         if(determ.and.isbig.and.isclose.and.norpt(ip,ia))then
-       write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,ift,xmag2,rjb,rrup,
+          write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,ift,xmag2,rjb,rrup,
      + wttmp,depth0(ift),iftype(ift),ifn
-      if(ifn .eq. nfi(ip))norpt(ip,ia)=.false.
-      endif
+          if(ifn .eq. nfi(ip))norpt(ip,ia)=.false.
+        endif
         do  k=1,nlev(ip)
-       pr=(gnd(ifn) - xlev(k,ip))*sigmaf
-       if(pr.gt.3.3)then
-       ipr=250002
-       elseif(pr.gt.plim)then
-       ipr= 1+nint(dp2*(pr-plim))      !3sigma cutoff n'(mu,sig)
-       else
-       goto 1283      !transfer out if ground motion above mu+3sigma
-       endif
-      cfac=wttmp*p(ipr)
-        prob(icnt,k,ip,ifn,kg)= prob(icnt,k,ip,ifn,kg)+cfac
-       if(deagg)then
+          pr=(gnd(ifn) - xlev(k,ip))*sigmaf
+          if(pr.gt.3.3)then
+            ipr=250002
+          elseif(pr.gt.plim)then
+            ipr= 1+nint(dp2*(pr-plim))      !3sigma cutoff n'(mu,sig)
+          else
+            goto 1283      !transfer out if ground motion above mu+3sigma
+          endif
+          cfac=wttmp*p(ipr)
+          prob(icnt,k,ip,ifn,kg)= prob(icnt,k,ip,ifn,kg)+cfac
+          if(deagg)then
 c for individual fault
-      frbar(ift,ifn,ip)=frbar(ift,ifn,ip)+cfac*rrup
-      fmbar(ift,ifn,ip)=fmbar(ift,ifn,ip)+cfac*xmag
-               eps= -pr*sqrt2
-      febar(ift,ifn,ip)=febar(ift,ifn,ip)+cfac*eps
-      fhaz(ift,ifn,ip) =fhaz(ift,ifn,ip)+cfac
+          frbar(ift,ifn,ip)=frbar(ift,ifn,ip)+cfac*rrup
+          fmbar(ift,ifn,ip)=fmbar(ift,ifn,ip)+cfac*xmag
+          eps= -pr*sqrt2
+          febar(ift,ifn,ip)=febar(ift,ifn,ip)+cfac*eps
+          fhaz(ift,ifn,ip) =fhaz(ift,ifn,ip)+cfac
 c ifn index is present: 2nd to last frontier. ieps is  an explicit dimension, recomm. by Bazzuro
 c Some attn. models will say a given M,R is a low eps0 combination, others will say a higher eps0.
 c 
@@ -3095,7 +3097,7 @@ c  *prlr       this factor is not present now. Why?
       ka=ka-1
       if(ka.eq.0)goto 1283
       prx= temp-ptail(ka)
-      enddo
+        enddo
       endif      !eps <emax
       endif      !if deagg
            enddo
