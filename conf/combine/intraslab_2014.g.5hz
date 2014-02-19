@@ -1,4 +1,5 @@
-1
+24.6 50.0 0.1
+-125 -100 0.1
 9		number of files 
 ../out/CAdeep_2014.5hz
 1.0
@@ -18,6 +19,9 @@
 0.9
 ../out/pacnwdeep_Mmax8.5hz
 0.1
-1
-../out/combine/intraslab_2014.5hz
 0
+../out/combine/hazard_intraslab.5hz.2pc50
+1
+0
+4.04e-4
+1
