@@ -1,6 +1,6 @@
 24.6 50.0 0.05
 -125 -65 0.05
-7
+6
 ../out/combine/sub.2014.pga
 1
 ../out/combine/ceus.pga
@@ -11,9 +11,7 @@
 1
 ../out/combine/wus_2014_epimerge.g.pga
 1
-../out/CA14-PGA-BG-0p05.curves
-1
-../out/CA14-PGA-FLT-0p05.curves
+../out/CA-PGA-ALL-0p05.curves
 1
 1
 ../out/combine/us_epimerge.pga
