@@ -1,5 +1,11 @@
-c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  01/31/ 2014. Long header version.
+c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  02/27/ 2014. Long header version.
+c Feb 27: add coeffs for T=4 and 5 s to the ABsub routine for in-slab events.
+c Feb 20: add hard-rock site term for Zhao et al relation. This change does not
+c affect the BC rock calcs, but will affect B- to B+ rock for intraplate source.
+c Also extended number of periods available to 22 (from 11 in previous vers) Zhao subr.
+c
 c ABsub: added 1.5s coeffs Jan 24 2014 SH. see AB03slab.1p5s.f in my Srcf dir.
+c ABsub: add 4 and 5 s coeffs (extrapolations) Feb 27
 c  jan31 2014: include 1.5s for the three "GailTable" tables
 c  Jan 24, 2014: getAB06: Add coeffs for 1.5s jan 24 2014 SH. See AB06.1p5s.f for the details.
 c Jan 24, 2014: getCampCEUS: include interpo. coeffs for 1.5s spectral period see "campCEUS.1p5s.f" for details
@@ -131,7 +137,7 @@ c   that the calculation of rjbmean was for a M(SRL) or M(A) relation.
 c   
 c Dec 18 2008: vulnerability in output file names for the .m and .p files is finally repaired.
 c Nov 20 2008: add Zhao et al. atten. for inslab and interface source. Need variety of models at LP Sa, but
-c              AB03 is only good to 3 s. Zhaos inslab goes to 5 s Sa.
+c              AB03 is only good to 3 s. Zhao's inslab goes to 5 s Sa.
 c Nov 19 2008: increase set of periods available with Geomatrix inslab attn.
 c mod Oct 22 2008. M (saturation) limit at 8.0 (AB03, BSSA v93 #4, p 1709)
 c August 2008: Mmax may be treated as a distribution for the cases iflt=3 and iflt=4.
@@ -459,7 +465,7 @@ c e0_ceus not saving a depth of rupture dim, not sens. to this. last dim is ip (
       real, dimension(40,nzonex):: mwmax,wtmw,wt_zone
        common/cb13p/Percb13
       integer m_ind
-      real, dimension(13):: a11fr,freq
+      real, dimension(14):: a11fr,freq
 c wtmj_cra = wt applied to rate when using Johnston mb to M for src in stable craton
 c wtmj_ext = wt applied to M when using Johnston mb to M for src in extended margin
 c wtmab_cra, wtmab_ext = ditto for Atkinson-Boore mb to M
@@ -515,7 +521,7 @@ c The pre-NGA atten. models are only called if oktogo = .true.
       character*80 namein,nameout,name,name3,name4,namea
       character cmnts2skip(200)*80
       character*12 pithy(3),adum
-      dimension xlen2(50),perabs(10),perabu(10)
+      dimension xlen2(50),perabs(12),perabu(10)
       integer, dimension(8):: ia08
 c 7/22/2010: promote hazard curve to double precision for better accumulation of small contributors
       real*8, dimension (1000,20,8,3) :: prob
@@ -543,8 +549,8 @@ c      real, dimension (16,20,10,npmx,5) :: prob5
       real, dimension (24) :: percy13        !5/2013
       real, dimension(npmx) :: perx,period,safix
       real, dimension(npmx+2) :: perx_pl
-      real, dimension(12):: per_camp,pdSilva        !add 1.5s jan 24 2014.
-      real, dimension(11):: perzhao
+      real, dimension(12):: perCampCEUS,per_camp,pdSilva        !add 1.5s jan 24 2014.
+      real, dimension(22):: perzhao
 c some arrays for BSSA NGAW model 
       real, dimension(5) :: dumb
 c safix is for fixed-SA or fixed PGA runs, usually with deaggregation.
@@ -572,7 +578,7 @@ c peras13 22 periods plus a -1 at the tail.
         perId12  = (/0.01,0.02,0.03,0.04,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,0.5,
      + 0.75,1.,1.5,2.,3.,4.,5.,7.5,10./)
 c Idriss 2012 GMPE periods in perId12
-       perabs = (/0.,0.2,1.0,0.1,0.3,0.5,0.75,1.5,2.0,3./)
+       perabs = (/0.,0.2,1.0,0.1,0.3,0.5,0.75,1.5,2.0,3.,4.,5./)
        perabu = (/0.,0.2,1.0,0.1,0.3,0.4,0.5,0.75,2.0,3./)
       perx_pl= (/0.0,0.2,1.0,0.1,0.3,0.5,1.5,2.0,0.04,0.4/)        !add 1.5s jan 24 2014.
 c pergeo Geomatrix inslab periods available Nov 19 2008.
@@ -634,7 +640,7 @@ c Tavakoli periods 0 = pga. added 0.4 s june 30 2008 (interpolated)
      1 0.3,0.40,0.5,
      1       7.50e-01,1.00e+00,1.50e+00,2.00e+00,3.00e+00,4.00e+00/)
 c a11fr frequencies for CEUS 2011 GMPES:
-       a11fr =(/0.20,    0.33, 0.50, 1.00, 2.00, 3.33, 5.00,10.00,20.,33.00,50.00,99.00,89.00/)
+       a11fr =(/0.20,    0.333, 0.50, 0.6667, 1.00, 2.00, 3.33, 5.00,10.00,20.,33.00,50.00,99.00,89.00/)
 c available periods for CY as of jan 2009. pga=0.0, pgv is -1.0 here
        prd=(/0.0,0.020,0.022,0.025,0.029,0.030,0.032,0.035,0.036,0.040,0.042,0.044,0.045,0.046,
      10.048,0.050,0.055,0.060,0.065,0.067,0.070,0.075,0.080,0.085,0.090,0.095,0.100,0.110,0.120,
@@ -651,12 +657,14 @@ c available periods for CB as of Mar 2008. pga=0.0 here. Displacement per is -2
      +0.25,0.30,0.35,0.40,0.45,0.50,0.60,0.70,0.80,0.90,1.00,1.10,1.20,
      +1.30,1.50,1.70,2.00,2.20,2.50,3.00,3.50,4.00,4.50,5.00/)
 c perabs: period set for ab slab-zone (deep) eqs.
-c ab06 frequencies, these dont seem to be extremely close to 1/T
+c ab06 frequencies, these don't seem to be extremely close to 1/T
       abfrq = (/2.00e-01,2.50e-01,3.20e-01,4.00e-01,5.00e-01,6.30e-01,0.667,8.00e-01,1.00e+00,
      1       1.26e+00,1.59e+00,2.00e+00,2.52e+00,3.17e+00,3.99e+00,5.03e+00,6.33e+00,
      1       7.97e+00,1.00e+01,1.26e+01,1.59e+01,2.00e+01,2.52e+01,3.18e+01,4.00e+01,
      1       0.00e+00,-1.00e+00/)
-      perzhao = (/0.0,0.1,0.2,0.3,0.5,1.0,1.5,2.,3.,4.,5./)
+c modified perzhao to have 22
+        PerZhao = (/0.01,0.05,0.10,0.15,0.20,0.25,0.30,0.40,
+     &     0.50,0.60,0.70,0.75,0.80,0.90,1.0,1.25,1.5,2.0,2.5,3.0,4.0,5.0/)
 c use 2008 USGS logic tree for Mmax for the wts for mbLg from 5.05 to 7.45. We may
 c read in this distribution but this is safe for envisioned purpose: web site server for
 c site-specific deagg.
@@ -746,7 +754,7 @@ c adum could be sa(g) or pgv (cm/s). need flexi format
       endif
       call date_and_time(date,time,zone,ival)
       write (6,61)date,time,zone,namein
-61      format('hazgridXnga13l (01/23/2014) log file. Pgm run on ',a,' at ',a,1x,a,/,
+61      format('hazgridXnga13l (03/14/2014) log file. Pgm run on ',a,' at ',a,1x,a,/,
      + '# Control file:',a)
         call getarg(0,progname)
         ind=index(progname,' ')
@@ -1519,7 +1527,8 @@ c
         print *,'period requested ',per
         stop' CEUS11 models close encounter with an unknown period'
         endif
-        dowhile(fr.gt.a11fr(kf)+.01)
+        dowhile(abs(fr-a11fr(kf)).gt.0.002)
+c        print *,fr,a11fr(kf)
         kf=kf+1
         if(kf.gt.14)stop' period not in A06,A08,P11 set'
         enddo
@@ -1533,7 +1542,7 @@ c
       okabs=.false.
       dowhile(abs(per-perabs(ka)).gt.0.002)
       ka=ka+1
-        if(ka.gt.10)stop'ABsub slab called with unavailble period '
+        if(ka.gt.12)stop'ABsub slab called with unavailble period '
         enddo
         okabs=.true.
         slab=.true.
@@ -1571,15 +1580,19 @@ c may also need the companion BA period index as of july 2009
 c add spectral periods for Geomatrix end of local mods. Nov 19 2008.
       elseif(ipiaa.eq.27.or.ipiaa.eq.28)then       
 c add 13 spectral periods for Zhao et al. Begin local mods. Nov 20 2008.
-       ka=1
+        if(per.le.0.011)then
+        ka=1
+        else
+       ka=2
        okzhao=.false.
       dowhile(abs(per-perzhao(ka)).gt.0.002)
       ka=ka+1
-        if(ka.gt.13)stop'Zhao-inslab called with unavailble period '
+        if(ka.gt.22)stop'Zhao-inslab called with unavailble period '
         enddo
+        endif        !PGA or SA>0.02s period?
         okzhao=.true.
         jzhao=ka
-c add 13 spectral periods for Zhao et al. end of local mods. Nov 20 2008.
+c 22 spectral periods for Zhao et al. end of local mods. Feb 20 2014.
       elseif(ipiaa.eq.2.and.vs30.ge.1500.)then
       ipia=-2
       iatten(ip,ia)=-2
@@ -1881,7 +1894,7 @@ c use soil coeffs as starting case if vs30<520 m/s. Modify siteamp from there.
       slab=.true.
 c the 1 below is a slab flag: inslab source if this is 1.
       call zhao(ip,jzhao,1,ia,ndist,di,nmag,magmin,dmag)
-       write(6,*)'Zhao intraslab relation for rock, seism. at ',dtor(1:ntor),' km'
+       write(6,*)'Zhao intraslab relation for rock/soil, seism. at ',dtor(1:ntor),' km'
       elseif(ipia.eq.28.and.okzhao)then
       slab=.false.
 c the 0 below is a subduction flag: 
@@ -3109,7 +3122,7 @@ c not ready for nga code. out of date relation in 2008. Use getCamp2003
 cccccccccccccccccccccc
       subroutine getAB95(ip,iq,ia,ndist,di,nmag,
      &   magmin,dmag,sigmanf,distnf)
-c adapt to nga style. new problem: gettab. This routine doesnt seem to be used.
+c adapt to nga style. new problem: gettab. This routine doesn't seem to be used.
 c I dont ever see iatten 5 in CEUS input files for 2002. always getFEA. Check? SH
 c not ready. july 28 2006. Using iatten 5 for AB95 with table lookup.
       Write(6,*)'hazgridXnga13l: getAB95 should not be called. No array 
@@ -3820,8 +3833,8 @@ ccccccccccccccc
       subroutine getABsub(ip,iq,ir,slab,ia,ndist,di,nmag,
      &     magmin,dmag,vs30)
 c +++ Atkinson and Boore subduction zone intraslab.
-c added 1.5s coeffs Jan 24 2014 SH. see AB03slab.1p5s.f in my Srcf dir.
-c        modified for gfortran, f95 Oct 2006.
+c added 1.5s 4 & 5 coeffs Jan 24 2014 SH. see AB03slab.1p5s.f in my Srcf dir.
+c        modified for gfortran, f95 Oct 2006. 5s: See ab03slab.5s.f
 c +++ Add interface source modeling July 14 2010.
 c mod Oct 22 2008. M upper limit at 8.0 (AB03, BSSA v93 #4, p 1709)
 c this subr. was slightly modified apr 10 2007, for NEHRP C- and D- site classes
@@ -3871,7 +3884,7 @@ c last dim of e0_sub is ia model,
       logical slab, sdi
       dimension pr(310,38,20,8,3,3),xlev(20,8),nlev(8),icode(8,10),
      + wt(8,10,2),wtdist(8,10)
-      real, dimension(np+1) :: c1,c1w,c2,c3,c4,c5,c6,c7,sig,perx
+      real, dimension(12) :: c1,c1w,c2,c3,c4,c5,c6,c7,sig,perx
       real, dimension(np+1) :: s1,s2,s3,s4,s5,s6,s7,pcor,ssig,peri
       real, dimension(np+1) :: s1g,s2g,s3g,s4g,s5g,s6g,s7g
       real period
@@ -3879,18 +3892,18 @@ c array constructors oct 2006.  Add 3s SA Feb 2008. Add 0.75s dec 08
 c add c7 may 13 2009. C7 corresponds to E soil.
       if(slab)then
       r2=rc2; r3=rc3; r4=rc4
-      perx= (/0.,0.2,1.0,0.1,0.3,0.5,0.75,1.5,2.0,3./)      !-1 shall be reserved for pgv
-      c1= (/ -0.25,0.40,-0.98,0.160,0.195,-0.172,-0.67648,-1.7229023,-2.250,-3.64/)
+      perx= (/0.,0.2,1.0,0.1,0.3,0.5,0.75,1.5,2.0,3.,4.,5./)      !-1 shall be reserved for pgv
+      c1= (/ -0.25,0.40,-0.98,0.160,0.195,-0.172,-0.67648,-1.7229023,-2.250,-3.64,-4.626221,-5.391193/)
       c1w=(/-0.04713,0.51589,-1.02133,0.43928,0.26067,-0.16568,-0.69924,-1.8233193,-2.39234,
-     + -3.70012/)      ! global c1 coeffs.
-      c2= (/0.6909,0.69186,0.8789,0.66675,0.73228,0.7904,0.84559,0.947633,0.99640,1.1169/)
-       c3= (/0.01130,0.00572,0.00130,0.0108,0.00372,0.00166,0.0014349,2.6688121E-3,0.00364,.00615/)
+     + -3.70012,-4.628005,-5.3477282/)      ! global c1 coeffs.
+      c2= (/0.6909,0.69186,0.8789,0.66675,0.73228,0.7904,0.84559,0.947633,0.99640,1.1169,1.2023962,1.268712/)
+       c3= (/0.01130,0.00572,0.00130,0.0108,0.00372,0.00166,0.0014349,2.6688121E-3,0.00364,.00615,7.930873E-3,9.3122255E-3/)
        c4= (/-0.00202,-0.00192,-0.00173,-0.00219,-0.00185,-0.00177,-.0017457,-1.4082706E-3,-0.00118,
-     + -0.00045/)
-      c5= (/0.19,0.15,0.10,.15,0.1383,0.125,.10941,0.1,0.100 ,0.1/)
-       c6= (/0.24,0.27,0.30,0.23,0.3285,0.353,0.322,0.2707519,0.25,0.25/)
-       c7= (/0.29,0.25,0.55,0.20,0.3261,0.4214,0.4966,0.46225562,0.40,0.36/)        
-      sig= (/0.27,0.28,0.29,.28,0.280,0.282,0.2869,0.29584962,0.300,0.30/)      !BASE 10 SIGMA
+     + -0.00045,-0.00045,-0.00045/)        !keep the anelastic term trending..
+      c5= (/0.19,0.15,0.10,.15,0.1383,0.125,.10941,0.1,0.100 ,0.10,0.1,0.1/)
+       c6= (/0.24,0.27,0.30,0.23,0.3285,0.353,0.322,0.2707519,0.25,0.25,0.25,0.25/)
+       c7= (/0.29,0.25,0.55,0.20,0.3261,0.4214,0.4966,0.46225562,0.40,0.36,0.36,0.36/)        
+      sig= (/0.27,0.28,0.29,.28,0.280,0.282,0.2869,0.29584962,0.300,0.30,0.3,0.3/)      !BASE 10 SIGMA
       period = perx(iq)
           sigmasq= sig(iq)*sqrt2*aln10
       else      !subduction
@@ -3900,7 +3913,7 @@ c Definitions: s1g global, s1 Cascadia.
 c 10/17/2008: Cubic Splines were used for several 3.33 and 2 hz Global-estimation coefs. 
 c Interested in the details? See intAB03.table.f for src code. uses Numerical recipes. 
 c s1g has been recomputed for 2.0, 2.5, 3.33 and 5hz. Ditto s2g ,...
-c Cannot Add 4 and 5 s. Not available. Nov 19 2008.
+c Extrapolate if you want to Add 4 and 5 s. Not available. Nov 19 2008.
       peri= (/0.,0.2,1.0,0.1,0.3,0.4,0.5,0.75,2.0,3.0/)      
        r2=rs2; r3=rs3; r4=rs4
       s1g=(/2.991,2.5711536,2.1442,2.7789,2.6168785,2.6175463,2.536019,2.288355,2.1907,2.301
@@ -7117,7 +7130,7 @@ c     az= az/coef
 c compute median and sigmaf for the Zhao model with Somerville correction
 c added to gridded Nov 20 2008. SHarmsen. Use for inslab at long period?
 c Added sdi option. Assumes coeffs. are same as the ones for shallow crustal.
-c Meera R is checking on this Mar 2013.
+c Include full set of periods (21 in Zhao article + interpolated 0.75s), SH Feb 20 2014.
 c
 c      input:  ndist, di = source distances for filling pr() array.
 c              dist = distance to slab or interface (r_cd, km)
@@ -7128,12 +7141,12 @@ c              dtor=hslab= depth (km) of slab or interface events (50 km for Pac
 c              Vs30 enters in geotec common. Vs30 is a scalar applied uniformly to all sites.
 c              magmin, dmag = minimum M and delta-M for filling pr() array.
 c       Calculated:
-c              ivs = Vs30 indicator, 1 for B or vs30 > 600 m/s, 2 for C, 3 for D
+c              ivs = Vs30 indicator, 1 for BC or 850> vs30 > 600 m/s, 2 for C, 3 for D
 c              pr() = probability of exceedance for range of R and M at specified
 c              gm levels (g) for site class that best corresponds to Vs30 
 c                if sdi = .true. gm is in cm and exceedance is of spec. displ. cm
 c
-      parameter (nper=11,hi=20.,sqrt2=1.41421356,gfac=6.88755)
+      parameter (nper=22,hi=20.,sqrt2=1.41421356,gfac=6.88755)
       logical deagg, sdi
       common/sdi/sdi,dy_sdi,fac_sde
       real, dimension(8) :: fac_sde
@@ -7145,54 +7158,127 @@ c
       common/prob/p(25005),plim,dp2     !table of complementary normal probab.
       real pr(310,38,20,8,3,3),xlev(20,8),wt(8,10,2),wtdist(8,10) 
       integer nlev(8),icode(8,10)
-      real, dimension (nper):: a,b,c,d,e,si,c1,c2,c3,qi,wi,
-     + ps,qs,ws,sr,ss,ssl,sig,taui,taus,per
+      real, dimension (nper):: a,b,c,d,e,si,ch,c1,c2,c3,qi,wi,
+     + ps,qs,qc,wc,ws,sr,ss,ssl,sig,tau, tauC,tauI,taus,per
       real magmin,afac, dist0, dist, site, sigma, sigmasq, sigmaf
       real dy_sdi, rhat
 c pst,qst, wst in eqn (5) of Zhao et al. (2006)
       real pst,qst,st,sslt,wst
-      per = (/0.0,0.1,0.2,0.3,0.5,1.0,1.5,2.,3.,4.,5./)
-      a=(/1.101,1.118,1.147,1.163,1.25,1.479,1.621,1.694,1.759,1.826,1.825/)
-      b=(/-.00564,-.00787,-0.00659,-0.0052,-0.00338,-.0022,-.00224,-.00201,-.00147,-.00195,-.00237/)
-      c=(/0.0055,.009,.012,.015,.006,.002,.002,.0025,.0032,.004,.005/)
-      d=(/1.08,1.083,1.014,0.934,1.008,1.115,1.091,1.055,1.025,1.044,1.065/)
-      e=(/.01412,.01423,.01462,.01458,.01114,.01005,.00928,.00833,.00644,.00590,.00510/)
-      sr=(/.251,.240,.26,.259,.247,.211,.248,.263,.307,.353,.248/)
-      si=(/0.,0.,0.,0.,-.053,-0.239,-.306,-.321,-.331,-.390,-.498/)
-      ss=(/2.607,2.156,1.901,2.181,2.629,2.233,1.589,0.966,1.037,0.561,0.225/)
+c coefficients from Zhao source code not from BSSA tables: more precision in his software.        
+c added 0.75s nov 2008. 0.75s (1.33 Hz) is an in-demand T.
+        per = (/0.0,0.05,0.10,0.15,0.20,0.25,0.30,0.40,
+     &     0.50,0.60,0.70,0.75,0.80,0.90,1.0,1.25,1.5,2.0,2.5,3.0,4.0,5.0/)
+        a=(/1.101,1.076,1.118,1.134,1.147,1.149,1.163,
+     &       1.200,1.250,1.293,1.336,1.360956,1.386,1.433,1.479,1.551,1.621,
+     &       1.694,1.748,1.759,1.826,1.825/)
+        b=(/-0.00564,-0.00671,-0.00787,-0.00722,-0.00659,
+     & -0.00590,-0.00520,-0.00422,-0.00338,-0.00282,-0.00258,-2.50E-3,-0.00242,
+     & -0.00232,-0.00220,-0.00207,-0.00224,-0.00201,-0.00187,-0.00147,
+     & -0.00195,-0.00237/)
+        c=(/0.0055,0.0075,0.0090,0.0100,0.0120,0.0140,
+     &     0.0150,0.0060,0.0060,0.0030,0.0025,.0023,0.0022,0.0020,0.0020,
+     &     0.0020,0.0020,0.0025,0.0028,0.0032,0.0040,0.0050/)
+        d=(/1.07967,1.05984,1.08274,1.05292,1.01360,
+     &   0.96638,0.93427,0.95880,1.00779,1.08773,1.08384,1.0826032,1.08849,
+     &   1.10920,1.11474,1.08295,1.09117,1.05492,1.05191,1.02452,
+     &   1.04356,1.06518/)
+        e=(/0.01412,0.01463,0.01423,0.01509,0.01462,
+     &   0.01459,0.01458,0.01257,0.01114,0.01019,0.00979,9.560258E-3,0.00944,
+     &   0.00972,0.01005,0.01003,0.00928,0.00833,0.00776,0.00644,
+     &   0.00590,0.00510/)
+        sr=(/0.2509,0.2513,0.2403,0.2506,0.2601,0.2690,
+     &      0.2590,0.2479,0.2470,0.2326,0.2200,.225,0.2321,0.2196,0.2107,
+     &      0.2510,0.2483,0.2631,0.2620,0.3066,0.3529,0.2485/)
+        si=(/0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,
+     &       0.0000,-0.0412,-0.0528,-0.1034,-0.1460,-0.15377375,-0.1638,-0.2062,
+     &      -0.2393,-0.2557,-0.3065,-0.3214,-0.3366,-0.3306,-0.3898,
+     &      -0.4978/)
+c ss coeffs corrected 12/07/2009. SH.
+        ss=(/2.607,2.764,2.156,2.161,1.901,1.814,2.181,2.432,2.629,
+     + 2.702,2.654,2.55,2.48,2.332,2.233,2.029,1.589,0.966,0.789,1.037,0.561,0.225/)
 c sigt = Table 5 total sigma, from intra- and inter-event sigmas sqrt(SS) without the mag-cor term
-c      sigt = (/0.723,0.849,0.811,0.77,0.76,0.775,0.787,0.776,0.751,0.745/)
-      sig=(/0.604,0.694,0.692,0.67,0.653,0.657,0.664,0.669,0.667,0.647,0.643/)
-c interevnt sig from table 5, intraevent tau with the mag-cor term from table 6. see comment p 910,
-c col II, Zhao et al. Somerville says to use the mag-cor term, thus lower sigma_total.      
-      taui=(/0.308,0.403,0.328,0.280,0.277,0.328,0.352,0.36,0.338,0.307,0.272/)
-      taus=(/0.321,0.420,0.324,0.284,0.272,0.286,0.282,0.30,0.274,0.281,0.296/)
-c c1 = rock site term, for NEHRP A and B, vs > 600 m/s. from Zhao table 2 p 901 bssa june 2006
-c c2 = stiff soil term for NEHRP C
-c c3 = soft soil term for NEHRP D
-      c1=(/1.111,2.061,1.669,1.172,.071,-2.152,-3.548,-4.41,-5.431,-6.181,-6.347/)
-      c2=(/1.344,2.135,2.085,1.683,0.515,-1.776,-3.169,-4.039,-5.089,-5.882,-6.051/)
-      c3=(/1.355,2.031,2.001,1.808,0.934,-1.523,-2.979,-3.871,-4.893,-5.698,-5.873/)
+c        sigt = (/0.723,0.849,0.811,0.77,0.76,0.775,0.779,0.787,0.776,0.751,0.745/)
+        sig=(/0.6039,0.6399,0.6936,0.7017,0.6917,
+     &  0.6823,0.6696,0.6589,0.6530,0.6527,0.6516,0.6483102,0.6467,0.6525,
+     &  0.6570,0.6601,0.6640,0.6694,0.6706,0.6671,0.6468,0.6431/)
+c interevnt sig tau from table 5,  Somerville says to use the mag-cor term, but not use the lower sigma_total.        
+        tau=(/0.3976,0.4437,0.4903,0.4603,0.4233,0.3908,
+     &       0.3790,0.3897,0.3890,0.4014,0.4079,0.41473114,0.4183,0.4106,0.4101,
+     &       0.4021,0.4076,0.4138,0.4108,0.3961,0.3821,0.3766/)
+c intraevent tauI & tauS with the mag-cor term from table 6. see comment p 910,
+c col II, Zhao et al.
+        tauC=(/0.303,0.326,0.342,0.331,0.312,0.298,0.3,0.346,0.338,0.349,
+     + 0.351,0.353,0.356,0.348,0.338,0.313,0.306,0.283,0.287,0.278,0.273,0.275/)
+        tauI=(/0.308,0.343,0.403,0.367,0.328,0.289,0.280,
+     &    0.271,0.277,0.296,0.313,0.32331293,0.329,0.324,0.328,0.339,0.352,0.360,
+     &    0.356,0.338,0.307,0.272/)
+        tauS=(/0.321,0.378,0.420,0.372,0.324,0.294,0.284,
+     &    0.278,0.272,0.285,0.290,0.29615661,0.299,0.289,0.286,0.277,0.282,0.300,
+     &    0.292,0.274,0.281,0.296/)
+c ch = relatively hard rock site term NEHRP B+ to A- Added Feb 19 2014.
+c c1 = rock site term, for NEHRP BC and B, vs > 600 m/s. SCI from Zhao table 2 p 901 bssa june 2006
+c c2 = stiff soil term for NEHRP C (SCII)
+c c3 = soft soil term for NEHRP D  (SCIII)
+c
+        ch=(/0.293,0.939,1.499,1.462,1.280,1.121,0.852,0.365,-0.207,-0.705,-1.144,-1.4,
+     &    -1.609,-2.023,-2.451,-3.243,-3.888,-4.783,-5.444,-5.839,-6.598,-6.752/)
+        c1=(/1.1111,1.6845,2.0609,1.9165,1.6688,1.4683,
+     &         1.1720,0.6548,0.0713,-0.4288,-0.8656,-1.099344,-1.3250,-1.7322,
+     &      -2.1522,-2.9226,-3.5476,-4.4102,-5.0492,-5.4307,-6.1813,
+     &      -6.3471/)
+        c2=(/1.3440,1.7930,2.1346,2.1680,2.0854,1.9416,
+     &   1.6829,1.1271,0.5149,-0.0027,-0.4493,-0.69264763,-0.9284,-1.3490,-1.7757,
+     &  -2.5422,-3.1689,-4.0387,-4.6979,-5.0890,-5.8821,-6.0512/)
+        c3=(/1.3548,1.7474,2.0311,2.0518,2.0007,1.9407,
+     &   1.8083,1.4825,0.9339,0.3936,-0.1109,-0.37189444,-0.6200,-1.0665,-1.5228,
+     &  -2.3272,-2.9789,-3.8714,-4.4963,-4.8932,-5.6981,-5.8733/)
 c slab event term not used for subduction
-      ssl=(/-.528,-.420,-.372,-.45,-.554,-.509,-.379,-0.248,-.263,-.169,-.120/)
-c qi and wi are for the magnitude square term correction..
-c qs, ws, and taus for slab event magnitude square term correction.
-      ps=(/0.1392,0.1690,0.1631,0.1544,0.1381,0.106,0.0821,0.0628,0.0322,0.0083,-.0117/)
-      qi =(/0.,0.,-0.0256,-0.0423,-0.0632,-0.0917,-.1083,-.1202,-.1368,-.1486,-.1578/)
-      qs =(/0.1584,0.2057,0.1856,0.1573,0.1078,0.0314,-.0062,-.0235,-.0261,-.0065,0.0246/)
-      wi =(/0.,0.,0.0352,0.0445,0.0562,0.0721,0.0814,0.088,0.0972,0.1038,0.109/)
-      ws =(/-.0529,-.0877,0.0644,0.0395,-.0008,0.0498,0.0674,0.0692,0.0496,0.0150,-0.0268/)
+        ssl=(/-0.5284,-0.5507,-0.4201,-0.4315,-0.3715,
+     &     -0.3601,-0.4505,-0.5061,-0.5538,-0.5746,-0.5721,-0.5563261,-0.5397,
+     &     -0.5216,-0.5094,-0.4692,-0.3787,-0.2484,-0.2215,-0.2625,
+     &     -0.1689,-0.1201/)
+       qc=(/0.,0.,0.,0.,0.,0.,0.,0.,-0.0126,-0.0329,-0.0501,-0.057,
+     + -0.065,-0.0781,-0.0899,-0.1148,-0.1351,-0.1672,-0.1921,-0.2124,-0.2445,
+     + -0.2694/)
+       wc=(/0.,0.,0.,0.,0.,0.,0.,0.,0.0116,0.0202,0.0274,0.03,0.0336,
+     + 0.0391,0.0441, 0.0545,0.063,0.0764,0.0869,0.0954,0.1088,0.1193/)
+c qc and wc are for ccrustal
+c qi and wi are for the magnitude square term correction
+        qi =(/0.0,0.0,0.0,-0.0138,-0.0256,-0.0348,-0.0423,
+     &        -0.0541,-0.0632,-0.0707,-0.0771,-0.07988431,-0.0825,-0.0874,-0.0917,
+     &        -0.1009,-0.1083,-0.1202,-0.1293,-0.1368,-0.1486,-0.1578/)
+        wi =(/0.0,0.0,0.0,0.0286,0.0352,0.0403,0.0445,
+     &    0.0511,0.0562,0.0604,0.0639,0.065498955,0.0670,0.0697,0.0721,0.0772,
+     &    0.0814,0.0880,0.0931,0.0972,0.1038,0.1090/)
+c Ps, Qs, and Ws for deep intraplate eqs; see last several columns of Table 6
+        ps= (/0.1392,0.1636,0.1690,0.1669,0.1631,0.1588,
+     &      0.1544,0.1460,0.1381,0.1307,0.1239,0.12070625,0.1176,0.1116,0.1060,
+     &      0.0933,0.0821,0.0628,0.0465,0.0322,0.0083,-0.0117/)
+        qs= (/0.1584,0.1932,0.2057,0.1984,0.1856,0.1714,
+     &      0.1573,0.1309,0.1078,0.0878,0.0705,0.06278851,0.0556,0.0426,0.0314,
+     &      0.0093,-0.0062,-0.0235,-0.0287,-0.0261,-0.0065,0.0246/)
+        ws= (/-0.0529,-0.0841,-0.0877,-0.0773,-0.0644,
+     &       -0.0515,-0.0395,-0.0183,-0.0008,0.0136,0.0254,0.030538963,0.0352,
+     &        0.0432,0.0498,0.0612,0.0674,0.0692,0.0622,0.0496,0.0150,
+     &       -0.0268/)
 c              ivs = Vs30 indicator, 1 for C+ and B or vs30 > 600 m/s, 2 for D+ and C, 3 for D
+c new ivs=0 for NEHRP B+ rock; ivs=-1 for B- ROCK. New Feb 20 2014. SH.
+c linear siteamp.
       if(V_S30 .lt. 300.)then
       ivs=3
-c linear siteamp.
         site=c3(iq)
       elseif(V_S30.lt.600.)then
       ivs=2
         site=c2(iq)
-      else
+      elseif(V_S30.lt.850.)then
       ivs=1
         site=c1(iq)
+      elseif(V_S30.lt.1020.)then
+       ivs=-1
+        site=0.5*(c1(iq)+ch(iq))
+        else
+        ivs=0
+        site=ch(iq)        !B+ rock more than 1020 m/s Vs30        
       endif
       afac=0.0
       if(islab.lt.0)then
@@ -7779,7 +7865,7 @@ c e0_ceus not saving a depth of rupture dim, not sens. to this
       integer nlev(8),icode(8,10)
        character*32 name
            clamp = (/3.,6.,0.,6.,6.,6.,0.,6.,6./)
-        name ='GR/P11A_Rcd.dat'
+        name ='GR/P11A_Rcd.rev'
         name=trim(name)
              open(3,file=name,status='old',err=202)
         call GailTable(3)
@@ -7900,13 +7986,13 @@ c      ka = 1,2, or 3 depending on which table to use AB06 AB08 or P11
 c     Gets ground motion value (ln PSA) from table
       common/gail1/xmag(20,3), gma(20,30,20,3), rlog(30,3), f(20,3), itype(3)
       common/gail2/nf(3), nd(3), nm(3)
-      common/gail3/freq(13)
+      common/gail3/freq(14)
       real sfac,Vs30,r,rjb,amag
-      real, dimension(13) :: bcfac
+      real, dimension(14) :: bcfac
       real, dimension(20) :: avg
       parameter (gfac=6.8875526,sfac=2.3025851)        !to convert to base e
-c frequencies: 0.2, 0.33, 0.5, 1.0, 2.0, 3.33, 5., 10., 20., 33.0, 50., PGA, PGV
-            bcfac = (/0.06, 0.08,0.09, 0.11, 0.14, 0.14, 0.12, 0.03, -0.2, -.045, -.045, -.045,0.09/)
+c frequencies: 0.2, 0.33, 0.5, 0.667, 1.0, 2.0, 3.33, 5., 10., 20., 33.0, 50., PGA, PGV
+            bcfac = (/0.06, 0.08,0.09, 0.10,0.11, 0.14, 0.14, 0.12, 0.03, -0.2, -.045, -.045, -.045,0.09/)
 c bcfac for pga can be a function of rjb= -0.3+.15 log(rjb) (Repi in Gail's notes)
 c     
 c     Use interpolation to get amean for given freq(jfreq), amag, R (hazard looping values).
@@ -7991,16 +8077,18 @@ c      endif
 c Input magnitude and period index, 
 c Output sigma_lnY
 c magnitude dependent sigma_lnY for the Pezeshk and Zandieh (BSSA,2011)
-c GMPE. coeffs c12, c13,c14 from table 2 of their article
+c GMPE. coeffs c12, c13,c14 from table 2 of their article. Add 1.5s Mar 14 2014.
+c this 1.5s period is in demand these days. SHarmsen. The period set corresponds
+c to the a11fr frequency set in main.
        common/ceus_sig/lceus_sigma,ceus_sigma
        logical lceus_sigma
-      real, dimension(13) :: per, c12,c13,c14
-      per= (/5.,3.,2.,1.,0.5,0.3,0.2,0.1,0.05,0.03,0.02,0.00,0.01/)        !s
-      c12= (/-6.9e-3,-8.509e-3,-9.443e-3,-1.18e-2,-1.556e-2,-1.837e-2,-2.046e-2,-2.259e-2,
+      real, dimension(14) :: per, c12,c13,c14
+      per= (/5.,3.,2.,1.5,1.,0.5,0.3,0.2,0.1,0.05,0.03,0.02,0.00,0.01/)        !s
+      c12= (/-6.9e-3,-8.509e-3,-9.443e-3,-0.01042124,-1.18e-2,-1.556e-2,-1.837e-2,-2.046e-2,-2.259e-2,
      & -2.244e-2,-2.094e-2,-1.974e-2,-2.105e-2,-1.974e-2/)
-      c13= (/3.577e-1,3.54e-1,3.56e-1,3.588e-1,3.722e-1,3.867e-1,3.979e-1,4.102e-1,3.990e-1,
+      c13= (/3.577e-1,3.54e-1,3.56e-1,0.3571621,3.588e-1,3.722e-1,3.867e-1,3.979e-1,4.102e-1,3.990e-1,
      & 3.817e-1,3.691e-1,3.778e-1,3.688e-1/)
-      c14= (/3.58e-1,3.43e-1,3.387e-1,3.249e-1,3.119e-1,3.068e-1,3.033e-1,3.007e-1,2.905e-1,
+      c14= (/3.58e-1,3.43e-1,3.387e-1,0.33297246,3.249e-1,3.119e-1,3.068e-1,3.033e-1,3.007e-1,2.905e-1,
      & 2.838e-1,2.796e-1,2.791e-1,2.792e-1/)
         if(lceus_sigma)then
         sigma=ceus_sigma      !for special studies. Use a low sigma for all GMPE periods, magnitudes, etc.

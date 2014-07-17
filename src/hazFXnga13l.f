@@ -1,41 +1,44 @@
-c--- program  hazFXnga13l.f; 01/24/2014; Use  with NGA relations, or others.
+c--- program  hazFXnga13l.f; 03/14/2014; Use  with NGA relations, or others.
 c of the below optimistic comments, only getToro was finished jan 24.
+c Mar 14, 2014: A08', AB06', and Pez11 all have added 1.5-s table entries. Tables
+c with additional 1.5s end in .rev instead of .dat
+c jan 31, 2014: getSomer: add 1.5s coeffs. (CEUS relation used for finite src)
 c  Jan 24, 2014: getAB06: Add coeffs for 1.5s jan 24 2014 SH. See AB06.1p5s.f for the details.
 c Jan 24, 2014: getCampCEUS: include interpo. coeffs for 1.5s spectral period see "campCEUS.1p5s.f" for details
 c Jan 24, 2014: getToro, getSilva: include interpo. coeffs for 1.5s spectral period see "silva.1p5s.f" for details
 c 1/22/2014: correct aleatory sigma in Idriss NGA-W(2).
 c 01/03/2014: Use same median clamps in amean11 as are used in other CEUS GMMs. PPowers
-c 		noticed some discrepencies in earlier versions of this code.
+c                 noticed some discrepencies in earlier versions of this code.
 c 12/16/2013: Update ASK2013 a1 and vlin for some short periods. from Sanaz R email
 c OCT 1, 2013: use Mcap of 7.5 on s.d. computation in Idriss2013.
-c 9/17/2013	In ASK13, Ry0 is always -1. (previously some cases Ry0=dmin(5)=-1)
-c 8/28/2013	CB13: "Save" phi_lny and always calculate phi_lny(22) on first time thru
-c 8/27/2013	CB13: Update c0 vector for PGA and several short-period SA Bozorgnia email
-c 8/27/2013	changed z1km to z1_ref in call to ASK
-c 8/21/2013	CB13: Improve Zhyp further for downdip ruptures.
+c 9/17/2013        In ASK13, Ry0 is always -1. (previously some cases Ry0=dmin(5)=-1)
+c 8/28/2013        CB13: "Save" phi_lny and always calculate phi_lny(22) on first time thru
+c 8/27/2013        CB13: Update c0 vector for PGA and several short-period SA Bozorgnia email
+c 8/27/2013        changed z1km to z1_ref in call to ASK
+c 8/21/2013        CB13: Improve Zhyp further for downdip ruptures.
 c 8/20/2013 Inline CB13 coeffs. Begin standardizing Zhyp in CB13.
 c Correction Aug 15 2013: initialize PI in CB13 subroutine (previously wasnt).
-c		Also, calculate A1100 first time through CB13
-c		
+c                Also, calculate A1100 first time through CB13
+c                
 c 8/13/2013: Use the Rx0 version of ASK13. Set z1_rock = -1 for the hardrock calls of ASK
 c 8/05/2013: Minor repair in vicinity of line 1095 (some compiler subrange errors in prior vers)
 c 8/02/2013: The correlation coeff vector rho was updated in CB13. It is now
-c 	    stored as a data vector rather than being read in.
+c             stored as a data vector rather than being read in.
 c 08/01/2013: ASK13: Use estimated Vs30 setting if index is 36. Use measured Vs30 if index is -36.
 c 08/01/2013: Incorporate CY2013 vers of July 29. Use estimated Vs30 if index is 35.
-c		Use measured Vs30 if index is -35 (new 8/01/2013).
+c                Use measured Vs30 if index is -35 (new 8/01/2013).
 c 07/25/2013: Incorporate ASK_NGA_2013_V11.f which is the July 24 version of A S &Kamai. Uses Ry0 distance.
-c		
+c                
 c
 c July 22, 2013: Using latest BSSA coeffs. clin and Vclin for soil site computations.
-c		These postdate the Eq Spectra coeffs.
+c                These postdate the Eq Spectra coeffs.
 c July 16, 2013: Increase the number of clustered-event groups from 5 to 8. To handle
-c		NMSZ SSC clustered-event models. The M-uncertainty density function
-c		read in in relwt() has to be the same for all eqs in a group. This is a 
-c		fundamental coding limitation. It is not checked internally.
+c                NMSZ SSC clustered-event models. The M-uncertainty density function
+c                read in in relwt() has to be the same for all eqs in a group. This is a 
+c                fundamental coding limitation. It is not checked internally.
 c 6/27/2013: For the Pezeshk 2012 relation, force rkm to be max(1., rkm). Very
 c              close hypocenters will cause Pezeshk GMPE to issue NaN median value.
-c		For the AB06p GMPE(index 26), force rkm to be max(1.8,rkm)
+c                For the AB06p GMPE(index 26), force rkm to be max(1.8,rkm)
 c 6/11/2013: correct z1 units when calling bssa2013drv. Units are m. Use Chiou Z1cal.
 c 5/21/2013: correct  c11 term in gksa13v2
 c 5/20/2013: Add May 18 BSSA. 
@@ -55,7 +58,7 @@ c
 c 4/04/2013: increase iamax, number of atten models, to 10 (per spectral period)
 c
 c 4/04/2013: Reduce basin effect in GK13 if Vs30>600 m/s.  Basin bottom is depth where Vs>1.5 km/s. Cant be 0 for BC
-c	site condition. Update sigma_aleatory model in gk13.
+c        site condition. Update sigma_aleatory model in gk13.
 c 3/29/2013: include GK13 model which replaces GK12. Index 38.
 c 3/19/2013 : increase nfltmx to 1000.
 c 3/14/2013: revise AS08 to use our Rx. 3/15:Use vs30_class=1 (measured). Index 16
@@ -87,7 +90,7 @@ c 3/21/2011: add 3 2011 GMPES for CENA from G. Atkinson email. indexes 25, 26, 2
 c These 2011 CENA GMPEs are set up for hard rock and BC(firm rock) only. Don't use them for the soil site condition.
 c 10/30/2012: use Pezeshk11 sigma from article. not Gail's "stopgap". 
 c 11/01/2012: repair index 
-c      	problem when accessing sigPez11. 
+c              problem when accessing sigPez11. 
 c 10/30/2012: Add Silva single-corner, m-dependent stress, index 28. BC or A
 c FOr variable Vs30 do not use this code. Instead use hazFXnga7vs.f.
 c from hazFXnga7x.f. This version has event-clustering option. If this option is
@@ -401,8 +404,8 @@ c p() has about 4 or 5 decimal place accuracy which is likely good enough.
       real, dimension(800,nfltmx):: x,y
       real prob_s(3,8,ngpmx,20,8)
       real, dimension(8):: dmin,rate_cl,pdSilva2
-      real, dimension(11) :: pdSilva
-      real, dimension(10) :: pdToro	!new jan 24. toro period index.
+      real, dimension(12) :: pdSilva
+      real, dimension(10) :: pdToro        !new jan 24. toro period index.
 c wind used to determine if additional epistemic uncert will be added to
 c or subtracted from log(median) of each relation for that period
       real, dimension (6,6) :: dminr
@@ -468,19 +471,18 @@ c hdvs30 might be used if variable vs30 is read in.
 c clamp can limit the probabilistic motion in CEUS. THis is applied in main
 c in hazFXnga13l (Clamp applied in CEUS only. Set clamp(i) to 0 to skip this constraint).
 c
-      real z1,z1km	!depth to sustained 1 km/s Vs . Z1 is defaulted to a CY2013 function of Vs30.
+      real z1,z1km        !depth to sustained 1 km/s Vs . Z1 is defaulted to a CY2013 function of Vs30.
       real v30(100000)      !possible array of site-specific vs30 new mar 2006.
       real dbasin,vs30,pr,rx,ry,dy_sdi
-	real Q,Q_CA, Q_BR	!some Q estimates for the Graizer&Kalkan model
+        real Q,Q_CA, Q_BR        !some Q estimates for the Graizer&Kalkan model
       real, dimension (5) :: prdsom
-      real, dimension (5) :: pdsomerCEUS
       integer nmag,readn,ix,ix0,ix1,iy,iy0,jsegmin/10/,jsegmax/0/,iReg
       character nameout*78,name*60,adum*80,date*8,time*10,zone*5
       character*12 pithy(3),g_name(8),cmt
 c cluster group names, currently g1,g2,g3,g4,g5. Could be more geographic such as w1, w2, c0, e1, e2.
 c Could be input
       character*3 gname(8)      !grouped cluster file-name extensions, .g1, .g2, ... 
-       common/gail3/freq(13)
+       common/gail3/freq(14)
        common/fix_sigma/fix_sigma,sigma_fx
        common/sdi/sdi,dy_sdi,fac_sde
        common/perris/sigma_down,sigt_fac
@@ -524,13 +526,13 @@ c ipertp = map to tabakoli-pezeshsk;iperb = map from input file to boore set of 
 c irab is an index for 4 possible varieties of the AB06 model. 2 for 140 bar & 2 for 200 bar stress
 c irab became 2-D on December 5, 2007. S Harmsen
       integer, dimension(npmx) :: ipercy,iper,nattn,ipera,iperb,icy13,ipcb12,
-     + iperab,ipercb,iperk,ipertp,isilva,isilva2,isomer,isomerCEUS,itoro,ngroup,nfi,iperdahl,
+     + iperab,ipercb,iperk,ipertp,isilva,isilva2,isomer,itoro,ngroup,nfi,iperdahl,
      + ia06,ia08,ip11,ipgk,indbssa,idriss,ipas13 !new models Mar 2011 to dec 2012
 c      real, dimension (22):: Percb13,PerIMIdriss
       real, dimension (23):: Percb13
       real, dimension (22):: PerIMIdriss
       real, dimension (23):: perAS13
-      real z1_ref, z1_refr	!z1 reference values for ASK13.
+      real z1_ref, z1_refr        !z1 reference values for ASK13.
       integer ifn,isz,ipia,nscene
       integer, dimension(npmx,8,3) :: ifp
       integer, dimension (nfltmx) :: itype,npts,npts1,iftype,ibtype
@@ -543,9 +545,9 @@ c new 6/06: potentially variable a and b values for up to 12 branches for each f
 c Provides extra flexibility to model epistemic uncertainty of size of eq. 
 c dmag also needs a branch-specific
 c value. The customary 0.1 dM wont work when M precision is carried to 2 dec. places
-      real, dimension(13) :: a11fr    !,a11per        Atkinson 2011. frequency set 99=pga, 89=pgv
+      real, dimension(14) :: a11fr    !,a11per        Atkinson 2011. frequency set 99=pga, 89=pgv
       real, dimension (0:37) :: perka
-      real, dimension (24) :: percy13	!updated May 15 2013.
+      real, dimension (24) :: percy13        !updated May 15 2013.
       real, dimension (108) :: peras08
       real, dimension (107):: perbssa13
       real, dimension (6) :: ptail,perdahl
@@ -556,7 +558,7 @@ c value. The customary 0.1 dM wont work when M precision is carried to 2 dec. pl
 c      integer iargc,numarg,hwflag,vs30_class
       integer iargc,numarg,hwflag
 c Below, the array constructor business. No repeat (8*.01) unlike data statement.
-c gfortran required replacement of data statements in our Linux PC system. 10/06. SH.
+c gfortran required replacement of "data" statements in our Linux PC system. 10/06. SH.
 c abper is the set of spectral periods for the AB2006 CEUS model. -1 => PGV
       abper = (/5.0000, 4.0000, 3.1250, 2.5000, 2.0000, 1.5873, 1.2500, 1.0000,
      1 0.7937, 0.6289, 0.5000, 0.3968, 0.3, 0.2506, 0.2000, 0.1580,
@@ -573,21 +575,21 @@ c abper is the set of spectral periods for the AB2006 CEUS model. -1 => PGV
      + 1.800000, 1.900000, 2.000000, 2.200000, 2.400000, 2.500000, 2.600000, 2.800000, 3.000000, 3.20,
      + 3.400000, 3.500000, 3.600000, 3.800000, 4.000000, 4.200000, 4.400000, 4.600000, 4.80, 5.0,
      + 5.500000, 6.000000, 6.500000, 7.000000, 7.500000, 8.000000, 8.500000, 9.000000, 9.50,10.0/)
-
-       a11fr =(/0.20,  0.33, 0.50, 1.00, 2.00, 3.33, 5.00,10.00,20.,33.00,50.00,99.00,89.00/)
+c add 1.5s or 0.667 Hz to a11fr. Mar 14 2014.
+       a11fr =(/0.20,  0.333, 0.50, 0.667, 1.00, 2.00, 3.33, 5.00,10.00,20.,33.00,50.00,99.00,89.00/)
 c Somerville IMW period set (5 of em). pga is 0.0
        prdsom=(/0.000,0.200,0.300,1.000,5.000/)
 c Abrahamson Silva 2012 model 22 perios
       data perAS13 /0, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3,
      1             0.4, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 6., 7.5, 10., -1. /
 c Silva period set.
-      pdSilva=(/0.,0.04,0.05,0.1,0.2,0.3,0.4,0.5,1.,2.,5./)
+      pdSilva=(/0.,0.04,0.05,0.1,0.2,0.3,0.4,0.5,1.,1.5,2.,5./)
        pdSilva2=(/0.,0.1,0.2,0.3,0.5,1.,2.,5./)
        pdToro = (/0.,0.2,1.0,0.1,0.3,0.5,2.0,0.04,0.4,1.5/)
 c Tavakoli periods 0 = pga. added 0.04 & 0.4 s july 8 2008 (spline interpolation)
       tpper = (/0.0,.04, 0.05, 0.08, 1.00e-01,1.50e-01,2.00e-01,
      1 0.3, 0.40, 0.5, 0.75, 1.0, 1.50, 2.0, 3.0, 4.0/)
-	PerCB13=(/0.01,0.02,0.03,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,
+        PerCB13=(/0.01,0.02,0.03,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,
      + 0.5,0.75,1.,1.5,2.,3.,4.,5.,7.5,10.,0.,-1./)
 c perka = period set for Kanno et al., BSSA 2006. 0 = pga.
         perdahl=(/0.0,0.1,0.2,0.5,1.,2.0/)
@@ -600,7 +602,7 @@ c perb = Boore-Atkinson NGA 4/2007 period set, -1 = pgv. N(T)= 23. 10 s is longe
      + 1.500, 2.000, 3.000, 4.000, 5.0, 7.5, 10.0/)
 c perx = a default set of spectral periods used in 2002 PSHA maps. PGV=-1 was not
 c available then and should not be tried for those models
-       perx = (/0.,0.2,1.0,0.1,0.3,0.5,2.0,-1./)
+       perx = (/0.,0.2,1.0,0.1,0.3,0.5,1.5,2.0/)        !add 1.5s jan 31 2014
        percy13=     (/  0.0100, 0.0200, 0.0300, 0.0400, 0.0500,
      1              0.0750, 0.1000, 0.1200, 0.1500, 0.1700,
      1              0.2000, 0.2500, 0.3000, 0.4000, 0.5000,
@@ -661,7 +663,7 @@ c prd is the C&Y period set, 106 of em, jan 2009. Same, Oct 2007. PGA=0.0s in ou
      3 'Space Unoccu','BSSA 03/2013','C&B04/13 NGA',
      3 'ChiouY 03/13','Ab-Silva2013','IIdriss 2013','GraizKalkn13',
      4 'GrazKalkan09'/)
-      gname=(/'.g1','.g2','.g3','.g4','.g5','.g6','.g7','.g8'/)
+       gname=(/'.g1','.g2','.g3','.g4','.g5','.g6','.g7','.g8'/)
       nga=.false.
       wus02=.false.
       ceus02=.false.
@@ -753,7 +755,7 @@ c lceus_sigma lower all CEUS GMPE sigmas to 0.4 (natural log sigma) for sens. st
 53            npmax=i-1
              else
              write(6,*)'hazFXnga13l: Polygon file not found: ',polygon
-       	     stop 'Put in working dir and retry'
+                    stop 'Put in working dir and retry'
             endif
             poly=.true.
             endif      
@@ -791,7 +793,7 @@ c adum could be sa(g) or pgv (cm/s). need flexible format
             endif
       endif
       write (6,61)date,time,name
-61      format('# *** hazFXnga13l 01/22/2014 log file. Pgm run on ',a,' at ',a,/,
+61      format('# *** hazFXnga13l 03/14/2014 log file. Pgm run on ',a,' at ',a,/,
      +'# *** Input control file: ',a)
       if(poly)write(6,*)'hazFXnga13l: Polygon file &npts: ',polygon,npmax
 c Below bypasses are based on file name. Bypass wont work if file names change
@@ -812,19 +814,18 @@ c creeping section is also host to california floaters. Parkfield did not ruptur
 c surface. After short discussion with Wesson, I did not include creeping sec
 c set of calif. floaters that always rupture to surface. 
 c      write(6,*)'Enter a zero for grid of sites 1 to 30 for list: '
-c deterministic for nrec<0
       read(1,*)nrec
       if(nrec.lt.0)then
-        determ=.true.
-        if(determ)open(80,file='F'//name,status='unknown')
-        deagg=.false.      ! determ trumps deagg
-        if(nrec.lt.-35)then
-          nrec=0
-        else
-          nrec=-nrec
-        endif      !gridded or specified stations option
+      determ=.true.
+      if(determ)open(80,file='F'//name,status='unknown')
+      deagg=.false.      ! determ trumps deagg
+      if(nrec.lt.-35)then
+      nrec=0
       else
-        determ=.false.
+      nrec=-nrec
+      endif      !gridded or specified stations option
+      else
+      determ=.false.
       endif
       if(nrec.eq.0)then
       grid=.true.
@@ -883,9 +884,9 @@ c replace whatever was in the file with the command line location
       endif
 c **** Enter soil Vs30 condition  ******NEW*******
 c      write(6,*)"For sites, enter Vs30(m/s). Z25 will be computed internally"
-      read(1,*)vs30	!,dbasin
-c       		dbasin =		2.5 km/s isosurface depth (km).
-       dbasin = exp(7.089 - 1.144*alog(vs30) )	!New Campbell default depth Z25 may 22 2013
+      read(1,*)vs30        !,dbasin
+c                       dbasin =                2.5 km/s isosurface depth (km).
+       dbasin = exp(7.089 - 1.144*alog(vs30) )        !New Campbell default depth Z25 may 22 2013
        if(override_vs)vs30=vs30d
 c the below Z1 is defined so we do not need to rewrite input files with a Z1 value.
 c Units m. Z1cal was modified to equal the CY report eqn 2. Mar 11 2013.
@@ -894,20 +895,20 @@ c Units m. Z1cal was modified to equal the CY report eqn 2. Mar 11 2013.
 
 c     Norm Abrahamsons CA z1 reference (eq 18). Same in July 2013 update.
        z1_ref = exp ( -7.67/4. * alog( (Vs30**4 + 610.**4)/(1360.**4+610.**4) ) ) / 1000.
-	z1_refr=exp ( -7.67/4. * alog( (1180.**4 + 610.**4)/(1360.**4+610.**4) )) / 1000.
+        z1_refr=exp ( -7.67/4. * alog( (1180.**4 + 610.**4)/(1360.**4+610.**4) )) / 1000.
 c z1_refr added 8/13/2013. Z1 for hard rock. This value is .0028 km or 2.8 m
 c
-       z1=z1cal	!CY2013 function used until we know better for wus...
-      z1km= z1_ref	!for AS need units km
+       z1=z1cal        !CY2013 function used until we know better for wus...
+      z1km= z1_ref        !for AS need units km
 c from B Chiou email of Apr 15 2013.
         deltaZ1 = z1cal -
      1  exp(-7.15/4 *
      1      log(((VS30/1000.)**4 + .57094**4)/(1.360**4 + .57094**4)))
-	if(vs30.ge.600.)then
-	dgkbasin=0.15	!Peter Powers email Aug 27 2013.
-	else
+        if(vs30.ge.600.)then
+        dgkbasin=0.15        !Peter Powers email Aug 27 2013.
+        else
       dgkbasin=0.75 * z1km + 0.25*dbasin      !Vladimir says his basin is 1.5 km/s isosurface. Campbell is
-	endif
+        endif
 c this Z1 is  the recommended value of CY. May need to be changed (40 m for 760 m/s vs30)
       write(6,*)' Vs30 (m/s), Z1 (m) and depth of basin (km): ',vs30,Z1,dbasin
       write(6,*)' DeltaZ1 for CY relation ',deltaZ1
@@ -997,45 +998,45 @@ c---loop through periods
 801      write(6,*)'Period ',per,' underway'
       iper(ip)=k
       if(wind.gt.0.)then
-        cluster=.false.
-        l_gnd_ep(ip)=.true.
-        do im=1,3
-          if(im.eq.1)then
-            write(6,505)mcut(1)
-          elseif(im.eq.2)then
-            write(6,506)mcut(1),mcut(2)
-          else
-            write(6,507)mcut(2)
-          endif
-          write(6,509)dcut(1),dcut(1),dcut(2),dcut(2)
+      cluster=.false.
+      l_gnd_ep(ip)=.true.
+      do im=1,3
+      if(im.eq.1)then
+      write(6,505)mcut(1)
+      elseif(im.eq.2)then
+      write(6,506)mcut(1),mcut(2)
+      else
+      write(6,507)mcut(2)
+      endif
+      write(6,509)dcut(1),dcut(1),dcut(2),dcut(2)
 509      format('3 DeltaGnd, for d < ',f4.1,', ',f4.1,' <=d < ',f4.1,
      + '& d >=',f4.1,' km: ',$) 
-          read(1,*)gnd_ep(1,im,ip),gnd_ep(2,im,ip),gnd_ep(3,im,ip)
+      read(1,*)gnd_ep(1,im,ip),gnd_ep(2,im,ip),gnd_ep(3,im,ip)
 c increase or decrease gm by equal amounts in the atten subroutines
-          write(6,*)gnd_ep(1,im,ip),gnd_ep(2,im,ip),gnd_ep(3,im,ip)
+      write(6,*)gnd_ep(1,im,ip),gnd_ep(2,im,ip),gnd_ep(3,im,ip)
 505      format('Additional epistemic gnd, for M < ',f4.1)
 506      format('Next, for ',f4.1,'<=M < ',f4.1)
 507      format('Finally, for M >= ',f4.1)
-        enddo      !im loop
-        nfi(ip)=3
-        ngroup(ip)=1
-        icc(ip,1)=9+ip
+      enddo      !im loop
+      nfi(ip)=3
+      ngroup(ip)=1
+      icc(ip,1)=9+ip
       elseif(wind.eq.0.)then
-        nfi(ip)=1
-        ifn=1      !always use index 1 for this case.
-        ngroup(ip)=1
-        cluster=.false.
-        icc(ip,1)=9+ip
+      nfi(ip)=1
+      ifn=1      !always use index 1 for this case.
+      ngroup(ip)=1
+      cluster=.false.
+      icc(ip,1)=9+ip
       else
 c current indicator to perform clustering is wind < 0. You can make up to 5 independent clustered-event curves
 c set wind=-1 for one, wind=-2 for 2, ..., wind = -5 for 5. These could be the 5 virtual NMSZ faults in 2002 hz model
 c The use of this variable for different things depending on its sign might be considered clumsy & contemptible.
 c Should be revised.
-        nfi(ip)=1
-        ifn=1
-        cluster=.true.
-        ngroup(ip)= iabs(int(wind))
-        if(ip.gt.1.and.ngroup(ip).ne.ngroup(1))stop'number of cluster groups cannot be period dep.'
+      nfi(ip)=1
+      ifn=1
+      cluster=.true.
+      ngroup(ip)= iabs(int(wind))
+      if(ip.gt.1.and.ngroup(ip).ne.ngroup(1))stop'number of cluster groups cannot be period dep.'
       endif      !if additional epistemic sigma is read in or model clustering is asked for: one or the other
 c but not both at least initially
       nameout= '                                             '
@@ -1044,8 +1045,8 @@ c      write(6,*) "enter name of output file for this period"
  909  format(a)
        isz=index(nameout,' ')-1
       if(determ)then
-        open(66+ip,file=nameout(1:isz)//'.DET')
-        write(66+ip,677)per,date,time,name
+      open(66+ip,file=nameout(1:isz)//'.DET')
+      write(66+ip,677)per,date,time,name
       endif
 677      format('#hazFXnga13l sources. Sp_Per= ',f5.2,' s. Run on ',a,' at ',a,/,
      +'# *** Input control file: ',a,/,
@@ -1053,8 +1054,8 @@ c      write(6,*) "enter name of output file for this period"
      +' Dtor(km) SlipCode EPS_AT')
        do kg=1,ngroup(ip)
        if(cluster)then
-         nameout=nameout(1:isz)//gname(kg)
-         icc(ip,kg)=9+ip+9+kg
+       nameout=nameout(1:isz)//gname(kg)
+       icc(ip,kg)=9+ip+9+kg
        endif
        if(grid)then
       call openwx(ifp(ip,kg,1),nameout)
@@ -1120,8 +1121,8 @@ c convert sa to sd
      1 xlev(1,ip),xlev(nlev(ip),ip)
          if(.not.deagg)write(6,*) (xlev(k,ip),k=1,nlev(ip))
 c repair aug 5 2013. Start below loop at k=2.
-	ylev(1,ip)=xlev(1,ip)
-	xlev(1,ip)=alog(xlev(1,ip))
+        ylev(1,ip)=xlev(1,ip)
+        xlev(1,ip)=alog(xlev(1,ip))
       do 414 k=2,nlev(ip)
       ylev(k,ip)=xlev(k,ip)
       if(ylev(k,ip).lt.1.05*ylev(k-1,ip))then
@@ -1141,17 +1142,17 @@ c     &  weight2 , mb to M conv."
       read(1,*) iatten(ip,ia),wt(ip,ia,1),wtdist(ip,ia),wt(ip,ia,2),
      &   icode(ip,ia)
       ipia=iatten(ip,ia)
-	if(ipia.eq.35)then
-	F_inferred=1.0
-	F_measured=0.0
+        if(ipia.eq.35)then
+        F_inferred=1.0
+        F_measured=0.0
         write(6,*)'CY model: Using estimated Vs30 because ia was enterred as 35'
-	elseif(ipia.eq.-35)then
-	F_inferred=0.0
-	F_measured=1.0
-	iatten(ip,ia)=35
-	ipia=35
+        elseif(ipia.eq.-35)then
+        F_inferred=0.0
+        F_measured=1.0
+        iatten(ip,ia)=35
+        ipia=35
         elseif(ipia.eq.36)then
- 	vs30_class       =0
+         vs30_class       =0
         write(6,*)'ASK model: Using estimated Vs30 because ia was enterred as 36'
         elseif(ipia.eq.-36)then
         vs30_class=1
@@ -1186,15 +1187,17 @@ c prepare look-up tables for certain CEUS relations.
         print *,'period requested ',per
         stop' CEUS11 models close encounter with an unknown period'
         endif
-        dowhile(fr.gt.a11fr(kf)+.01)
+c try to use the stated frequencies. 
+        dowhile(abs(fr-a11fr(kf)).gt.0.002)
         kf=kf+1
-        if(kf.gt.13)stop' period not in A06,A08,P11 set'
+        if(kf.gt.14)stop' period not in A06,A08,P11 set'
         enddo
         freq(ip)=a11fr(kf)
         if(ipia.eq.25)then
         if(callme(1))then
-        print *,'calling GailTable A08revA_Rjb fr,per,kf=',fr,per,kf
-        name ='GR/A08revA_Rjb.dat'
+        print *,'calling GailTable A08revA_Rjb.rev fr,per,kf=',fr,per,kf
+c        name ='GR/A08revA_Rjb.dat'
+        name ='GR/A08revA_Rjb.rev'
         name=trim(name)
              open(3,file=name,status='old',err=202)
         call GailTable(1)
@@ -1203,7 +1206,8 @@ c prepare look-up tables for certain CEUS relations.
         ia08(ip)=kf  
         elseif(ipia.eq.26)then
          if(callme(2))then
-       name ='GR/AB06revA_Rcd.dat'
+c       name ='GR/AB06revA_Rcd.dat'
+       name ='GR/AB06revA_Rcd.rev'
         print *,'calling GailTable AB06revA_Rcd fr,per=',fr,per,kf
              open(3,file=name,status='old',err=202)
        call GailTable(2)
@@ -1213,7 +1217,8 @@ c prepare look-up tables for certain CEUS relations.
         elseif(ipia.eq.27)then
         if(per.lt.0.0)stop' Pezeshk 2011 does not have PGV coeffs'
         if(callme(3))then
-        name= 'GR/P11A_Rcd.dat'
+c        name= 'GR/P11A_Rcd.dat'
+        name= 'GR/P11A_Rcd.rev'
              open(3,file=name,status='old',err=202)
        call GailTable(3) 
         print *," just read Gail's Pezeshk 2011 A-table",fr,per,kf
@@ -1300,12 +1305,12 @@ c You can call the hardrock table when Vs30 >= 1500 m/s. But not clear that AB w
           dowhile(per.ne.pdSilva(ka))
             ka=ka+1
             if(ka.gt.11)then
-              write(6,*) 'As of 7/2008 input period doesnt correspond to Silva2002 set'
+              write(6,*) 'As of 1/2014 input period doesnt correspond to Silva2002 set'
               stop 'Suggestion: remove this relation from input file for this period'
             endif
           enddo
           isilva(ip)=ka
-          write(6,*)ip,ka,' Silva 7/2008 ip map'
+          write(6,*)ip,ka,' Silva 1/2014 ip map'
           if(vs30.ge.1500.)then
           irsilva=-1
       write(6,*)'Silva relation is called with hardrock coeff'
@@ -1332,17 +1337,17 @@ c You can call the hardrock table when Vs30 >= 1500 m/s. But not clear that AB w
         endif
         if(ipia.eq.2.or.ipia.eq.-2)then
 c toro ceus mod jan 24 2014
-	if(per.le.0.01)then
-	itoro(ip)=1
-	else
-	ka=2
-	dowhile (abs(per-pdToro(ka)) .gt. 0.001)
-	ka=ka+1
-	if(ka.gt.10)stop'no toro relation for that period'
-	enddo
-	itoro(ip)=ka
-	endif
-	endif
+        if(per.le.0.01)then
+        itoro(ip)=1
+        else
+        ka=2
+        dowhile (abs(per-pdToro(ka)) .gt. 0.001)
+        ka=ka+1
+        if(ka.gt.10)stop'no toro relation for that period'
+        enddo
+        itoro(ip)=ka
+        endif
+        endif        !Toro prep?
 c end toro mod jan 24 2014
         if(ipia.eq.-3)then
 c Somerville IMW, 5 periods
@@ -1408,7 +1413,7 @@ c Below, Chiou/Youngs 11/2007 period set
 c initialize some site-related terms for the new CY relation for each spectral period.
       elseif(abs(ipia).eq.35)then
       if (per.ge.0..and. per.le.0.01)then
-      icy13(ip)=1	!PGA index is 3 in Mar 2013 update
+      icy13(ip)=1        !PGA index is 3 in Mar 2013 update
       k=1
       write(6,*)'Calling CY2013 NGA-W with period index 3: PGA'
       else
@@ -1437,20 +1442,20 @@ c!pga or other?
       stop 'please remove this GMPE from your input file'
       endif
       ipas13(ip)=k
-      	endif
+              endif
       write(6,*)'Calling AS2013 NGA-W revision with z1=',z1km,' period index ',ipas13(ip)
-      useRy0(ip)= .false.	!dont use this metric
+      useRy0(ip)= .false.        !dont use this metric
       print *,'Using Ry0 metric for this spectral period?',useRy0(ip)
-        vs30_rock = 1180.	!changed from 1100 to 1180 July 2013.
-        iReg=1	!USA
-        z10_rock = -1.0	!mod 8/13/2013. 
+        vs30_rock = 1180.        !changed from 1100 to 1180 July 2013.
+        iReg=1        !USA
+        z10_rock = -1.0        !mod 8/13/2013. 
 c above coefficients are needed by the AS2013 model      
       elseif(ipia.eq.34)then
 c      if(readcb13)then
 c      if(per.gt.0.01)stop'CB13 must be called with PGA as first g.m.'
 c      call cb13_nga_spec_in
 c      readcb13=.false.
-	if(per.le.0.01)then
+        if(per.le.0.01)then
       k=22
       else
       k=2
@@ -1458,7 +1463,7 @@ c      readcb13=.false.
       k=k+1
       enddo
       if(k.eq.22)stop' Period not found for CB13 relation.'
-      endif	!pga or other spectral accel?
+      endif        !pga or other spectral accel?
       ipcb12(ip)=k
       print *,'CB13 relation period index ',k,' for period ',per
       elseif(ipia.eq.37)then
@@ -1470,7 +1475,7 @@ c      readcb13=.false.
       k=k+1
       enddo
       if(k.eq.22.and.per.ne.10.)stop' Period not found for IMIdriss relation.'
-      endif	!pga or other spectral accel?
+      endif        !pga or other spectral accel?
       idriss(ip)=k
       print *,'Idriss relation period index ',k,' for period ',per
       
@@ -1511,10 +1516,10 @@ c      print *,nper_gmpe,' number of periods having coeffs BSSA'
       if(ipia.eq.39)then
       write(6,*)'Calling Grazier Kalkan09 model. 0 for basin. Pd index ',k
       else
-      if(per.le.0.01)ipgk(ip)=1	!use the sa1 for new graizer model
+      if(per.le.0.01)ipgk(ip)=1        !use the sa1 for new graizer model
       write(6,*)'Calling Grazier Kalkan13 model.  Pd index ',ipgk(ip)
       write(6,*)'Graizer13 basin depth (km) set to ',dgkbasin
-      Q_CA=150.	!New Q for California from Vladimir Graizer. His Q was 435
+      Q_CA=150.        !New Q for California from Vladimir Graizer. His Q was 435
       Q_BR = 205.     ! Possible reasonable average value for basin and range Q.
       write(6,*)'Graizer13 Quality factor for California= ',Q_CA
       write(6,*)'For WUS sites with longitude>-120E, use this Q ',Q_BR
@@ -1618,7 +1623,7 @@ ccc-------read fault data
 c      write(6,*) "enter 1 for char. 2 for G-R; 1 for SS, 2 for reverse; nmagep"
       read(1,900,end=999) adum
       if(determ)write(80,2108)ift,adum(1:80)
-2108	format(i4,1x,a)
+2108        format(i4,1x,a)
       write (6,900)adum
 c blank lines at end of file are ok. should not cause hiccough below.
 c nmagf (ift) is a new required field 6-06. Number of mag branches. Used for
@@ -1630,9 +1635,8 @@ c combining 25-wt and 50-wt California faults into one file, and the relwt for t
 c 25-wt items is X, then the relwt for the 50-wt items is 2X. This was discussed
 c at a software meeting late Oct 2006. S Harmsen.
 c add moment rate to log file output 11/2010
-c read cluster fault data
       if(cluster)then
-        read(adum,*,err=999,end=999)itype(ift),iftype(ift),nmagf(ift),igroup(ift),jseg(ift)
+      read(adum,*,err=999,end=999)itype(ift),iftype(ift),nmagf(ift),igroup(ift),jseg(ift)
 c May 16 2007: igroup is a new index, for the geographic or other group index for clustering. 
 c Idea is : Do not mix scenarios from different groups.
 c All scenarios within a group must have same recurrence (rate).
@@ -1645,11 +1649,11 @@ c code should be able to work with earlier file format if clustering is not requ
       ibtype(ift)=1
       cDPP(ift)=0.0
       elseif(iftype(ift).eq.2)then
-      ibtype(ift)=3	!boore 2013 swithces
+      ibtype(ift)=3        !boore 2013 swithces
       cDPP(ift)=0.0
       else
       ibtype(ift)=2
-      cDPP(ift)=0.0	!temporary setting for amount of directivity effect
+      cDPP(ift)=0.0        !temporary setting for amount of directivity effect
       endif
 
       if(itype(ift).gt.0)then
@@ -1849,7 +1853,7 @@ c----- find rates for epistemic uncertainty, b=0 branch
          do 623 ilt= 1, nbranch
          mmax= magmax(ift,imag+nmg)+ dmbranch(ilt)
          nmagg= int((mmax-magmin(ift,imag+nmg))/dmag(ift,imag+nmg) + 1.4)
-         nmagg=max(1,nmagg)      	!new mar 4 2008 
+         nmagg=max(1,nmagg)              !new mar 4 2008 
          sum= 1.e-20
          do 622 m=1,nmagg
          xmag= magmin(ift,imag+nmg)+ (m-1)*dmag(ift,imag+nmg)
@@ -1876,7 +1880,7 @@ c the below line was changed feb 22 2008 Old version is commented out. New vers
 c requires both epistemic and aleatory Muncert to be zero to set itest() to 1
       if(sdal.eq.0. .and. itype(ift).eq.1) itest(ift)=1
       if(sdal.eq.0. .and. itype(ift).eq.2 .and. nbranch.eq.1) itest(ift)=1      !line added feb28 2008
-c      if(sdal.eq.0.) itest(ift)=1      	!this line seems to remove epistemic branching
+c      if(sdal.eq.0.) itest(ift)=1              !this line seems to remove epistemic branching
 c  
       write(6,*)ift,itest(ift),nmag0(ift,1),' fault number, itest,nmag0(ift,1)'
        write(6,*) "enter dip, downdip width, depth0 of fault plane"
@@ -2106,12 +2110,12 @@ c find nearest gridpoint in vs30 array to the site with coords rx,ry
       endif      !inbounds
       endif      !array rather than scalar vs30      
       if(determ)then
-        xmagdet=5.0
-        rjbdet=dmax
-        do ip=1,nper
-          write(66+ip,6684)rx,ry,i,vs30
+      xmagdet=5.0
+      rjbdet=dmax
+      do ip=1,nper
+      write(66+ip,6684)rx,ry,i,vs30
 6684      format('! ',f8.3,1x,f7.3,' site ',i7,' vs30 ',f7.1,' m/s')
-        enddo
+      enddo
       endif
 c following lines omit several site checks for ca and/or extensional faults.
       if(byeca.and.ry.gt.43.9) goto 860
@@ -2212,7 +2216,7 @@ c     + x(1,ift),y(1,ift)
         dmin(1)=rjb
         dmin(2)=rcd; dmin(3) = rcd
         dmin(4)= R_x      !used in CY NGA 11/07
-        dmin(5)= -1.0	!make it negative. not used 8/13/2013. R_x*tan(azb*coef)
+        dmin(5)= -1.0        !make it negative. not used 8/13/2013. R_x*tan(azb*coef)
 c dmin(5) is the Ry0 value for the July 2013 ASK13 model.
 c        write(6,*) ry,rx,testhw,dhy,angtest,dmin(5)
 c  dmin is minimum distance from fault to receiver 
@@ -2482,7 +2486,7 @@ c     1      dtor1, srcSiteA, F_RV, F_NM,gnd,sigmaf)
       elseif(ipia.eq.33)then
       indx1=indbssa(ip)
       mech = ibtype(ift)
-      iregion=1	!CA-Taiwan version
+      iregion=1        !CA-Taiwan version
       call bssa2013drv(ip,indx_pga,indx1,xmag,rjb,vs30,z1cal,mech,iregion,alny,sigmaf)
 c skip the 2nd period for now assume the period of interest was tabulated.
       gnd(1)=alny
@@ -2506,7 +2510,7 @@ c skip the 2nd period for now assume the period of interest was tabulated.
       endif
       call gksa13v2(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q)
       elseif(ipia.eq.39)then
-      ib=0	!basin term Graizer & kalkan model of 2011? Out of date.
+      ib=0        !basin term Graizer & kalkan model of 2011? Out of date.
       call  gksa(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),IB)
       elseif(abs(ipia).eq.35)then
 c cDpp new predictor variable 3/2013: 
@@ -2563,10 +2567,10 @@ c gnd is lnSA in AS code. need to fill in some other input. vs30_class ?
 c period1 is output by AS_modelXX. period1 should equal per(ip)
        sigmaf=1./sqrt2/sigma1
       elseif(ipia.eq.34)then
-      SJ=0.0	!Are we in Japan? 1 = yes. 0 = california 3 = China.
-c      Hhyp=min(12.,dtor1+8.)	!Take a stab at hypocenter depth.
-	Hhyp = dtor1+0.5*sinedip*W_rup
-c	if(ip.eq.1)print *,ift,Hhyp,W_rup,F_RV,F_NM,dtor1,dbasin,xmag,Rrup,R_x,Rjb
+      SJ=0.0        !Are we in Japan? 1 = yes. 0 = california 3 = China.
+c      Hhyp=min(12.,dtor1+8.)        !Take a stab at hypocenter depth.
+        Hhyp = dtor1+0.5*sinedip*W_rup
+c        if(ip.eq.1)print *,ift,Hhyp,W_rup,F_RV,F_NM,dtor1,dbasin,xmag,Rrup,R_x,Rjb
       call CB13_NGA_SPEC  (ip,ipcb12(ip), xmag,Rrup,R_x,Rjb,F_RV, F_NM,dtor1,Hhyp,W_rup,dbasin,Vs30,
      +Dip0(ift),SJ,gnd,sigmaf)
 c      print *,exp(gnd(1)),ift,xmag,Rrup,period(ip)
@@ -2605,7 +2609,7 @@ c CEUS pre-nga (2002 atten models) added 3 new CENA models defined by tables. Ma
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
        elseif(ipia.eq.26)then
-       rkm=max(rrup,1.8)	!keep source at least 1.8 km away. Atkinson model Can blow up. SH June27 
+       rkm=max(rrup,1.8)        !keep source at least 1.8 km away. Atkinson model Can blow up. SH June27 
        jf=ia06(ip)
        ka=2
              sigma = 0.3*2.303
@@ -2614,10 +2618,10 @@ c     print *,gnd,rkm,ip,jf,ka
        if(gnd(1).gt.1.79)print *,exp(gnd(1)),rkm,ip,jf,ka,rx,ry
        sigmaf = 1./sqrt2/sigma
        elseif(ipia.eq.27)then
-       rkm=max(rrup,1.)	!keep source at least 1km away. Pez model Can blow up. SH June27 
+       rkm=max(rrup,1.)        !keep source at least 1km away. Pez model Can blow up. SH June27 
        jf=ip11(ip)
 c 2nd variable in sigPez11 is the frequency index according to the GailA set 2011.
-      sigma = sigPez11(xmag,jf)	!new 10/30/2012. SH.
+      sigma = sigPez11(xmag,jf)        !new 10/30/2012. SH.
        ka=3
        gnd(1) = amean11(xmag,rkm,rjbp,vs30,ip,jf,ka)
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
@@ -2674,21 +2678,21 @@ c not work for this case because truncation is no longer at mu+3sig
         goto 282
         endif
       elseif(ipia.eq.12)then
-        call getMota(ip,iper(ip),xmag,rrup,vs30,gnd,sigmaf)
+      call getMota(ip,iper(ip),xmag,rrup,vs30,gnd,sigmaf)
       elseif(ipia.eq.22)then
-        call getDahle95(iperdahl(ip),isoild,xmag,rjb,gnd,sigmaf)
+      call getDahle95(iperdahl(ip),isoild,xmag,rjb,gnd,sigmaf)
       endif
       wttmp=wtbranch(ilt)*weight*rate
         do ifn=1,nfi(ip)
 c for deterministic calcs write the largest M cases from GR distributions.
         if(determ.and.isbig.and.isclose.and.norpt(ip,ia))then
-          write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,ift,xmag,rjb,rrup,
+        write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,ift,xmag,rjb,rrup,
      +     wttmp,dtor1,iftype(ift), ifn
-c	print *,ipia,ift,' ****** CHAR ipia ift *******'
+c        print *,ipia,ift,' ****** CHAR ipia ift *******'
 c there is now a report dont tell it again, Sam. (you could have more than one
 c that is big and close but these are all the same w.r.t. saved params)
-          if(ifn .eq. nfi(ip)) norpt(ip,ia)=.false.
-        endif
+      if(ifn .eq. nfi(ip)) norpt(ip,ia)=.false.
+      endif
 c679      format(e11.5,1x,e11.5,1x,i2,1x,i3,1x,f6.2,1x,f7.1,1x,f7.1,1x,e11.5,
 c     + f5.1,1x,i2,1x,i1)
 679      format(e11.5,1x,e11.5,1x,i5,1x,i7,1x,f6.2,1x,f7.1,1x,f7.1,1x,e11.5,
@@ -2726,7 +2730,7 @@ c Below keeps the books on epsilon distribution for e0<2. if e0>2 dont bother.
       prx= temp-ptail(ka)
       dowhile(prx.gt.1.e-9)
       prob5(ir,im,ieps,ip,ifn,ka)=prob5(ir,im,ieps,ip,ifn,ka)+
-     +       wttmp*prx      ! *prlr 	dont know about this
+     +       wttmp*prx      ! *prlr         dont know about this
       ka=ka-1
       if(ka.eq.0)goto 283
       prx= temp-ptail(ka)
@@ -2850,7 +2854,7 @@ c these particular floating ruptures always rupture to top of fault, dtor.
       elseif(ipia.eq.33)then
       indx1=indbssa(ip)
       mech=ibtype(ift)
-      iregion=1	!CA-Taiwan version
+      iregion=1        !CA-Taiwan version
       call bssa2013drv(ip,indx_pga,indx1,xmag2,rjb,vs30,z1cal,mech,iregion,alny,sigmaf)
 c skip the 2nd period for now assume the period of interest was tabulated.
       gnd(1)=alny
@@ -2875,7 +2879,7 @@ c skip the 2nd period for now assume the period of interest was tabulated.
       endif
       call gksa13v2(ipgk(ip),ip,xmag2,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q)
       elseif(ipia.eq.39)then
-      ib=0	!basin term Graizer & kalkan model
+      ib=0        !basin term Graizer & kalkan model
       call  gksa(ipgk(ip),ip,xmag2,rrup,gnd,sigmaf,vs30,iftype(ift),IB)
 c      if(ift.eq.1)print *,ip,exp(gnd(1)),rrup,xmag,1/sigmaf/sqrt2
       elseif(abs(ipia).eq.35)then
@@ -2910,10 +2914,10 @@ c      print *,exp(lnSa),phi,tau,width(ift),xmag2,Width(ift)
          endif
         sigmaf = 1./sqrt( phi**2 + tau**2 )/sqrt2
       elseif(ipia.eq.34)then
-      SJ=0.0	!Are we in Japan? 1 = yes. 2 = no, but China. 0 = no, but WUS
-c      Hhyp=min(12.,dtor+8.)	!Take a stab at hypocenter depth.
-	Hhyp = dtor + 0.5*sinedip*width(ift)
-c	if(ip.eq.1)print *,ift,Hhyp,Width(ift),F_RV,F_NM,dtor,dbasin,xmag,Rrup,R_x,Rjb
+      SJ=0.0        !Are we in Japan? 1 = yes. 2 = no, but China. 0 = no, but WUS
+c      Hhyp=min(12.,dtor+8.)        !Take a stab at hypocenter depth.
+        Hhyp = dtor + 0.5*sinedip*width(ift)
+c        if(ip.eq.1)print *,ift,Hhyp,Width(ift),F_RV,F_NM,dtor,dbasin,xmag,Rrup,R_x,Rjb
       call CB13_NGA_SPEC  (ip,ipcb12(ip), xmag2,Rrup,R_x,Rjb,F_RV, F_NM,dtor,Hhyp,Width(ift),dbasin,Vs30,
      +Dip0(ift),SJ,gnd,sigmaf)
 c      print *,exp(gnd(1)),ift,xmag2,Rrup
@@ -2977,7 +2981,7 @@ c added 3 new CENA models defined by tables. Mar 2011. 25&26 are Gail Atkinson. 
 c     print *,gnd,rkm,ip,jf,ka
       sigmaf = 1./sqrt2/sigma
        elseif(ipia.eq.26)then
-       rkm=max(rrup,1.8)	!keep source at least 1.8 km away. Atkinson model Can blow up. SH June27 
+       rkm=max(rrup,1.8)        !keep source at least 1.8 km away. Atkinson model Can blow up. SH June27 
        jf=ia06(ip)
        ka=2
              sigma = 0.3*2.303
@@ -2986,7 +2990,7 @@ c     print *,gnd,rkm,ip,jf,ka
        if(gnd(1).gt.1.79)print *,exp(gnd(1)),rkm,ip,jf,ka,rx,ry
       sigmaf = 1./sqrt2/sigma
        elseif(ipia.eq.27)then
-       rkm=max(rrup,1.)	!keep source at least 1km away. Pez model Can blow up. SH June27 
+       rkm=max(rrup,1.)        !keep source at least 1km away. Pez model Can blow up. SH June27 
        jf=ip11(ip)
       sigma = sigPez11(xmag2,jf)
        ka=3
@@ -3055,28 +3059,28 @@ c deaggregation for the special case. not prepared oct 30 2007.
       wttmp=wt1wt2*weight*rate
         do ifn=1,nfi(ip)
         if(determ.and.isbig.and.isclose.and.norpt(ip,ia))then
-          write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,ift,xmag2,rjb,rrup,
+       write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,ift,xmag2,rjb,rrup,
      + wttmp,depth0(ift),iftype(ift),ifn
-          if(ifn .eq. nfi(ip))norpt(ip,ia)=.false.
-        endif
+      if(ifn .eq. nfi(ip))norpt(ip,ia)=.false.
+      endif
         do  k=1,nlev(ip)
-          pr=(gnd(ifn) - xlev(k,ip))*sigmaf
-          if(pr.gt.3.3)then
-            ipr=250002
-          elseif(pr.gt.plim)then
-            ipr= 1+nint(dp2*(pr-plim))      !3sigma cutoff n'(mu,sig)
-          else
-            goto 1283      !transfer out if ground motion above mu+3sigma
-          endif
-          cfac=wttmp*p(ipr)
-          prob(icnt,k,ip,ifn,kg)= prob(icnt,k,ip,ifn,kg)+cfac
-          if(deagg)then
+       pr=(gnd(ifn) - xlev(k,ip))*sigmaf
+       if(pr.gt.3.3)then
+       ipr=250002
+       elseif(pr.gt.plim)then
+       ipr= 1+nint(dp2*(pr-plim))      !3sigma cutoff n'(mu,sig)
+       else
+       goto 1283      !transfer out if ground motion above mu+3sigma
+       endif
+      cfac=wttmp*p(ipr)
+        prob(icnt,k,ip,ifn,kg)= prob(icnt,k,ip,ifn,kg)+cfac
+       if(deagg)then
 c for individual fault
-          frbar(ift,ifn,ip)=frbar(ift,ifn,ip)+cfac*rrup
-          fmbar(ift,ifn,ip)=fmbar(ift,ifn,ip)+cfac*xmag
-          eps= -pr*sqrt2
-          febar(ift,ifn,ip)=febar(ift,ifn,ip)+cfac*eps
-          fhaz(ift,ifn,ip) =fhaz(ift,ifn,ip)+cfac
+      frbar(ift,ifn,ip)=frbar(ift,ifn,ip)+cfac*rrup
+      fmbar(ift,ifn,ip)=fmbar(ift,ifn,ip)+cfac*xmag
+               eps= -pr*sqrt2
+      febar(ift,ifn,ip)=febar(ift,ifn,ip)+cfac*eps
+      fhaz(ift,ifn,ip) =fhaz(ift,ifn,ip)+cfac
 c ifn index is present: 2nd to last frontier. ieps is  an explicit dimension, recomm. by Bazzuro
 c Some attn. models will say a given M,R is a low eps0 combination, others will say a higher eps0.
 c 
@@ -3097,7 +3101,7 @@ c  *prlr       this factor is not present now. Why?
       ka=ka-1
       if(ka.eq.0)goto 1283
       prx= temp-ptail(ka)
-        enddo
+      enddo
       endif      !eps <emax
       endif      !if deagg
            enddo
@@ -3216,7 +3220,7 @@ c     1      dtor1, srcSiteA, F_RV, F_NM,gnd,sigmaf)
       elseif(ipia.eq.33)then
       indx1=indbssa(ip)
       mech=ibtype(ift)
-      iregion=1	!CA-Taiwan version
+      iregion=1        !CA-Taiwan version
       call bssa2013drv(ip,indx_pga,indx1,xmag,rjb,vs30,z1cal,mech,iregion,alny,sigmaf)
 c skip the 2nd period for now assume the period of interest was tabulated.
       gnd(1)=alny
@@ -3240,7 +3244,7 @@ c skip the 2nd period for now assume the period of interest was tabulated.
       endif
       call gksa13v2(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q)
       elseif(ipia.eq.39)then
-      ib=0	!basin term Graizer & kalkan model
+      ib=0        !basin term Graizer & kalkan model
       call  gksa(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),IB)
 c      if(ift.eq.1)print *,ip,exp(gnd(1)),rrup,xmag,1/sigmaf/sqrt2
       elseif(abs(ipia).eq.35)then
@@ -3275,10 +3279,10 @@ c      print *,exp(lnSa),phi,tau,w_rup
          endif
         sigmaf = 1./sqrt( phi**2 + tau**2 )/sqrt2
       elseif(ipia.eq.34)then
-      SJ=0.0	!Are we in Japan? 1 = yes.
-c      Hhyp=min(12.,dtor1+8.)	!Take a stab at hypocenter depth.
-	Hhyp = dtor1+0.5*sinedip*w_rup
-c	if(ip.eq.1)print *,ift,Hhyp,W_rup,F_RV,F_NM,dtor1,dbasin,xmag,Rrup,R_x,Rjb
+      SJ=0.0        !Are we in Japan? 1 = yes.
+c      Hhyp=min(12.,dtor1+8.)        !Take a stab at hypocenter depth.
+        Hhyp = dtor1+0.5*sinedip*w_rup
+c        if(ip.eq.1)print *,ift,Hhyp,W_rup,F_RV,F_NM,dtor1,dbasin,xmag,Rrup,R_x,Rjb
       call CB13_NGA_SPEC  (ip,ipcb12(ip), xmag,Rrup,R_x,Rjb,F_RV, F_NM,dtor1,Hhyp,w_rup,dbasin,Vs30,
      +Dip0(ift),SJ,gnd,sigmaf)
 c      print *,exp(gnd(1)),ift,xmag,Rrup
@@ -3340,7 +3344,7 @@ c added 3 new CENA models defined by tables. Mar 2011
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
       elseif(ipia.eq.26)then
-       rkm=max(rrup,1.8)	!keep source at least 1.8 km away. Atkinson model Can blow up. SH June27 
+       rkm=max(rrup,1.8)        !keep source at least 1.8 km away. Atkinson model Can blow up. SH June27 
        jf=ia06(ip)
        ka=2
              sigma = 0.3*2.303
@@ -3349,7 +3353,7 @@ c     print *,gnd,rkm,ip,jf,ka
        if(gnd(1).gt.1.79)print *,exp(gnd(1)),rkm,ip,jf,ka,rx,ry
        sigmaf = 1./sqrt2/sigma
        elseif(ipia.eq.27) then
-       rkm=max(rrup,1.)	!keep source at least 1km away. Pez model Can blow up. SH June27 
+       rkm=max(rrup,1.)        !keep source at least 1km away. Pez model Can blow up. SH June27 
        jf=ip11(ip)
       sigma = sigPez11(xmag,jf)
        ka=3
@@ -3424,7 +3428,7 @@ c fault segment.
       wttmp=weight*rate
         do ifn=1,nfi(ip)
         if(determ.and.isbig.and.isclose.and.norpt(ip,ia))then
-c write home to mom if its big and close and you havent written but should
+c write home to mom if it's big and close and you havent written but should
       write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,
      + ift,xmag,rjb,rrup,wttmp,
      + dtor1,iftype(ift),ifn
@@ -3586,7 +3590,7 @@ c     1      dtor, srcSiteA, F_RV, F_NM,gnd,sigmaf)
       elseif(ipia.eq.33)then
       indx1=indbssa(ip)
       mech=ibtype(ift)
-      iregion=1	!CA-Taiwan version
+      iregion=1        !CA-Taiwan version
       call bssa2013drv(ip,indx_pga,indx1,xmag2,rjb,vs30,z1cal,mech,iregion,alny,sigmaf)
 c skip the 2nd period for now assume the period of interest was tabulated.
       gnd(1)=alny
@@ -3612,7 +3616,7 @@ c      endif
       call gksa13v2(ipgk(ip),ip,xmag2,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q)
 c      print *,xmag2,rrup,gnd(1),sigmaf
       elseif(ipia.eq.39)then
-      ib=0	!basin term Graizer & kalkan model
+      ib=0        !basin term Graizer & kalkan model
       call  gksa(ipgk(ip),ip,xmag2,rrup,gnd,sigmaf,vs30,iftype(ift),IB)
 c      if(ift.eq.1)print *,ip,exp(gnd(1)),rrup,xmag,1/sigmaf/sqrt2
       elseif(abs(ipia).eq.35)then
@@ -3651,10 +3655,10 @@ c      print *,exp(lnSa),xmag2,rrup,rjb,r_x,Sa1100,sig,period(ip)
          endif
         sigmaf = 1./sig/sqrt2
       elseif(ipia.eq.34)then
-      SJ=0.0	!Are we in Japan? 1 = yes.
-c      Hhyp=min(12.,dtor+8.)	!Take a stab at hypocenter depth.
-	Hhyp = dtor+0.5*sinedip*width(ift)
-c	if(ip.eq.1)print *,ift,Hhyp,width(ift),F_RV,F_NM,dtor,dbasin,xmag2,Rrup,R_x,Rjb
+      SJ=0.0        !Are we in Japan? 1 = yes.
+c      Hhyp=min(12.,dtor+8.)        !Take a stab at hypocenter depth.
+        Hhyp = dtor+0.5*sinedip*width(ift)
+c        if(ip.eq.1)print *,ift,Hhyp,width(ift),F_RV,F_NM,dtor,dbasin,xmag2,Rrup,R_x,Rjb
       call CB13_NGA_SPEC  (ip,ipcb12(ip), xmag2,Rrup,R_x,Rjb,F_RV, F_NM,dtor,Hhyp,width(ift),dbasin,Vs30,
      +Dip0(ift),SJ,gnd,sigmaf)
 c      print *,exp(gnd(1)),ift,xmag2,Rrup
@@ -3713,7 +3717,7 @@ c CEUS pre-nga (2002 atten models)
 c     print *,gnd,rkm,ip,jf,ka
             sigmaf = 1./sqrt2/sigma
        elseif(ipia.eq.26)then
-             rkm=max(rrup,1.8)	!blows up for small R
+             rkm=max(rrup,1.8)        !blows up for small R
              jf=ia06(ip)
              ka=2
                sigma = 0.3*2.303
@@ -3722,7 +3726,7 @@ c     print *,gnd,rkm,ip,jf,ka
        if(gnd(1).gt.1.79)print *,exp(gnd(1)),rkm,ip,jf,ka,rx,ry
             sigmaf = 1./sqrt2/sigma
        elseif(ipia.eq.27)then
-       rkm=max(rrup,1.)	!keep source at least 1km away. Pez model Can blow up. SH June27 
+       rkm=max(rrup,1.)        !keep source at least 1km away. Pez model Can blow up. SH June27 
              jf=ip11(ip)
       sigma = sigPez11(xmag2,jf)
             ka=3
@@ -3974,7 +3978,7 @@ c     1      dtor, srcSiteA, F_RV, F_NM,gnd,sigmaf)
       elseif(ipia.eq.33)then
       indx1=indbssa(ip)
       mech=ibtype(ift)
-      iregion=1	!CA-Taiwan version
+      iregion=1        !CA-Taiwan version
       call bssa2013drv(ip,indx_pga,indx1,xmag,rjb,vs30,z1cal,mech,iregion,alny,sigmaf)
 c skip the 2nd period for now assume the period of interest was tabulated.
       gnd(1)=alny
@@ -3999,7 +4003,7 @@ c skip the 2nd period for now assume the period of interest was tabulated.
       call gksa13v2(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),dgkbasin,Q)
 c      print *,xmag,rrup,gnd(1),sigmaf
       elseif(ipia.eq.39)then
-      ib=0	!basin term Graizer & kalkan model
+      ib=0        !basin term Graizer & kalkan model
       call  gksa(ipgk(ip),ip,xmag,rrup,gnd,sigmaf,vs30,iftype(ift),IB)
 c      if(ift.eq.1)print *,ip,exp(gnd(1)),rrup,xmag,1/sigmaf/sqrt2
       elseif(abs(ipia).eq.35)then
@@ -4037,10 +4041,10 @@ c      print *,exp(lnSa),sig,Sa1100,period(ip),xmag,rRup
          endif
         sigmaf = 1./sig/sqrt2
       elseif(ipia.eq.34)then
-      SJ=0.0	!Are we in Japan? 1 = yes.
-c      Hhyp=min(12.,dtor+8.)	!Take a stab at hypocenter depth.
-	Hhyp = dtor+0.5*sinedip*width(ift)
-c	if(ip.eq.1)print *,ift,Hhyp,width(ift),F_RV,F_NM,dtor,dbasin,xmag,Rrup,R_x,Rjb
+      SJ=0.0        !Are we in Japan? 1 = yes.
+c      Hhyp=min(12.,dtor+8.)        !Take a stab at hypocenter depth.
+        Hhyp = dtor+0.5*sinedip*width(ift)
+c        if(ip.eq.1)print *,ift,Hhyp,width(ift),F_RV,F_NM,dtor,dbasin,xmag,Rrup,R_x,Rjb
       call CB13_NGA_SPEC  (ip,ipcb12(ip), xmag,Rrup,R_x,Rjb,F_RV, F_NM,dtor,Hhyp,width(ift),dbasin,Vs30,
      +Dip0(ift),SJ,gnd,sigmaf)
 c      print *,exp(gnd(1)),ift,xmag,Rrup,Period(ip)
@@ -4101,7 +4105,7 @@ c added 3 new CENA models defined by tables. Mar 2011
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
        sigmaf = 1./sqrt2/sigma
       elseif(ipia.eq.26)then
-       rkm=max(rrup,1.8)	!keep source at least 1.8 km away. Atkinson model Can blow up. SH June27 
+       rkm=max(rrup,1.8)        !keep source at least 1.8 km away. Atkinson model Can blow up. SH June27 
       jf=ia06(ip)
       ka=2
             sigma = 0.3*2.303
@@ -4110,7 +4114,7 @@ c added 3 new CENA models defined by tables. Mar 2011
        if(gnd(1).gt.1.79)print *,exp(gnd(1)),rkm,ip,jf,ka,rx,ry
       sigmaf = 1./sqrt2/sigma
       elseif(ipia.eq.27)then
-        rkm=max(rrup,1.)	!keep source at least 1km away. Pez model Can blow up. SH June27 
+        rkm=max(rrup,1.)        !keep source at least 1km away. Pez model Can blow up. SH June27 
       jf=ip11(ip)
       sigma = sigPez11(xmag,jf)
        ka=3
@@ -4174,7 +4178,7 @@ c mx_index is  the index of the maximum magnitude in the set 1,...,nmagf(ift)
        write(idet,679)exp(gnd(1)),1./sigmaf/sqrt2,ipia,ift,xmag,rjb,rrup,
      + wttmp,dtor1,iftype(ift),1
 c       print *,ipia,ift,xmag,rjb,sigma,sigmaf,' *** char without uncert****'
-       endif	!extra print?
+       endif        !extra print?
       endif      !if determ
       do k=1,nlev(ip)
       temp= (gnd(1) - xlev(k,ip))*sigmasq
@@ -4212,7 +4216,7 @@ c mx_index is  the index of the maximum magnitude in the set 1,...,nmagf(ift)
        write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,ift,xmag,rjb,rrup,
      + wttmp,dtor1,iftype(ift),ifn
 c       print *,ipia,ift,xmag,rjb,' *** char without uncert 2nd****'
-       endif	!extra print?
+       endif        !extra print?
       endif      !if determ
         do  k=1,nlev(ip)
        pr=(gnd(ifn) - xlev(k,ip))*sigmaf
@@ -4406,7 +4410,7 @@ c write some mean deagg info for each fault with more than tiny contribution
        if(prx.gt.tiny)write(40+ip,27)iflt,farbar/prx,
      + fambar/prx,faebar/prx,prx,nfi(ip)
 27      format(i3,1x,f9.3,1x,f7.3,1x,f5.2,1x,e11.5,4x,i2)
-      enddo	!iflt
+      enddo        !iflt
        close(ip+20)
        close(40+ip)
        enddo      !ip (.true.)
@@ -4698,12 +4702,12 @@ c tc Mw coeffs. 3.33 hz is log-log from the 2.5 and 5 hz values.
       
            th = (/9.3,7.5,6.8,8.3,7.26,7.027,6.9,10.5,7.1,6.858496/)
 c write sigma in nat log units. Saves a divide
-           tsigma = (/0.7506,0.7506,0.799,.7506,.7506,.7506,0.799,.7506,.7506,0.799/)	
+           tsigma = (/0.7506,0.7506,0.799,.7506,.7506,.7506,0.799,.7506,.7506,0.799/)        
            clamp = (/3.,6.,0.,6.,6.,6.,0.,6.,6.,0./)
         xmag= xmag0
 c correct mag will be used in calling program. never need to convert here.
       if(lceus_sigma)then
-      sigma=ceus_sigma	!special study 3/2011
+      sigma=ceus_sigma        !special study 3/2011
       else
           sigma= tsigma(ip)
           endif
@@ -4817,7 +4821,7 @@ c getAB95 removed. Seems to be too archaic.
 c  hardrock and   BC rock tables can be read in here.
 c 
 c replaced data statements with array constructors oct 2006.
-      parameter (np=7)
+      parameter (np=8)
       real gma(20,21,4*np),tabdist(21,4)
       logical isok
       common/gmat/gma,tabdist
@@ -4825,13 +4829,13 @@ c replaced data statements with array constructors oct 2006.
       character*4 adum
 c assumes these files are in working directory or GR/ sub-directory.
       nametab=(/'pgak01l.tbl ','t0p2k01l.tbl','t1p0k01l.tbl',
-     1 't0p1k01l.tbl','t0p3k01l.tbl','t0p5k01l.tbl','t2p0k01l.tbl'/)
+     1 't0p1k01l.tbl','t0p3k01l.tbl','t0p5k01l.tbl','t1p5k01l.tbl','t2p0k01l.tbl'/)
       nameab=(/'Abbc_pga.tbl','Abbc0p20.tbl','Abbc1p00.tbl',
-     1 'Abbc0p10.tbl','Abbc0p30.tbl','Abbc0p50.tbl','Abbc2p00.tbl'/)
+     1 'Abbc0p10.tbl','Abbc0p30.tbl','Abbc0p50.tbl','Abbc1p50.tbl','Abbc2p00.tbl'/)
        hardtab=(/'pgak006.tbl ','t0p2k006.tbl','t1p0k006.tbl',
-     1 't0p1k006.tbl','t0p3k006.tbl','t0p5k006.tbl','t2p0k006.tbl'/)
+     1 't0p1k006.tbl','t0p3k006.tbl','t0p5k006.tbl','t1p5k006.tbl','t2p0k006.tbl'/)
       hardab=(/'ABHR_PGA.TBL','ABHR0P20.TBL','ABHR1P00.TBL',
-     1'ABHR0P10.TBL','ABHR0P30.TBL','ABHR0P50.TBL','ABHR2P00.TBL'/)
+     1'ABHR0P10.TBL','ABHR0P30.TBL','ABHR0P50.TBL','ABHR1P50.TBL','ABHR2P00.TBL'/)
       if(iq.eq.1)then            !fea BCtable
       inquire(file=nametab(ip),exist=isok)
       if(.not.isok)then
@@ -4908,19 +4912,19 @@ c dist0= hypo distance used in getfea
 c sigmanf, distnf = nearfield sigma apply when distance < distnf (not used 2002)
 c replaced data statements with array constructors oct 2006.
 c
-        parameter (np=7,sqrt2i=0.707106781)
+        parameter (np=8,sqrt2i=0.707106781)
       common/gmat/gma,tabdist
       common/epistemic/l_gnd_ep,gnd_ep,ide,ime
       common/ceus_sig/lceus_sigma,ceus_sigma
       real gnd_ep(3,3,8),gndout(3)
       logical lceus_sigma,l_gnd_ep(8),sp
 
-      real bdepth(7),bsigma(7),clamp(7),xlogfac(7)
+      real bdepth(np),bsigma(np),clamp(np)
       real gma(20,21,4*np),tabdist(21,4)
              real perx(8)      !a reference set including pgv which wasn't used in 2002
-        perx= (/0.,0.2,1.0,0.1,0.3,0.5,2.0,-1./ )
-           bdepth= (/5.0,5.0,5.0,5.0,5.0,5.0,5.0/)
-           bsigma= (/0.7506,0.7506,0.799,0.7506,0.7506,.7506,0.799/)      !converted to nat log
+        perx= (/0.,0.2,1.0,0.1,0.3,0.5,1.5,2.0/ )
+           bdepth= (/5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0/)
+           bsigma= (/0.7506,0.7506,0.799,0.7506,0.7506,.7506,0.799,0.799/)      !converted to nat log
 c---- following for  FEA or Atkinson-Boore look-up table
       ipq=ip+np*(iq-1)
 c        if(icode(ip,ia).eq.1) xmag= 2.715 -0.277*xmag0+0.127*xmag0*xmag0
@@ -4959,7 +4963,7 @@ c--- following is for clipping
 c pga has index ip=1
            gnd=min(0.405,gnd)
            elseif(sp)then
-c No Clipping for LP: 1s SA haz index 3. 2s has period index 7  Noo clipping for2hz either.
+c No Clipping for LP: 1s SA haz index 3. 2s has period index 8  No clipping for2hz either.
            gnd=min(gnd,1.099)
            endif
        gndout(1)=gnd
@@ -4982,19 +4986,17 @@ c ir=2 hard rock (2800 m/s?)
 c output gnd=log(median) and sigmaf=1/sigma/sqrt2
 c replaced data statements with array constructors oct 2006.
 c
-      parameter(np=8,dist1=50.358713,sqrt2=1.41421356)
+      parameter(dist1=50.358713,sqrt2=1.41421356)
 c      dist1= sqrt(50.*50.+ 6.*6.) in above parameter statement
       common/epistemic/l_gnd_ep,gnd_ep,ide,ime
       common/ceus_sig/lceus_sigma,ceus_sigma
       real gnd_ep(3,3,8),gndout(3)
       logical lceus_sigma,l_gnd_ep(8)
 
+      real,dimension(8):: a1,a1h,a2,a3,a4,a5,a6,a7,sig0
 c enter statements with coeff values.
-             real perx(8)      !a reference set including pgv which wasn't used in 2002
-c perx(8) corresponds to PGV which is not set up for Somerville. Could check
-c if that relation has a PGV model. SH July 31 2006.
-      real a1(np),a1h(np),a2(np),a3(np),a4(np),a5(np),a6(np)
-      real a7(np),sig0(np),clamp(np)
+             real perx(8)
+c     !a reference set including 1.5s
       perx = (/0.,0.2,1.0,0.1,0.3,0.5,1.5,2./)
       a1 = (/0.658,1.358,-0.0143,1.442,1.2353,.8532, 0.7696301,-0.9497/)
       a1h = (/0.239,0.793,-0.307,0.888,0.6930,0.3958,-0.5614739,-1.132/)
@@ -5005,10 +5007,10 @@ c if that relation has a PGV model. SH July 31 2006.
       a6 = (/-0.477,-.477,-0.755,-.477,-.523792,-.605213,-0.8667278,-.946/)
       a7 = (/0.,0.,-0.102,0.,-.030298,-.0640237,-0.124228574,-.140/)
       sig0 = (/0.587,0.611,0.693,0.595,.6057,.6242,0.7696301,0.824/)
-      clamp = (/3.,6.,0.,6.,6.,6.,0.,0./)
+c      clamp = (/3.,6.,3.,6.,6.,6.,0.,0./)
 c compute SOmerville median and dispersion estimates.
       if(lceus_sigma)then
-      sig=ceus_sigma	!special study 3/2011
+      sig=ceus_sigma        !special study 3/2011
       else
         sig= sig0(ip)
         endif
@@ -5160,7 +5162,7 @@ c Coeffs written but not checked july 27 2006. SH. Checked oct 2007.
       logical l_gnd_ep(8)
 
       real, dimension(7):: c1,c2,c3,c4,c5,c6,c7,c8,c9,cmagsig
-      real, dimension(7):: csigma1,csigmacoef,csigma2,c10,c11,csite,c15
+      real, dimension(7):: csigma1,c12,c13,c10,c11,csite,c15
       real mfac
       c1= (/-4.033,-2.771,-3.867,-2.661,-2.999,-3.556,-4.311/)
       c2= (/0.812,0.812,0.812, 0.812,0.812,0.812,0.812/)
@@ -5176,8 +5178,8 @@ c Coeffs written but not checked july 27 2006. SH. Checked oct 2007.
       c15= (/.370,.370,0.281,0.370,0.370,0.370,0.160/)      !HW effect.
       csite= (/-0.289,-0.331,-0.607,-0.299,-0.453,-0.528,-0.649/)      !is this a vs30-dependent term?
       csigma1= (/0.920,0.981,1.021,0.958,0.984,0.990,1.021/)
-      csigmacoef= (/0.07, 0.07,0.07,0.07, 0.07,0.07,0.07/)
-      csigma2= (/.402,0.463,0.503,0.44,0.466,0.472,0.503/)
+      c12= (/0.07, 0.07,0.07,0.07, 0.07,0.07,0.07/)
+      c13= (/.402,0.463,0.503,0.44,0.466,0.472,0.503/)
       cmagsig= (/ 7.4,7.4,7.4,7.4,7.4,7.4,7.4/)
       mfac=(8.5-xmag)*(8.5-xmag)
 c
@@ -5209,8 +5211,8 @@ c---- hanging wall term for thrust faults or more steeply dipping reverse faults
       endif
 ccc   sigma C&B with mag-dependence
 2          if(xmag.lt.cmagsig(ip)) csigma= csigma1(ip)- 
-     &     csigmacoef(ip)*xmag
-          if(xmag.ge.cmagsig(ip)) csigma= csigma2(ip)
+     &     c12(ip)*xmag
+          if(xmag.ge.cmagsig(ip)) csigma= c13(ip)
       sigmaf= 1./csigma/sqrt2
        gndout(1)=gnd
          if(l_gnd_ep(iper))then
@@ -5223,7 +5225,7 @@ ccc   sigma C&B with mag-dependence
 cccccccccccccc
       subroutine getCampCEUS(iper,ip,ir,xmag,dist,gndout,csigma,sigmaf)
         parameter (sqrt2=1.414213562,alg70=4.2484952,alg130=4.8675345)
-        parameter (np=7)
+        parameter (np=12)
       common/mech/ss,rev,normal,obl
       common/ceus_sig/lceus_sigma,ceus_sigma
       logical lceus_sigma,ss,rev,normal,obl      
@@ -5231,6 +5233,7 @@ c      iper = period index in iatten(*,*)
 c      ip = period index in coeff arrays below.
 c  Campbell CEUS BSSA June 2003. BC or A rock. 7 periods.
 c Campbell has exceptionally low sigma for higher M events (NMSZ M7.7 for example) 
+c----- Add 1.5s coeffs jan 31 2014
 c testing june 23 2006. SH. No clamp during
 c initial effort. 6-23-06. Clipping applied for range of T, 0.02 to 0.5 s.
 c input xmag= moment mag
@@ -5244,23 +5247,40 @@ c
       logical l_gnd_ep(8),sp
 
       real,dimension(np):: c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,
-     1 clamp,c1h,csigma1,csigmacoef,csigma2,cmagsig,perx
-       perx = (/0.,0.2,1.0,0.1,0.3,0.5,2.0/)
-      c1= (/0.4492,.1325,-.3177,.4064,-0.1483,-0.1333,-1.2483/)
-        c1h= (/0.0305,-0.4328,-.6104,-0.1475,-.6906,-.5907,-1.4306/)
-      c2= (/.633,.617,.451,.613,0.609,0.534,0.459/)
-      c3= (/-.0427,-.0586,-.2090,-.0353,-0.0786,-0.1379,-0.2552/)
-      c4= (/-1.591,-1.32,-1.158,-1.369,-1.28,-1.216,-1.124/)
-      c5= (/.683,.399,.299,0.484,0.349,0.318,.310/)
-      c6= (/.416,.493,.503,0.467,0.502,0.503,.499/)
-      c7= (/1.140,1.25,1.067,1.096,1.241,1.116,1.015/)
-      c8= (/-.873,-.928,-.482,-1.284,-.753,-0.606,-.417/)
-      c9= (/-.00428,-.0046,-.00255,-.00454,-.00414,-.00341,-.00187/)
-      c10= (/.000483,.000337,.000141,.00046,.000263,.000194,.000103/)
-      csigma1= (/1.030,1.077,1.110,1.059,1.081,1.098,1.093 /)
-      csigmacoef= (/-.0860,-.0838,-.0793,-.0838,-0.0838,-0.0824,-.0758/)
-      csigma2= (/0.414,.478,.543,0.460,0.482,0.508,0.551/)
-      cmagsig= (/7.16,7.16,7.16,7.16,7.16,7.16,7.16/)
+     1 clamp,c1h,c11,c12,c13,perx
+       perx = (/0.01,0.2,1.0,0.1,0.3,0.4,
+     + 0.5,1.5,2.0,.03,.04,.05/)
+      c1= (/0.4492,.1325,-.3177,.4064,-0.1483,-0.17039,
+     + -0.1333,-0.86206603,-1.2483,1.68,1.28,0.87/)
+      c1h= (/0.0305,-0.4328,-.6104,-0.1475,-.6906,-0.67076736,
+     + -.5907,-1.0901862,-1.4306,1.186,0.72857,0.3736/)
+      c2= (/.633,.617,.451,.613,0.609,0.5722637,
+     + 0.534,0.45567968,0.459,.622,.618622,.616/)
+      c3= (/-.0427,-.0586,-.2090,-.0353,-0.0786,-0.10939892,
+     + -0.1379,-0.23602527,-0.2552,-.0362,-.035693,-.0353/)
+      c4= (/-1.591,-1.32,-1.158,-1.369,-1.28,-1.244142,
+     + -1.216,-1.1381112,-1.124,-1.691,-1.5660,-1.469/)
+      c5= (/.683,.399,.299,0.484,0.349,0.32603806,
+     + 0.318,0.30543458,.310,0.922,0.75759,0.630/)  !paper's c7
+      c6= (/.416,.493,.503,0.467,0.502,0.5040741,
+     + 0.503,0.5006602,.499,.376,0.40246,0.423/) !paper's c8
+      c7= (/1.140,1.25,1.067,1.096,1.241,1.1833254,
+     + 1.116,1.036582,1.015,0.759,0.76576,0.771/) !paper's c9
+      c8= (/-.873,-.928,-.482,-1.284,-.753,-0.6529481,
+     + -0.606,-0.44397741,-.4170,-.922,-1.1005,-1.239/) !paper's c10
+      c9= (/-.00428,-.0046,-.00255,-.00454,-.00414,-3.7463151E-3,
+     + -.00341, -2.55E-3,-.00187,-.00367,-.0037319,-.00378/) !paper's c5
+      c10= (/.000483,.000337,.000141,.00046,.000263,2.1878805E-4,
+     + .000194,1.1877142E-4,.000103,.000501,.00050044,.0005/) !paper's c6
+      c11= (/1.030,1.077,1.110,1.059,1.081,1.0901983,
+     + 1.098,1.1000557,1.093,1.03,1.037,1.042 /)  !paper's c11
+      c12= (/-.0860,-.0838,-.0793,-.0838,-0.0838,-0.083180725,
+     + -0.0824,-0.07725263,-.0758,-.086,-0.0848,-.0838/) !paper's c12
+      c13= (/0.414,.478,.543,0.460,0.482,0.49511834,
+     + 0.508,0.54767966,0.551,.414,0.43,.443/)  !paper's c13
+c clamp for 2s set to 0 as per Ken Campbell's email of Aug 18 2008.
+      clamp= (/3.0,6.0,0.,6.,6.,6.,3.0,0.,0.,6.,6.,6./)
+      cmagsig=  7.16        !make it a constant
       sp = perx(ip).gt.0.02.and.perx(ip).lt.0.5
       if(ir.eq.1)then
       gnd=c1(ip)
@@ -5283,10 +5303,10 @@ c--- following is for clipping
           endif
           if(lceus_sigma)then
           csigma = sigma_ceus      !special study 3/2011
-          elseif(xmag.lt.cmagsig(ip))then
-           csigma= csigma1(ip)+ csigmacoef(ip)*xmag
+          elseif(xmag.lt.cmagsig)then
+           csigma= c11(ip)+ c12(ip)*xmag
           else
-           csigma= csigma2(ip)
+           csigma= c13(ip)
           endif
        gndout(1)=gnd
          if(l_gnd_ep(iper))then
@@ -6623,7 +6643,7 @@ c the frequencies according to AB2006
      1       0.00e+00,-1.00e+00/)
 c frequency - independent sigma
       if(lceus_sigma)then
-      sigma=ceus_sigma	!special study 3/2011
+      sigma=ceus_sigma        !special study 3/2011
       else
       sigma = 0.3*sfac
       endif
@@ -6771,7 +6791,7 @@ c apply stress factor before nonlinear adjustments, which occur in eqn (7) of ab
         endif
 c need to take alog10(exp(S)) according to eqns. 7a and 7b AB2006. p. 2200 bssa
 c This correction does not affect rock at BC boundary, but does affect soil calcs.
-      S = alog10(exp(S))      	!new nov 26 2007.
+      S = alog10(exp(S))              !new nov 26 2007.
       endif
       gnd = c1(ip) + c2(ip)*M + c3(ip)*M*M + (c4(ip)+c5(ip)*M)*f1 +
      1      (c6(ip)+c7(ip)*M)*f2 + (c8(ip)+c9(ip)*M)*f0 + c10(ip)*R +sf2 + S
@@ -7062,35 +7082,36 @@ c iq is index in pd array for current spectral period, iq shuld be in 1 to 8 ran
 c ir is hardrock (-1) or BCrock indicator (+1).
 c Silva (2002) table 5, p. 13. Single corner, constant stress drop, w/saturation.
 c parts of this subroutine are from frankel hazFXv7 code. S Harmsen
+c added 1.5s Jan 31 2014. SH.
 c Added 2.5 and 25 hz July 1 2008 (for NRC projects). Add 20 hz, or 0.05 s. july 6
 c Note: PGV and several other periods are available in Silva Table 5. 
-      parameter (sqrt2=1.414213562,npmx=11)
+      parameter (sqrt2=1.414213562,npmx=12)
       common/epistemic/l_gnd_ep,gnd_ep,ide,ime
       common/ceus_sig/lceus_sigma,ceus_sigma
         real gnd_ep(3,3,8),gndout(3),c
         logical lceus_sigma,l_gnd_ep(8)
 
       real, dimension(npmx) :: c1,c1hr,c2,c3,c4,c5,c6,c7,c8,c9,c10,pd,sigma
-      pd=(/0.,0.04,0.05,0.1,0.2,0.3,0.4,0.5,1.,2.,5./)
+      pd=(/0.,0.04,0.05,0.1,0.2,0.3,0.4,0.5,1.,1.5,2.,5./)
       c1hr=(/5.53459,6.81012,6.63937,5.43782,3.71953,2.60689,
-     1 1.64228,0.69539,-2.89906,-7.42051,-13.69697/)
+     1 1.64228,0.69539,-2.89906,-5.5439386,-7.42051,-13.69697/)
 c c1 from c1hr using A->BC factors, 1.74 for 0.1s, 1.72 for 0.3s, 1.58 for 0.5s, and 1.20 for 2s
 c this from A Frankel advice, Mar 14 2007. For 25 hz use PGA amp. 
 c For BC at 2.5 hz use interp between .3 and .5. 1.64116 whose log is 0.4953 
         c1=(/5.9533, 7.2288,7.023,5.9917,4.2848,3.14919,2.13759,
-     1 1.15279,-2.60639,-7.23821,-13.39/)
+     1 1.15279,-2.60639,-5.315831,-7.23821,-13.39/)
        c2=(/-.11691,-0.13594,-.12193,-0.02059,.12490,.23165,.34751,
-     1 .45254,.88116,1.41946,2.03488/)
-      c4=(/ 2.9,3.0,3.,2.9,2.8,2.8,2.8,2.8,2.8,2.7,2.5/)     
+     1 0.45254,0.88116,1.1960454,1.41946,2.03488/)
+      c4=(/ 2.9,3.0,3.,2.9,2.8,2.8,2.8,2.8,2.8,2.7415037,2.7,2.5/)     
       c6=(/ -3.42173,-3.48499,-3.45478,-3.25499,-3.04591,-2.96321,-2.87774,
-     1 -2.818,-2.58296,-2.26433,-1.91969/)
+     1 -2.818,-2.58296,-2.3965733,-2.26433,-1.91969/)
       c7=(/ .26461,.26220,0.26008,0.24527,.22877,.22112,.21215,
-     1 .20613,.18098,.14984,.12052/)
+     1 .20613,.18098,0.16276427,.14984,.12052/)
       c10=(/ -.06810,-.06115,-.06201,-0.06853,-.08886,-0.11352,-.13838,
-     1 -0.16423,-.25757,-0.33999,-0.35463/)
+     1 -0.16423,-.25757,-0.30578261,-0.33999,-0.35463/)
 c note very high sigma for longer period SA:
       sigma= (/.8471,0.8870,0.8753,0.8546,.8338,0.8428,.8386,
-     1 0.8484,.8785,1.0142,1.2253/)
+     1 0.8484,.8785,0.9578794,1.0142,1.2253/)
         if(ir.ge.1)then
         c=c1(iq)
         else
@@ -7115,7 +7136,7 @@ c 2.5, 3 and 5 hz 10 Hz median limit 3.0 g
        endif
 c--- return sigma and sigmaf for clipping 
       if(lceus_sigma)then
-      sig=ceus_sigma	!special study 3/2011
+      sig=ceus_sigma        !special study 3/2011
       else 
       sig=sigma(iq)
       endif
@@ -7140,7 +7161,7 @@ c  Single corner, variable stress drop as fcn of M, w/saturation.
       pd=(/0.,0.1,0.2,0.3,0.5,1.,2.,5./)
       c1hr=(/5.19757,4.94207,3.46126,1.72806,-0.51056,-4.46472,-9.12315,-15.20886/)
 c A->BC factors: 1.52 for pga 1.74 for 0.1s; 1.76 for 0.2s; 1.58 for 0.5s; 1.34 for 1.0s; 1.20 for 2s, 1.15 for 5-s SA.
-      c1=(/5.61628, 5.4959551,4.0265738,2.2703843,-0.0531352,-4.1720504,-8.9408284,-15.0690981/)	!copied from getSilva. C1uses 
+      c1=(/5.61628, 5.4959551,4.0265738,2.2703843,-0.0531352,-4.1720504,-8.9408284,-15.0690981/)        !copied from getSilva. C1uses 
 c frankel A->BC factors. These may need work in future updates (say, relative to 2008)
       c2=(/0.07129,0.18877,0.33544,0.49782,0.76645,1.24156,1.78482,2.34990/)
       c4=(/ 2.8,2.8,2.8,2.7,2.7,2.7,2.6,2.4/)     
@@ -7189,7 +7210,7 @@ c this subroutine resamples fault trace to new 1km(?) discretization. It also
 c determines downdip coordintes corresponding to those at top of fault.
 c these downdip values will be used for buried ruptures with GR distribution.
 c Inputs: ift = fault number
-	parameter (nfltmx=1000)
+        parameter (nfltmx=1000)
 c      npts= number of points on discretized input fault
 c      x(*,ift)=x -coord
 c      y(*,ift)=y-coord (degrees)
@@ -7850,7 +7871,7 @@ c      soil records.
       real, dimension(3):: gnd3
       real, dimension(npmx):: c1,c2,c3,c4,c5,period,sigma
       period=(/0.0,0.1,0.2,0.5,1.,2.0/)
-      c1=(/	-1.579,-4.608,-4.746,-5.717,-6.595,-7.205/)
+      c1=(/        -1.579,-4.608,-4.746,-5.717,-6.595,-7.205/)
       c2=(/0.554, 0.486,0.645, 0.920, 1.084,1.131/)    
       c3=(/-0.560, -0.609,-0.674,-0.761, -0.792, -0.762/)  
       c4=(/-0.00302,-0.00198, -0.00155,-0.00106,-0.00075, -0.00051/)  
@@ -7885,10 +7906,10 @@ c      ip = outer loop period index is 1 => period2: spectral period (scalar) is
 c common input
 c       iq = period index in the below arrays. This has been precomputed
 c      ipgeom (not used here)
-c      lvs	(not used here)
+c      lvs        (not used here)
 c
 c Output: basiteamp = log(AMP at vs30)-log(AMP at vs30r)
-      parameter (np=23)	!23 periods apr 07. include 0.01 to 10 s 
+      parameter (np=23)        !23 periods apr 07. include 0.01 to 10 s 
       parameter (pi=3.14159265,sqrt2=1.414213562,vref=760.)
       parameter (dx=1.098612289,dxsq=1.206948961,dxcube=1.325968960,plfac=-0.510825624)
 c dx = ln(a2/a1), made a param. used in a smoothed nonlin calculation sept 2006.
@@ -8051,7 +8072,7 @@ c from the snippet Gail sent, which only allows one model.
 c moved open to main. problems passing the string not resolved.
 c Currently looking at 3 possible models, AB08, AB06', or Pz11
 c wrute ti unit 94.
-        parameter (gfac=6.8875526,sfac=2.3025851)	!to convert to base e
+        parameter (gfac=6.8875526,sfac=2.3025851)        !to convert to base e
       common/gail1/xmag(20,3), gma(20,30,20,3), rlog(30,3), f(20,3),itype(3)
       common/gail2/nf(3), nd(3), nm(3)
       common/gnome/fname
@@ -8070,7 +8091,7 @@ c wrute ti unit 94.
       read(3,*) (f(jf,i), jf=1,nf(i))
 c
       write(94,9)fname(i2:i3), itype(i)
-      write(94,99)'R(km)  1hzSA(g)   5hzSA(g)	  PGA(g) for hard rock'
+      write(94,99)'R(km)  1hzSA(g)   5hzSA(g)          PGA(g) for hard rock'
       do 5000 jm = 1, nm(i)
         read(3,*)xmag(jm,i)
         m7=xmag(jm,i).eq.7.0
@@ -8094,14 +8115,14 @@ c      jf = frequency index
 c      ka = 1,2, or 3 depending on which table to use AB06 AB08 or P11
 c     Gets ground motion value (ln PSA) from table
       real sfac,Vs30,r,rjb,amag
-        parameter (gfac=6.8875526,sfac=2.3025851)	!to convert to base e
+        parameter (gfac=6.8875526,sfac=2.3025851)        !to convert to base e
       common/gail1/xmag(20,3), gma(20,30,20,3), rlog(30,3), f(20,3), itype(3)
       common/gail2/nf(3), nd(3), nm(3)
-      common/gail3/freq(13)
-      real, dimension(13) :: bcfac
+      common/gail3/freq(14)
+      real, dimension(14) :: bcfac
         real, dimension(20) :: avg
-c frequencies: 0.2, 0.33, 0.5, 1.0, 2.0, 3.33, 5., 10., 20., 33.0, 50., PGA, PGV
-            bcfac = (/0.06, 0.08,0.09, 0.11, 0.14, 0.14, 0.12, 0.03, -0.2, -.045, -.045, -.045,0.09/)
+c frequencies: 0.2, 0.33, 0.5, 0.67, 1.0, 2.0, 3.33, 5., 10., 20., 33.0, 50., PGA, PGV
+            bcfac = (/0.06, 0.08,0.09,0.10, 0.11, 0.14, 0.14, 0.12, 0.03, -0.2, -.045, -.045, -.045,0.09/)
 c bcfac for pga can be a function of rjb= -0.3+.15 log(rjb) (Repi in Gail's notes)
 c     
 c     Use interpolation to get amean for given freq(jfreq), amag, R (hazard looping values).
@@ -8166,14 +8187,14 @@ c Also, nothing in 2011 models is available for handing soil Vs.
       amean = amean -0.3 + 0.15*rl
       else
       amean = amean + bcfac(jf)
-      endif	!pga or not?
-      endif	!BC rock from A?
+      endif        !pga or not?
+      endif        !BC rock from A?
 c change to base e log to fit into standard framework. Convert to units g
       amean11 = amean*sfac -gfac
 c apply the median clamp for some frequencies. Gail email, Mar 23, 2011.
       if(freq(jf).gt.2.1 .and. freq(jf) .lt.40.)then
 c      amean11=min(amean11,1.792)
-      amean11=min(amean11,1.099)	!corrected clamp value
+      amean11=min(amean11,1.099)        !corrected clamp value
       elseif(freq(jf).gt.90.)then
       amean11=min(amean11,0.405)
       endif
@@ -8182,20 +8203,22 @@ c      amean11=min(amean11,1.792)
 
       real function sigPez11(mag,ip)
       parameter (fac=-6.95e-3,afac=2.3025851 )
-      real mag	!Mw
+      real mag        !Mw
 c Input magnitude and period index, 
 c Output sigma_lnY
 c magnitude dependent sigma_lnY for the Pezeshk and Zandieh (BSSA,2011)
 c GMPE. coeffs c12, c13,c14 from table 2 of their article
+c Add 1.5s Mar 14 2014.
+c this 1.5s period is in demand these days. SHarmsen.
        common/ceus_sig/lceus_sigma,ceus_sigma
        logical lceus_sigma
-      real, dimension(13) :: per, c12,c13,c14
-      per= (/5.,3.,2.,1.,0.5,0.3,0.2,0.1,0.05,0.03,0.02,0.00,0.01/)	!s
-      c12= (/-6.9e-3,-8.509e-3,-9.443e-3,-1.18e-2,-1.556e-2,-1.837e-2,-2.046e-2,-2.259e-2,
+      real, dimension(14) :: per, c12,c13,c14
+      per= (/5.,3.,2.,1.5,1.,0.5,0.3,0.2,0.1,0.05,0.03,0.02,0.00,0.01/)        !s
+      c12= (/-6.9e-3,-8.509e-3,-9.443e-3,-0.01042124,-1.18e-2,-1.556e-2,-1.837e-2,-2.046e-2,-2.259e-2,
      & -2.244e-2,-2.094e-2,-1.974e-2,-2.105e-2,-1.974e-2/)
-      c13= (/3.577e-1,3.54e-1,3.56e-1,3.588e-1,3.722e-1,3.867e-1,3.979e-1,4.102e-1,3.990e-1,
+      c13= (/3.577e-1,3.54e-1,3.56e-1,0.3571621,3.588e-1,3.722e-1,3.867e-1,3.979e-1,4.102e-1,3.990e-1,
      & 3.817e-1,3.691e-1,3.778e-1,3.688e-1/)
-      c14= (/3.58e-1,3.43e-1,3.387e-1,3.249e-1,3.119e-1,3.068e-1,3.033e-1,3.007e-1,2.905e-1,
+      c14= (/3.58e-1,3.43e-1,3.387e-1,0.33297246,3.249e-1,3.119e-1,3.068e-1,3.033e-1,3.007e-1,2.905e-1,
      & 2.838e-1,2.796e-1,2.791e-1,2.792e-1/)
         if(lceus_sigma)then
         sigPez11=ceus_sigma      !for special studies. Use a low sigma for all GMPE periods, magnitudes, etc.
@@ -8263,11 +8286,11 @@ C*********Coefficients file, dec 2012 ***************
          c7 =  1.190
          c8 = -6.150
 c         c9 =  0.525
-	c9 = 0.6	!V.G. updates of apr 8 2013
+        c9 = 0.6        !V.G. updates of apr 8 2013
          bv = -0.240 
          Va = 484.5
          R1 = 100.0
-         c11= 0.345	!corrected May 21 2013. Lower Q and lower c11.
+         c11= 0.345        !corrected May 21 2013. Lower Q and lower c11.
          D1 = 0.65
          sigpga = 0.550
          if (per(L).le.0.12) then
@@ -8294,7 +8317,7 @@ ccccc      Mec = 4 combination of thrust and strike
           Frv = 1.14
       ENDIF
       A = (c1*atan(Mw+c2)+c3)*Frv
-      A = A/1.12	!corrected denom. May 21 2013.
+      A = A/1.12        !corrected denom. May 21 2013.
       Y1 = alog(A)
 
 c********* Distance R0 Factor ********************
@@ -8339,10 +8362,10 @@ ccccccc End non-basin PGA Calculation cccccccccccccccccccccccc
 c------SA calculations ----------mod coeffs mar 29 2013 SH-----
           e1=-0.0012
 c          e2=-0.40854
-	e2 = -0.38
+        e2 = -0.38
           e3= 0.0006
 c          e4= 3.63
-	e4 = 3.9	!V.G. updates of apr 8 2013
+        e4 = 3.9        !V.G. updates of apr 8 2013
           a1= 0.01686
           a2= 1.2695
           a3= 0.0001
@@ -8351,10 +8374,10 @@ c          t1= 0.0022
           t1= 0.001
 c          t2= 0.63
 c          t2= 0.60
-	t2 = 0.59
+        t2 = 0.59
           t3=-0.0005
 c          t4=-2.1
-	t4 = -2.3	!V.G. updates of apr 8 2013
+        t4 = -2.3        !V.G. updates of apr 8 2013
 c          s1=0.001
           s1=0.00
           s2=0.077
@@ -8366,7 +8389,7 @@ c          s1=0.001
 
           Si = s1*x-(s2*Mw+s3)
 
-          Tspo = MAX(0.3,ABS(t1*x+t2*Mw+t3*Vs+t4))	!changed 3/29/2013
+          Tspo = MAX(0.3,ABS(t1*x+t2*Mw+t3*Vs+t4))        !changed 3/29/2013
           Pern = (per(L)/Tspo)**Slope
 
           temp1 = (alog(per(L))+Mu)/Si
@@ -8695,37 +8718,37 @@ c
         Period  = (/0.01,0.02,0.03,0.04,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,0.5,0.75,1.,1.5,2.,3.,4.,5.,7.5,10./)
 c coeffs. from apr 10 2013 email. Two sets which to use depends on Mw (xmag)
       if(xmag.le.6.75)then
-	a1=(/7.0887,7.1157,7.2087,7.3287,6.2638,5.9051,7.5791,8.0190,9.2812,9.5804,9.8912,9.5342,
+        a1=(/7.0887,7.1157,7.2087,7.3287,6.2638,5.9051,7.5791,8.0190,9.2812,9.5804,9.8912,9.5342,
      +9.2142,8.3517,7.0453,5.1307,3.3610,0.1784,-2.4301,-4.3570,-7.8275,-9.2857/)
-	a2=(/0.2058,0.2058,0.2058,0.2058,0.0625,0.1128,0.0848,0.1713,0.1041,
+        a2=(/0.2058,0.2058,0.2058,0.2058,0.0625,0.1128,0.0848,0.1713,0.1041,
      +0.0875,0.0003,0.0027,0.0399,0.0689,0.1600,0.2429,0.3966,0.7560,0.9283,1.1209,1.4016,1.5574/)
-	a3=(/0.0589,0.0589,0.0589,0.0589,0.0417,0.0527,0.0442,0.0329,0.0188,
+        a3=(/0.0589,0.0589,0.0589,0.0589,0.0417,0.0527,0.0442,0.0329,0.0188,
      +0.0095,-0.0039,-0.0133,-0.0224,-0.0267,-0.0198,-0.0367,-0.0291,-0.0214,-0.0240,-0.0202,-0.0219,-0.0035/)
-	b1=(/2.9935,2.9935,2.9935,2.9935,2.8664,2.9406,3.0190,2.7871,2.8611,
+        b1=(/2.9935,2.9935,2.9935,2.9935,2.8664,2.9406,3.0190,2.7871,2.8611,
      +2.8289,2.8423,2.8300,2.8560,2.7544,2.7339,2.6800,2.6837,2.6907,2.5782,2.5468,2.4478,2.3922/)
-	b2=(/-0.2287,-0.2287,-0.2287,-0.2287,-0.2418,-0.2513,-0.2516,-0.2236,
+        b2=(/-0.2287,-0.2287,-0.2287,-0.2287,-0.2418,-0.2513,-0.2516,-0.2236,
      +-0.2229,-0.2200,-0.2284,-0.2318,-0.2337,-0.2392,-0.2398,-0.2417,-0.2450,-0.2389,-0.2514,-0.2541,-0.2593,-0.2586/)
-	x=(/-0.854,-0.854,-0.854,-0.854,-0.631,-0.591,-0.757,-0.911,-0.998,
+        x=(/-0.854,-0.854,-0.854,-0.854,-0.631,-0.591,-0.757,-0.911,-0.998,
      +-1.042,-1.030,-1.019,-1.023,-1.056,-1.009,-0.898,-0.851,-0.761,-0.675,-0.629,-0.531,-0.586/)
-	g=(/-0.0027,-0.0027,-0.0027,-0.0027,-0.0061,-0.0056,-0.0042,-0.0046,
+        g=(/-0.0027,-0.0027,-0.0027,-0.0027,-0.0061,-0.0056,-0.0042,-0.0046,
      +-0.0030,-0.0028,-0.0029,-0.0028,-0.0021,-0.0029,-0.0032,-0.0033,-0.0032,-0.0031,-0.0051,-0.0059,-0.0057,-0.0061/)
-	phi=(/0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.06,0.04,0.02,0.02,0.,0.,0.,0./)
+        phi=(/0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.06,0.04,0.02,0.02,0.,0.,0.,0./)
                 else
-	a1=(/9.0138,9.0408,9.1338,9.2538,7.9837,7.7560,9.4252,9.6242,11.1300,
+        a1=(/9.0138,9.0408,9.1338,9.2538,7.9837,7.7560,9.4252,9.6242,11.1300,
      + 11.3629,11.7818,11.6097,11.4484,10.9065,9.8565,8.3363,6.8656,4.1178,1.8102,0.0977,-3.0563,-4.4387/)
-	a2=(/-0.0794,-0.0794,-0.0794,-0.0794,-0.1923,-0.1614,-0.1887,-0.0665,
+        a2=(/-0.0794,-0.0794,-0.0794,-0.0794,-0.1923,-0.1614,-0.1887,-0.0665,
      + -0.1698,-0.1766,-0.2798,-0.3048,-0.2911,-0.3097,-0.2565,-0.2320,-0.1226,0.1724,0.3001,0.4609,0.6948,0.8393/)
-	a3=(/0.0589,0.0589,0.0589,0.0589,0.0417,0.0527,0.0442,0.0329,0.0188,
+        a3=(/0.0589,0.0589,0.0589,0.0589,0.0417,0.0527,0.0442,0.0329,0.0188,
      + 0.0095,-0.0039,-0.0133,-0.0224,-0.0267,-0.0198,-0.0367,-0.0291,-0.0214,-0.0240,-0.0202,-0.0219,-0.0035/)
-	b1=(/2.9935,2.9935,2.9935,2.9935,2.7995,2.8143,2.8131,2.4091,2.4938,
+        b1=(/2.9935,2.9935,2.9935,2.9935,2.7995,2.8143,2.8131,2.4091,2.4938,
      + 2.3773,2.3772,2.3413,2.3477,2.2042,2.1493,2.0408,2.0013,1.9408,1.7763,1.7030,1.5212,1.4195/)
-	b2=(/-0.2287,-0.2287,-0.2287,-0.2287,-0.2319,-0.2326,-0.2211,-0.1676,
+        b2=(/-0.2287,-0.2287,-0.2287,-0.2287,-0.2319,-0.2326,-0.2211,-0.1676,
      + -0.1685,-0.1531,-0.1595,-0.1594,-0.1584,-0.1577,-0.1532,-0.1470,-0.1439,-0.1278,-0.1326,-0.1291,-0.1220,-0.1145/)
-	x=(/-0.854,-0.854,-0.854,-0.854,-0.631,-0.591,-0.757,-0.911,-0.998,
+        x=(/-0.854,-0.854,-0.854,-0.854,-0.631,-0.591,-0.757,-0.911,-0.998,
      + -1.042,-1.030,-1.019,-1.023,-1.056,-1.009,-0.898,-0.851,-0.761,-0.675,-0.629,-0.531,-0.586/)
-	g=(/-0.0027,-0.0027,-0.0027,-0.0027,-0.0061,-0.0056,-0.0042,-0.0046,
+        g=(/-0.0027,-0.0027,-0.0027,-0.0027,-0.0061,-0.0056,-0.0042,-0.0046,
      +-0.0030,-0.0028,-0.0029,-0.0028,-0.0021,-0.0029,-0.0032,-0.0033,-0.0032,-0.0031,-0.0051,-0.0059,-0.0057,-0.0061/)
-	phi=(/0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.06,0.04,0.02,0.02,0.,0.,0.,0./)
+        phi=(/0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.06,0.04,0.02,0.02,0.,0.,0.,0./)
                 endif
 c T is constrained spectral period see Idriss EqSpectra Mar 2008 for the details. use aleatory sigma from the article.
 c This sigma may be revised.
@@ -8736,8 +8759,8 @@ c This sigma may be revised.
       else
       xmagc=max(5.0,min(xmag,Mcap))
 c      sig = 1.28 + 0.05*alog(T) - 0.08 * xmagc
-	sig = 1.18 + 0.035*alog(T) - 0.06 * xmagc	!see P Powers email jan 21 2014
-      endif	!special study can fix all sigma at a specified value. jan 7 2012.
+        sig = 1.18 + 0.035*alog(T) - 0.06 * xmagc        !see P Powers email jan 21 2014
+      endif        !special study can fix all sigma at a specified value. jan 7 2012.
           sigmaf= 1./sig/sqrt2
           vscap=min(vs30,1200.)
 c-- 
@@ -8789,7 +8812,7 @@ c output
       integer ide,ime,ip
        common/fix_sigma/fix_sigma,sigma_fx
       common/Dipinf/dipang,cosDELTA,cdipsq,cyhwfac,cbhwfac
-	real csoil,nsoil
+        real csoil,nsoil
        real, dimension(8) :: fac_sde
       real, dimension(nper):: Phi,Tau,Per,c0,c1,c2low,c2,c3,c4,c5,c6,c7,c8,c9,c10,c10j,c10jlow,c11,
      + c11j,c12,c13low,c13hi,c14,c15,k1,k2,k3,a2,h1,h2,h3,h4,h5,h6,phi_lny,phi_low, phi_hi,
@@ -8802,133 +8825,133 @@ c of pSA. Tothong&Cornell approach
        save A1100, phi_lny
 c T=.01,.02,.03,.05,.075,.1,.15,.2,.25,.3,0.4,0.5,.75,1,1.5,2,3,4,5,7.5,10,0,-1
 c-----Soil model constants (not using the constant vector from Bozorgnia code)
-	Per=(/0.01,0.02,0.03,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,
+        Per=(/0.01,0.02,0.03,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.4,
      + 0.5,0.75,1.,1.5,2.,3.,4.,5.,7.5,10.,0.,-1./)
 c c0 updated for several spectral periods and for PGA Bozorgnia email aug 27, 2013.
-     	c0=(/-4.365,-4.348,-4.024,-3.479,-3.29312,-3.66556,
+             c0=(/-4.365,-4.348,-4.024,-3.479,-3.29312,-3.66556,
      + -4.86602,-5.41069,-5.96223,-6.40274,-7.56611,-8.37896,-9.84117,
      + -11.01088,-12.46903,-12.96946,-13.30646,-14.01959,-14.55814,
      + -15.50934,-15.97482,-4.416,-2.89541/)
-     	c1=(/0.9767,0.97602,0.93061,0.88708,0.9018,0.99317,1.26745,1.36587,
+             c1=(/0.9767,0.97602,0.93061,0.88708,0.9018,0.99317,1.26745,1.36587,
      + 1.45843,1.52845,1.73878,1.87232,2.02098,2.18019,2.26973,2.2711,
      + 2.14989,2.1324,2.11557,2.22333,2.13178,0.98408,1.51014/)
-   	c2low=(/0.5333,0.54938,0.62834,0.67381,0.72577,0.69757,0.51048,0.4471,
+           c2low=(/0.5333,0.54938,0.62834,0.67381,0.72577,0.69757,0.51048,0.4471,
      + 0.27438,0.19341,-0.02008,-0.1212,-0.04173,-0.06925,0.04678,0.14935,
      + 0.36819,0.72617,1.02702,0.16924,0.36739,0.53714,0.27/)
-     	c2=(/-1.48461,-1.48771,-1.49384,-1.38762,-1.46913,-1.57184,-1.66866,
+             c2=(/-1.48461,-1.48771,-1.49384,-1.38762,-1.46913,-1.57184,-1.66866,
      + -1.74959,-1.71072,-1.77001,-1.59425,-1.57678,-1.75665,-1.70658,
      + -1.62116,-1.51208,-1.31456,-1.50567,-1.72132,-0.75648,-0.80033,
      + -1.49918,-1.29865/)
-     	c3=(/-0.498937453,-0.500622655,-0.516949343,-0.614846203,-0.596140959,          	
+             c3=(/-0.498937453,-0.500622655,-0.516949343,-0.614846203,-0.596140959,                  
      + -0.53615185,-0.489916175,-0.451168621,-0.40377,-0.32137,-0.42641,
      + -0.44027,-0.44323,-0.52717,-0.62968,-0.7684,-0.88968,-0.88483,
      + -0.87758,-1.0771,-1.28153,-0.496099731,-0.45259/)
-     	c4=(/-2.77287,-2.77184,-2.78177,-2.79116,-2.74484,-2.63321,-2.45812,
+             c4=(/-2.77287,-2.77184,-2.78177,-2.79116,-2.74484,-2.63321,-2.45812,
      + -2.42082,-2.39172,-2.37647,-2.30344,-2.29568,-2.23162,-2.15751,
      + -2.06285,-2.1042,-2.05109,-1.98623,-2.02143,-2.17893,-2.24395,
      + -2.77308,-2.46623/)
-     	c5=(/0.24794,0.24728,0.24569,0.23957,0.22728,0.20998,0.18271,0.18236,
+             c5=(/0.24794,0.24728,0.24569,0.23957,0.22728,0.20998,0.18271,0.18236,
      + 0.18902,0.19458,0.18548,0.18608,0.18622,0.16948,0.15776,0.15773,
      + 0.14786,0.13543,0.13954,0.17836,0.19421,0.24792,0.20353/)
-    	c6=(/6.7526,6.50193,6.29064,6.31674,6.86079,7.29437,8.03121,8.38547,
+            c6=(/6.7526,6.50193,6.29064,6.31674,6.86079,7.29437,8.03121,8.38547,
      + 7.53447,6.99039,7.012,6.902,5.52167,5.64974,5.795,6.63167,6.75917,
      + 7.97765,8.53845,8.46752,6.56419,6.76761,5.83687/)
-     	c7=0.0
-     	c8=(/-0.21399,-0.20765,-0.21286,-0.24416,-0.26594,-0.22909,-0.21079,
+             c7=0.0
+             c8=(/-0.21399,-0.20765,-0.21286,-0.24416,-0.26594,-0.22909,-0.21079,
      + -0.16256,-0.15032,-0.131,-0.15869,-0.15259,-0.0903,-0.105,-0.05765,
      + -0.02807,0.,0.,0.,0.,0.,-0.21192,-0.16787/)
-     	c9=(/0.72005,0.72967,0.75901,0.8263,0.81493,0.83098,0.74885,0.76413,
+             c9=(/0.72005,0.72967,0.75901,0.8263,0.81493,0.83098,0.74885,0.76413,
      + 0.71599,0.73747,0.73848,0.71779,0.79532,0.55604,0.48038,0.40135,
      + 0.20613,0.105,0.,0.,0.,0.72036,0.30531/)
           c10=(/1.09423,1.14928,1.28982,1.44851,1.53508,1.61453,1.87724,2.06875,
      + 2.20472,2.3056,2.39843,2.35519,1.99492,1.4472,0.32996,-0.51429,
      + -0.84808,-0.79272,-0.74828,-0.66444,-0.57634,1.09034,1.71266/)
-     	c10Jlow=(/2.19076,2.18901,2.16441,2.13849,2.44588,2.96906,3.54382,
+             c10Jlow=(/2.19076,2.18901,2.16441,2.13849,2.44588,2.96906,3.54382,
      + 3.70687,3.34286,3.33392,3.54369,3.01604,2.61646,2.46961,2.10849,
      + 1.32674,0.60121,0.56816,0.35563,0.0751,-0.02688,2.18598,2.6016/)
-     	c10J=(/1.41626,1.45343,1.47596,1.54867,1.77181,1.91583,2.16149,2.46523,
+             c10J=(/1.41626,1.45343,1.47596,1.54867,1.77181,1.91583,2.16149,2.46523,
      + 2.7662,3.0105,3.20302,3.33327,3.05379,2.56169,1.45264,0.65727,0.36667,
      + 0.30608,0.26753,0.37356,0.29687,1.42048,2.45689/)
-     	c11=(/-0.00697,-0.01669,-0.04215,-0.06628,-0.07944,-0.02935,0.06424,
+             c11=(/-0.00697,-0.01669,-0.04215,-0.06628,-0.07944,-0.02935,0.06424,
      + 0.09684,0.14409,0.15969,0.14104,0.14743,0.17641,0.25934,0.28807,
      + 0.31124,0.34781,0.37465,0.33817,0.37541,0.35056,-0.00638,0.10601/)
-     	c11J=(/-0.20736,-0.19937,-0.20208,-0.33892,-0.40355,-0.41622,-0.40719,
+             c11J=(/-0.20736,-0.19937,-0.20208,-0.33892,-0.40355,-0.41622,-0.40719,
      + -0.31065,-0.17151,-0.08379,0.08468,0.23288,0.41099,0.47909,0.56579,
      + 0.5624,0.534,0.52227,0.47719,0.32092,0.1743,-0.20246,0.33242/)
-     	c12=(/0.38951,0.38713,0.37769,0.29548,0.322,0.38448,0.41653,0.40419,
+             c12=(/0.38951,0.38713,0.37769,0.29548,0.322,0.38448,0.41653,0.40419,
      + 0.46631,0.52831,0.53978,0.63753,0.77607,0.77071,0.7476,0.76284,
      + 0.68565,0.69094,0.67003,0.75653,0.62149,0.39293,0.58488/)
-     	c13low=(/0.09813,0.10091,0.10948,0.12256,0.11646,0.0998,0.07595,0.05707,
+             c13low=(/0.09813,0.10091,0.10948,0.12256,0.11646,0.0998,0.07595,0.05707,
      + 0.04374,0.03232,0.0209,0.00922,-0.00821,-0.0131,-0.01865,-0.02581,
      + -0.03106,-0.04129,-0.02814,-0.02054,0.00093,0.09766,0.05174/)
-     	c13hi=(/0.0334,0.03272,0.03312,0.02695,0.02882,0.03253,0.03884,0.04373,
+             c13hi=(/0.0334,0.03272,0.03312,0.02695,0.02882,0.03253,0.03884,0.04373,
      + 0.04633,0.05084,0.04322,0.04053,0.042,0.04259,0.03798,0.02515,0.02356,
      + 0.0102,0.00335,0.00497,0.00986,0.03334,0.03267/)
-     	c14=(/0.00755,0.00759,0.0079,0.00803,0.00811,0.00744,0.00716,0.00688,
+             c14=(/0.00755,0.00759,0.0079,0.00803,0.00811,0.00744,0.00716,0.00688,
      + 0.00556,0.00458,0.00401,0.00388,0.0042,0.00409,0.00424,0.00448,0.00345,
      + 0.00603,0.00805,0.0028,0.00458,0.00757,0.00613/)
-     	c15=0.0
-     	c15CA=(/-0.0055,-0.0055,-0.0057,-0.0063,-0.007,-0.0073,-0.0069,-0.006,
+             c15=0.0
+             c15CA=(/-0.0055,-0.0055,-0.0057,-0.0063,-0.007,-0.0073,-0.0069,-0.006,
      + -0.0055,-0.0049,-0.0037,-0.0027,-0.0016,-0.0006,0.,0.,0.,0.,0.,0.,0.,-0.0055,
      + -0.0017/)
-     	c15j=(/-0.009,-0.009,-0.0091,-0.01,-0.0107,-0.0107,-0.0099,-0.0091,
+             c15j=(/-0.009,-0.009,-0.0091,-0.01,-0.0107,-0.0107,-0.0099,-0.0091,
      + -0.0088,-0.0084,-0.0071,-0.0061,-0.0048,-0.0036,-0.0019,-0.0005,
      + 0.,0.,0.,0.,0.,-0.009,-0.0023/)
-     	c15_China=(/-0.0019,-0.0019,-0.002,-0.0023,-0.0031,-0.0031,-0.0027,-0.0019,
+             c15_China=(/-0.0019,-0.0019,-0.002,-0.0023,-0.0031,-0.0031,-0.0027,-0.0019,
      + -0.0019,-0.0018,-0.0009,-0.0002,0.,0.,0.,0.,0.,0.,0.,0.,0.,-0.0019,0./)
-     	a2=(/0.168204,0.16608,0.166615,0.173208,0.198386,0.174173,0.197692,0.204389,
+             a2=(/0.168204,0.16608,0.166615,0.173208,0.198386,0.174173,0.197692,0.204389,
      + 0.185493,0.16375,0.159991,0.183814,0.215828,0.595819,0.595819,0.595819,
      + 0.595819,0.595819,0.595819,0.595819,0.595819,0.166756,0.595819/)
-     	h1=(/0.242491585,0.244239479,0.246102927,0.251121153,0.260215395,0.258891885,
+             h1=(/0.242491585,0.244239479,0.246102927,0.251121153,0.260215395,0.258891885,
      + 0.253754887,0.236761836,0.205538668,0.209669285,0.225654325,0.216617007,
      + 0.153809642,0.117400827,0.117400827,0.117400827,0.117400827,0.117400827,
      + 0.117400827,0.117400827,0.117400827,0.241153212,0.117400827/)
-     	h2=(/1.471226463,1.467008458,1.467306208,1.449483555,1.43491017,1.448920728,
+             h2=(/1.471226463,1.467008458,1.467306208,1.449483555,1.43491017,1.448920728,
      + 1.46101266,1.484246105,1.581051011,1.585576015,1.544360277,1.553834937,
      + 1.626464751,1.615567127,1.615567127,1.615567127,1.615567127,1.615567127,
      + 1.615567127,1.615567127,1.615567127,1.473962695,1.615567127/)
-     	h3=(/-0.713718048,-0.711247937,-0.713409135,-0.700604707,-0.695125566,
+             h3=(/-0.713718048,-0.711247937,-0.713409135,-0.700604707,-0.695125566,
      + -0.707812613,-0.714767546,-0.721007941,-0.786589679,-0.7952453,
      + -0.770014601, -0.770451944,-0.780274394,-0.732967953,-0.732967953,
      + -0.732967953,-0.732967953, -0.732967953,-0.732967953,-0.732967953,
      + -0.732967953,-0.715115906,-0.732967953/)
-     	h4=1.0
-     	h5=(/-0.336344,-0.339225,-0.338487,-0.338309,-0.347476,-0.391023,-0.449387,
+             h4=1.0
+             h5=(/-0.336344,-0.339225,-0.338487,-0.338309,-0.347476,-0.391023,-0.449387,
      + -0.393051,-0.338954,-0.446928,-0.525278,-0.407316,-0.370885,-0.127976,
      + -0.127976,-0.127976,-0.127976,-0.127976,-0.127976,-0.127976,-0.127976,
      + -0.336826,-0.127976/)
-     	h6=(/-0.26972,-0.262572,-0.258835,-0.262789,-0.218517,-0.200791,-0.0994103,
+             h6=(/-0.26972,-0.262572,-0.258835,-0.262789,-0.218517,-0.200791,-0.0994103,
      + -0.198083,-0.210334,-0.120913,-0.0861837,-0.28051,-0.284764,-0.755608,
      + -0.755608,-0.755608,-0.755608,-0.755608,-0.755608,-0.755608,-0.755608,
      + -0.270212,-0.755608/)
-     	k1=(/865.,865.,908.,1054.,1086.,1032.,878.,748.,654.,587.,503.,457.,410.,400.,400.,400.,
+             k1=(/865.,865.,908.,1054.,1086.,1032.,878.,748.,654.,587.,503.,457.,410.,400.,400.,400.,
      + 400.,400.,400.,400.,400.,865.,400./)
-     	k2=(/-1.186,-1.219,-1.273,-1.346,-1.471,-1.624,-1.931,-2.188,-2.381,-2.518,
+             k2=(/-1.186,-1.219,-1.273,-1.346,-1.471,-1.624,-1.931,-2.188,-2.381,-2.518,
      + -2.657,-2.669,-2.401,-1.955,-1.025,-0.299,0.,0.,0.,0.,0.,-1.186,-1.955/)
-     	k3=(/1.839,1.84,1.841,1.843,1.845,1.847,1.852,1.856,1.861,1.865,1.874,1.883,
+             k3=(/1.839,1.84,1.841,1.843,1.845,1.847,1.852,1.856,1.861,1.865,1.874,1.883,
      + 1.906,1.929,1.974,2.019,2.11,2.2,2.291,2.517,2.744,1.839,1.929/)
-c     	csoil=(/1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,
-c     	     + 1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88/)
-c     	nsoil=(/1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,
+c             csoil=(/1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,
+c                  + 1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88,1.88/)
+c             nsoil=(/1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,
 c     + 1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18,1.18/)
-     	phi_low=(/0.7336,0.7375,0.7471,0.7768,0.7821,0.7691,0.7693,0.7609,0.7439,
+             phi_low=(/0.7336,0.7375,0.7471,0.7768,0.7821,0.7691,0.7693,0.7609,0.7439,
      + 0.7265,0.6901,0.6632,0.6058,0.5785,0.5412,0.5286,0.5269,0.5212,0.5024,
      + 0.4568,0.4412,0.7335,0.6552/)
-     	phi_hi=(/0.4915,0.4955,0.5034,0.5197,0.5349,0.5431,0.5427,0.5515,0.5448,
+             phi_hi=(/0.4915,0.4955,0.5034,0.5197,0.5349,0.5431,0.5427,0.5515,0.5448,
      + 0.5684,0.5931,0.6113,0.6326,0.6278,0.6032,0.5879,0.578,0.5592,0.551,
      + 0.5456,0.5432,0.4918,0.4944/)
-     	tau_low=(/0.4041,0.4167,0.4458,0.5076,0.504,0.4449,0.3816,0.3392,0.3401,
+             tau_low=(/0.4041,0.4167,0.4458,0.5076,0.504,0.4449,0.3816,0.3392,0.3401,
      + 0.3399,0.3559,0.3792,0.4299,0.4695,0.4973,0.4985,0.4996,0.5427,0.5339,
      + 0.5228,0.4655,0.4086,0.3171/)
-     	tau_hi=(/0.3247,0.3258,0.3437,0.3769,0.418,0.4261,0.3865,0.3381,0.316,
+             tau_hi=(/0.3247,0.3258,0.3437,0.3769,0.418,0.4261,0.3865,0.3381,0.316,
      + 0.2997,0.2635,0.2632,0.3264,0.3527,0.3989,0.4004,0.4172,0.3925,0.4209,
      + 0.4376,0.4379,0.3219,0.2969/)
-     	phi_lnAF=(/0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,
+             phi_lnAF=(/0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,
      + 0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3/)
 c sigma_c is used to get an aleatory sigma for the random H comp instead of mean H comp.
-     	sigma_c=(/0.166,0.166,0.165,0.162,0.158,0.17,0.18,0.186,0.191,0.198,0.206,
+             sigma_c=(/0.166,0.166,0.165,0.162,0.158,0.17,0.18,0.186,0.191,0.198,0.206,
      + 0.208,0.221,0.225,0.222,0.226,0.229,0.237,0.237,0.271,0.29,0.166,0.19/)
-     	rho=(/1.0,0.998,0.986,0.938,0.887,0.87,0.876,0.87,0.85,0.819,0.743,0.684,0.562,
+             rho=(/1.0,0.998,0.986,0.938,0.887,0.87,0.876,0.87,0.85,0.819,0.743,0.684,0.562,
      + 0.467,0.364,0.298,0.234,0.202,0.184,0.176,0.154,1.0,0.684/)    
        nsoil = 1.18
        csoil = 1.88
@@ -8940,13 +8963,13 @@ c A1100. Once calculated it is saved for the other spectral periods to use.
         else
         iperflag=0
         endif   
-	if(SJ.lt.1.0)then
-	c15=c15ca	!use california Qmodel when SJ<1
-	elseif(SJ.lt.2.)then
-	c15=c15j
-	else
-	c15=c15_China
-	endif
+        if(SJ.lt.1.0)then
+        c15=c15ca        !use california Qmodel when SJ<1
+        elseif(SJ.lt.2.)then
+        c15=c15j
+        else
+        c15=c15_China
+        endif
 
 C*****Magnitude term
       IF (Mw .LE. 4.5) THEN
@@ -9114,7 +9137,7 @@ c the only PGA available at this moment is PGA(1100 m/s rock)
       if(Per(iper).gt.0.0 .and.Per(iper).le. 0.25)then
       gnd(1) = max(gnd(1),alog(A1100))
       endif
-	gnd(1)=gnd(1)+F_site
+        gnd(1)=gnd(1)+F_site
 c       write(80+ip,*)rrup,exp(gnd(1)),F_site,A1100,Mw,ip
 C.....CALCULATE ALEATORY UNCERTAINTY
 C     Note: This part has been changed
@@ -9161,8 +9184,8 @@ C     Note: This part has been changed
      &           2.0*alpha*rho(iper)*phi_lnyB*phi_lnPGAB)
       
       if(fix_sigma)then
-      	Sigmatot=sigma_fx
-      else      	
+              Sigmatot=sigma_fx
+      else              
         Sigmatot = SQRT(phi(iper)**2 + Tau(iper)**2)
        endif
        if(sdi)then
@@ -9682,7 +9705,7 @@ c....... Polulation mean of ln(psa) (eta=0).
 c Keep psa in logged units. No need to exponentiate here.
 
         psa = psa_ref + (a + b * log((exp(psa_ref)+c)/c)) + rkdepth
-	gndout(1)=psa
+        gndout(1)=psa
 c....... Total variance of ln(psa) about the population mean:
 c          The approximate method (Equation 3.9)
 
@@ -9990,12 +10013,12 @@ c     1         log(((V_S30/1000.)**4 + .57094**4)/(1.360**4 + .57094**4))
 c     1        )
 c        if (Z1 .EQ. -999) Z1 = mZ1
 c        deltaZ1 = Z1 - mZ1
-	c8 = 2.154	!from table 3.1
-	c8a = 0.2695	!from table 3.1
-	c11 = 0.0
+        c8 = 2.154        !from table 3.1
+        c8a = 0.2695        !from table 3.1
+        c11 = 0.0
 c Center Z_TOR on the Z_TOR-M relation in Chiou and Youngs (2013)
         if (F_RV.EQ.1) then
-          if (M .le. 5.849) then	!corrected from 5.869 May 16 2013
+          if (M .le. 5.849) then        !corrected from 5.869 May 16 2013
               mZ_TOR = 2.704*2.704
           else
               mZ_TOR = max(2.704-1.226*(M-5.849), 0.)
@@ -10114,7 +10137,7 @@ c         if(ip.eq.1)print *,exp(gndout(1)),total_app,sigmaf,M,R_rup
       subroutine bssa2013drv(ip,indx_pga,indx_per,m,rjb,v30,z1,mech,iregion,lny,sigmaf)
 c updated with new coeffs. May 20 2013. SH.
       real sqrt2
-      	parameter (npermx=107,sqrt2=1.414213562)
+              parameter (npermx=107,sqrt2=1.414213562)
       real  c(3)
 c this driver code runs the NGAW BSSA model May 18 2013 ver) for PGA and then for period with index indx_per
 c the outputs are lny = logged SA, and sigmaf =1/sigma/sqrt2 
@@ -10162,14 +10185,14 @@ c ip is the global period index, used in SDI calcs for example.
      :  weight
 
 c updated coeffs. May 20 2013.     
-	T=(/-1.,0.0,0.01,0.02,0.022,0.025,0.029,0.03,0.032,0.035,0.036,0.04,
+        T=(/-1.,0.0,0.01,0.02,0.022,0.025,0.029,0.03,0.032,0.035,0.036,0.04,
      +0.042,0.044,0.045,0.046,0.048,0.05,0.055,0.06,0.065,0.067,0.07,0.075,
      +0.08,0.085,0.09,0.095,0.1,0.11,0.12,0.13,0.133,0.14,0.15,0.16,0.17,0.18,
      +0.19,0.2,0.22,0.24,0.25,0.26,0.28,0.29,0.3,0.32,0.34,0.35,0.36,0.38,0.4,
      +0.42,0.44,0.45,0.46,0.48,0.5,0.55,0.6,0.65,0.667,0.7,0.75,0.8,0.85,0.9,
      +0.95,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.,2.2,2.4,2.5,2.6,2.8,3.0,3.2,
      +3.4,3.5,3.6,3.8,4.0,4.2,4.4,4.6,4.8,5.,5.5,6.,6.5,7.,7.5,8.,8.5,9.,9.5,10.0/)
-	e0=(/5.037,0.4473,0.4534,0.48598,0.49866,0.52283,0.55949,0.56916,0.58802,
+        e0=(/5.037,0.4473,0.4534,0.48598,0.49866,0.52283,0.55949,0.56916,0.58802,
      +0.61636,0.62554,0.66281,0.68087,0.69882,0.70822,0.71779,0.73574,0.75436,
      +0.7996,0.84394,0.88655,0.9027,0.92652,0.96447,1.0003,1.034,1.0666,1.0981,
      +1.1268,1.1785,1.223,1.2596,1.2692,1.2883,1.3095,1.3235,1.3306,1.3327,1.3307,
@@ -10182,7 +10205,7 @@ c updated coeffs. May 20 2013.
      +-1.8469,-1.9063,-1.966,-2.1051,-2.2421,-2.3686,-2.4827,-2.5865,-2.6861,
      +-2.782,-2.8792,-2.9769,-3.0702/)
 
-	e1=(/5.078,0.4856,0.4916,0.52359,0.53647,0.5613,0.59923,0.6092,0.62875,
+        e1=(/5.078,0.4856,0.4916,0.52359,0.53647,0.5613,0.59923,0.6092,0.62875,
      +0.65818,0.66772,0.70604,0.72443,0.74277,0.75232,0.76202,0.78015,0.79905,
      +0.8445,0.88884,0.93116,0.94711,0.97057,1.0077,1.0426,1.0755,1.1076,1.1385,
      +1.1669,1.2179,1.2621,1.2986,1.3082,1.327,1.3481,1.3615,1.3679,1.3689,
@@ -10193,7 +10216,7 @@ c updated coeffs. May 20 2013.
      +-0.3084,-0.39558,-0.47731,-0.55003,-0.6822,-0.8069,-0.86765,-0.92577,-1.0367,-1.142,
      +-1.2406,-1.3322,-1.3778,-1.4193,-1.5014,-1.5748,-1.6439,-1.7089,-1.7731,-1.8303,-1.8882,
      +-2.0232,-2.1563,-2.2785,-2.3881,-2.4874,-2.5829,-2.6752,-2.7687,-2.8634,-2.9537/)
-	e2=(/4.849,0.2459,0.2519,0.29707,0.31347,0.34426,0.39146,0.40391,0.42788,0.46252,
+        e2=(/4.849,0.2459,0.2519,0.29707,0.31347,0.34426,0.39146,0.40391,0.42788,0.46252,
      +0.47338,0.51532,0.53445,0.55282,0.56222,0.57166,0.58888,0.60652,0.6477,0.68562,0.71941,
      +0.73171,0.7494,0.77678,0.80161,0.82423,0.84591,0.86703,0.8871,0.92702,0.96616,1.0031,
      +1.0135,1.036,1.0648,1.0876,1.104,1.1149,1.1208,1.122,1.1133,1.0945,1.0828,1.071,1.0476,
@@ -10203,7 +10226,7 @@ c updated coeffs. May 20 2013.
      +-0.64899,-0.71466,-0.83003,-0.9326,-0.98228,-1.0313,-1.1301,-1.23,-1.3255,-1.415,-1.4599,
      +-1.5014,-1.5865,-1.6673,-1.7451,-1.8192,-1.8923,-1.9573,-2.0245,-2.1908,-2.3659,-2.5322,
      +-2.6818,-2.8176,-2.9438,-3.0597,-3.1713,-3.2785,-3.3776/)
-	e3=(/5.033,0.4539,0.4599,0.48875,0.49973,0.51999,0.54995,0.55783,0.5733,0.59704,0.60496,
+        e3=(/5.033,0.4539,0.4599,0.48875,0.49973,0.51999,0.54995,0.55783,0.5733,0.59704,0.60496,
      +0.63828,0.65505,0.67225,0.68139,0.69076,0.70854,0.72726,0.7737,0.82067,0.86724,0.88526,0.91227,
      +0.9563,0.99818,1.0379,1.0762,1.1127,1.1454,1.203,1.2502,1.2869,1.2961,1.3137,1.3324,1.3437,1.3487,
      +1.3492,1.3463,1.3414,1.3281,1.3132,1.3052,1.2972,1.2815,1.2736,1.2653,1.2479,1.2286,1.2177,1.2066,
@@ -10212,7 +10235,7 @@ c updated coeffs. May 20 2013.
      +-0.43818,-0.52682,-0.60658,-0.75402,-0.8941,-0.96187,-1.0266,-1.1495,-1.2664,-1.376,-1.4786,-1.5297,
      +-1.5764,-1.6685,-1.7516,-1.829,-1.9011,-1.9712,-2.0326,-2.0928,-2.2288,-2.3579,-2.477,-2.5854,-2.6854,
      +-2.7823,-2.8776,-2.9759,-3.076,-3.1726/)
-	e4=(/1.073,1.431,1.421,1.4331,1.4336,1.4328,1.4279,1.4261,1.4227,1.4174,1.4158,1.409,1.4059,1.4033,
+        e4=(/1.073,1.431,1.421,1.4331,1.4336,1.4328,1.4279,1.4261,1.4227,1.4174,1.4158,1.409,1.4059,1.4033,
      +1.4021,1.4009,1.3991,1.3974,1.3947,1.3954,1.4004,1.4032,1.4082,1.4174,1.4261,1.4322,1.435,1.4339,1.4293,
      +1.411,1.3831,1.3497,1.3395,1.3162,1.2844,1.2541,1.2244,1.1941,1.1635,1.1349,1.0823,1.0366,1.0166,0.99932,
      +0.97282,0.96348,0.95676,0.95004,0.94956,0.95077,0.95278,0.95899,0.96766,0.97862,0.99144,0.99876,1.0064,
@@ -10220,7 +10243,7 @@ c updated coeffs. May 20 2013.
      +1.6794,1.7239,1.7622,1.7955,1.8259,1.8564,1.8868,1.9152,1.9681,2.017,2.0406,2.0628,2.1014,2.1323,2.1545,
      +2.1704,2.1775,2.1834,2.1938,2.204,2.2123,2.2181,2.223,2.2268,2.2299,2.2389,2.2377,2.215,2.172,2.1187,
      +2.0613,2.0084,1.9605,1.9189,1.8837/)
-	e5=(/-0.1536,0.05053,0.04932,0.053388,0.054888,0.057529,0.060732,0.061444,0.062806,0.064559,0.065028,0.066183,
+        e5=(/-0.1536,0.05053,0.04932,0.053388,0.054888,0.057529,0.060732,0.061444,0.062806,0.064559,0.065028,0.066183,
      +0.066438,0.066663,0.066774,0.066891,0.067127,0.067357,0.067797,0.068591,0.070127,0.070895,0.072075,
      +0.073549,0.073735,0.07194,0.068097,0.062327,0.055231,0.037389,0.016373,-0.005158,-0.011354,-0.024711,
      +-0.042065,-0.057593,-0.071861,-0.08564,-0.098884,-0.11096,-0.133,-0.15299,-0.16213,-0.17041,-0.18463,
@@ -10230,7 +10253,7 @@ c updated coeffs. May 20 2013.
      +-0.11959,-0.11237,-0.098017,-0.083765,-0.076308,-0.068925,-0.055229,-0.04332,-0.03444,-0.027889,
      +-0.024997,-0.022575,-0.018362,-0.014642,-0.012248,-0.011459,-0.01176,-0.012879,-0.014855,-0.019502,
      +-0.026383,-0.039505,-0.05914,-0.081606,-0.10382,-0.12114,-0.13407,-0.14364,-0.15096/)
-	e6=(/0.2252,-0.1662,-0.1659,-0.16561,-0.1652,-0.16499,-0.16632,-0.1669,-0.16813,-0.17015,-0.17083,
+        e6=(/0.2252,-0.1662,-0.1659,-0.16561,-0.1652,-0.16499,-0.16632,-0.1669,-0.16813,-0.17015,-0.17083,
      +-0.17357,-0.17485,-0.17619,-0.17693,-0.17769,-0.1792,-0.18082,-0.1848,-0.18858,-0.19176,-0.19291,-0.19451,
      +-0.19665,-0.19816,-0.19902,-0.19929,-0.199,-0.19838,-0.19601,-0.19265,-0.18898,-0.18792,-0.18566,-0.18234,
      +-0.17853,-0.17421,-0.16939,-0.16404,-0.15852,-0.14704,-0.13445,-0.12784,-0.12115,-0.10714,-0.10011,
@@ -10239,12 +10262,12 @@ c updated coeffs. May 20 2013.
      +0.16432,0.17895,0.21042,0.2441,0.27799,0.30956,0.33896,0.36616,0.39065,0.41244,0.43151,0.44788,0.48024,
      +0.51873,0.53883,0.5581,0.59394,0.62694,0.65811,0.68755,0.70216,0.71523,0.74028,0.76303,0.78552,0.80792,
      +0.83126,0.8524,0.87314,0.91466,0.9487,0.97643,0.99757,1.0121,1.0232,1.0335,1.0453,1.0567,1.0651/)
-	Mh=(/6.2,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,
+        Mh=(/6.2,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,5.5,
      +5.5,5.5,5.51,5.52,5.53,5.54,5.57,5.62,5.66,5.67,5.7,5.74,5.78,5.82,5.85,5.89,5.92,5.97,6.03,6.05,6.07,
      +6.11,6.12,6.14,6.16,6.18,6.18,6.19,6.19,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,
      +6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,
      +6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2,6.2/)
-	c1=(/-1.243,-1.134,-1.134,-1.1394,-1.1405,-1.1419,-1.1423,-1.1421,-1.1412,-1.1388,-1.1378,-1.1324,
+        c1=(/-1.243,-1.134,-1.134,-1.1394,-1.1405,-1.1419,-1.1423,-1.1421,-1.1412,-1.1388,-1.1378,-1.1324,
      +-1.1292,-1.1259,-1.1242,-1.1224,-1.1192,-1.1159,-1.1082,-1.1009,-1.0942,-1.0918,-1.0884,-1.0831,-1.0785,
      +-1.0745,-1.0709,-1.0678,-1.0652,-1.0607,-1.0572,-1.0549,-1.0545,-1.0537,-1.0532,-1.0533,-1.0541,-1.0556,
      +-1.0579,-1.0607,-1.067,-1.0737,-1.0773,-1.0808,-1.0879,-1.0913,-1.0948,-1.1013,-1.1074,-1.1105,-1.1133,
@@ -10253,7 +10276,7 @@ c updated coeffs. May 20 2013.
      +-1.2123,-1.2141,-1.2159,-1.219,-1.2202,-1.2201,-1.2198,-1.2189,-1.2179,-1.2169,-1.216,-1.2156,-1.2156,
      +-1.2158,-1.2162,-1.2165,-1.2169,-1.2175,-1.2182,-1.2189,-1.2204,-1.2232,-1.2299,-1.2408,-1.2543,-1.2688,
      +-1.2839,-1.2989,-1.313,-1.3253/)
-	c2=(/0.1489,0.1917,0.1916,0.18962,0.18924,0.18875,0.18844,0.18842,0.1884,0.18839,0.18837,0.18816,
+        c2=(/0.1489,0.1917,0.1916,0.18962,0.18924,0.18875,0.18844,0.18842,0.1884,0.18839,0.18837,0.18816,
      + 0.18797,0.18775,0.18764,0.18752,0.1873,0.18709,0.18655,0.18582,0.18485,0.18442,0.18369,0.18225,0.18052,
      +0.17856,0.17643,0.1742,0.17203,0.1677,0.16352,0.15982,0.15882,0.15672,0.15401,0.15158,0.14948,0.14768,
      +0.14616,0.14489,0.14263,0.14035,0.13925,0.13818,0.13604,0.13499,0.13388,0.13179,0.12984,0.1289,0.12806,
@@ -10262,7 +10285,7 @@ c updated coeffs. May 20 2013.
      +0.096254,0.096207,0.096255,0.096361,0.096497,0.096198,0.096106,0.096136,0.096667,0.097638,0.098649,
      +0.099553,0.099989,0.10043,0.10142,0.10218,0.10269,0.10304,0.10324,0.10337,0.10353,0.1046,0.1075,0.11231,
      +0.11853,0.12507,0.13146,0.13742,0.14294,0.14781,0.15183/)
-	c3=(/-0.00344,-0.008088,-0.008088,-0.008074,-0.008095,-0.008153,-0.00829,-0.008336,-0.008445,-0.008642,
+        c3=(/-0.00344,-0.008088,-0.008088,-0.008074,-0.008095,-0.008153,-0.00829,-0.008336,-0.008445,-0.008642,
      +-0.008715,-0.00903,-0.009195,-0.00936,-0.009441,-0.009521,-0.009676,-0.009819,-0.01012,-0.01033,
      +-0.01048,-0.01052,-0.01056,-0.01058,-0.01056,-0.01051,-0.01042,-0.01032,-0.0102,-0.009964,-0.009722,
      +-0.009476,-0.009402,-0.009228,-0.008977,-0.008725,-0.008472,-0.008219,-0.007967,-0.007717,-0.007224,
@@ -10273,15 +10296,15 @@ c updated coeffs. May 20 2013.
      +-0.00004,-0.000045,-0.000049,-0.000053,-0.000052,-0.000047,-0.000039,-0.000027,-0.000014,0.,0.,0.,0.,0.,0.,0.,
      +0.,0.,0.,0./)
         Mref=4.5
-	Rref=1.0	!1 km reference distance.
-	h =(/5.3,4.5,4.5,4.5,4.5,4.5,4.5,4.49,4.45,4.4,4.38,4.32,4.29,4.27,4.25,4.24,4.22,4.2,4.15,4.11,4.08,
+        Rref=1.0        !1 km reference distance.
+        h =(/5.3,4.5,4.5,4.5,4.5,4.5,4.5,4.49,4.45,4.4,4.38,4.32,4.29,4.27,4.25,4.24,4.22,4.2,4.15,4.11,4.08,
      +4.07,4.06,4.04,4.02,4.03,4.07,4.1,4.13,4.19,4.24,4.29,4.3,4.34,4.39,4.44,4.49,4.53,4.57,4.61,4.68,4.75,
      +4.78,4.82,4.88,4.9,4.93,4.98,5.03,5.06,5.08,5.12,5.16,5.2,5.24,5.25,5.27,5.3,5.34,5.41,5.48,5.53,5.54,
      +5.56,5.6,5.63,5.66,5.69,5.72,5.74,5.82,5.92,6.01,6.1,6.18,6.26,6.33,6.4,6.48,6.54,6.66,6.73,6.77,6.81,
      +6.87,6.93,6.99,7.08,7.12,7.16,7.24,7.32,7.39,7.46,7.52,7.64,7.78,8.07,8.48,8.9,9.2,9.48,9.57,9.62,9.66,
      +9.66,9.66/)
-	Dc3CATW=0.0
-	Dc3China=(/0.00435,0.00286,0.00282,0.00278,0.00276,0.00275,0.00276,0.00276,0.00277,0.00278,0.00280,
+        Dc3CATW=0.0
+        Dc3China=(/0.00435,0.00286,0.00282,0.00278,0.00276,0.00275,0.00276,0.00276,0.00277,0.00278,0.00280,
      +0.00282,0.00285,0.00287,0.00290,0.00292,0.00294,0.00296,0.00296,0.00297,0.00297,0.00297,0.00296,0.00296,
      +0.00294,0.00293,0.00291,0.00290,0.00288,0.00286,0.00285,0.00283,0.00282,0.00280,0.00279,0.00276,0.00273,
      +0.00270,0.00266,0.00261,0.00256,0.00251,0.00244,0.00238,0.00231,0.00225,0.00220,0.00215,0.00212,0.00210,
@@ -10290,7 +10313,7 @@ c updated coeffs. May 20 2013.
      +0.00303,0.00300,0.00297,0.00292,0.00287,0.00281,0.00276,0.00271,0.00266,0.00262,0.00259,0.00258,0.00257,
      +0.00257,0.00259,0.00261,0.00262,0.00262,0.00262,0.00262,0.00260,0.00259,0.00258,0.00259,0.00260,0.00260,
      +0.00263,0.00267,0.00276,0.00289,0.00303/)
-	Dc3Italy=(/-0.00033,-0.00255,-0.00244,-0.00234,-0.00229,-0.00225,-0.00221,-0.00217,-0.00212,-0.00210,
+        Dc3Italy=(/-0.00033,-0.00255,-0.00244,-0.00234,-0.00229,-0.00225,-0.00221,-0.00217,-0.00212,-0.00210,
      +-0.00207,-0.00205,-0.00203,-0.00202,-0.00200,-0.00199,-0.00199,-0.00199,-0.00200,-0.00202,-0.00204,
      +-0.00208,-0.00211,-0.00216,-0.00221,-0.00227,-0.00233,-0.00238,-0.00244,-0.00249,-0.00254,-0.00258,
      +-0.00263,-0.00267,-0.00271,-0.00275,-0.00280,-0.00285,-0.00291,-0.00297,-0.00303,-0.00308,-0.00314,
@@ -10300,7 +10323,7 @@ c updated coeffs. May 20 2013.
      +-0.00132,-0.00125,-0.00120,-0.00117,-0.00116,-0.00115,-0.00116,-0.00117,-0.00118,-0.00119,-0.00119,
      +-0.00119,-0.00117,-0.00115,-0.00112,-0.00108,-0.00102,-0.00095,-0.00084,-0.00072,-0.00057,-0.00041,
      +-0.00023,-0.00004,0.00017,0.00038,0.00072,0.00094,0.00113,0.00131,0.00149/)
-c	clin=(/-0.8050,-0.5150,-0.5257,-0.5362,-0.5403,-0.5410,-0.5391,-0.5399,-0.5394,-0.5358,-0.5315,
+c        clin=(/-0.8050,-0.5150,-0.5257,-0.5362,-0.5403,-0.5410,-0.5391,-0.5399,-0.5394,-0.5358,-0.5315,
 c     +-0.5264,-0.5209,-0.5142,-0.5067,-0.4991,-0.4916,-0.4850,-0.4788,-0.4735,-0.4687,-0.4646,-0.4616,
 c     +-0.4598,-0.4601,-0.4620,-0.4652,-0.4688,-0.4732,-0.4787,-0.4853,-0.4931,-0.5022,-0.5126,-0.5244,
 c     +-0.5392,-0.5569,-0.5758,-0.5962,-0.6192,-0.6426,-0.6658,-0.6897,-0.7133,-0.7356,-0.7567,-0.7749,
@@ -10309,7 +10332,7 @@ c     +-0.9227,-0.9338,-0.9453,-0.9573,-0.9692,-0.9811,-0.9924,-1.0033,-1.0139,-
 c     +-1.0565,-1.0655,-1.0736,-1.0808,-1.0867,-1.0904,-1.0923,-1.0925,-1.0908,-1.0872,-1.0819,-1.0753,
 c     +-1.0682,-1.0605,-1.0521,-1.0435,-1.0350,-1.0265,-1.0180,-1.0101,-1.0028,-0.9949,-0.9859,-0.9748,
 c     +-0.9613,-0.9456,-0.9273,-0.9063,-0.8822,-0.8551,-0.8249,-0.7990,-0.7620,-0.7230,-0.6840,-0.6440/)
-c	Vclin=(/950.00,925.00,930.00,967.50,964.23,961.65,959.61,959.71,956.83,955.39,954.35,953.91,954.10,
+c        Vclin=(/950.00,925.00,930.00,967.50,964.23,961.65,959.61,959.71,956.83,955.39,954.35,953.91,954.10,
 c     +955.15,957.18,960.17,963.44,967.06,970.75,973.97,976.38,977.78,978.02,977.23,974.98,972.16,969.48,966.90,
 c     +964.90,963.89,964.03,965.34,967.71,970.89,974.53,977.78,979.37,979.38,978.42,975.61,971.31,965.97,960.05,
 c     +954.24,948.77,943.90,940.75,939.61,939.66,940.74,943.02,945.83,949.18,952.96,957.31,962.25,967.61,972.54,
@@ -10341,10 +10364,10 @@ c clin and Vclin updated July 2013.
      +    995.52,  981.33,  966.94,  952.34,  937.52,  922.43,  908.79,  896.15,  883.16,  870.05,
      +    857.07,  844.48,  832.45,  821.18,  810.79,  801.41,  793.13,  785.73,  779.91,  775.60,
      +    772.68,  771.01,  760.81,  764.50,  768.07,  771.55,  775.00/)
-	Vref=760.
-	f1=0.0
-	f3=0.1	!fill out with constant value
-	f4=(/-0.1000,-0.1500,-0.1483,-0.1471,-0.1477,-0.1496,-0.1525,-0.1549,-0.1574,-0.1607,-0.1641,-0.1678,
+        Vref=760.
+        f1=0.0
+        f3=0.1        !fill out with constant value
+        f4=(/-0.1000,-0.1500,-0.1483,-0.1471,-0.1477,-0.1496,-0.1525,-0.1549,-0.1574,-0.1607,-0.1641,-0.1678,
      +-0.1715,-0.1760,-0.1810,-0.1862,-0.1915,-0.1963,-0.2014,-0.2066,-0.2120,-0.2176,-0.2232,-0.2287,-0.2337,
      +-0.2382,-0.2421,-0.2458,-0.2492,-0.2519,-0.2540,-0.2556,-0.2566,-0.2571,-0.2571,-0.2562,-0.2544,-0.2522,
      +-0.2497,-0.2466,-0.2432,-0.2396,-0.2357,-0.2315,-0.2274,-0.2232,-0.2191,-0.2152,-0.2112,-0.2070,-0.2033,
@@ -10353,7 +10376,7 @@ c clin and Vclin updated July 2013.
      +-0.0470,-0.0414,-0.0361,-0.0314,-0.0271,-0.0231,-0.0196,-0.0165,-0.0136,-0.0112,-0.0093,-0.0075,-0.0058,
      +-0.0044,-0.0032,-0.0023,-0.0016,-0.0010,-0.0006,-0.0003,-0.0001,0.0000,0.0000,0.0000,-0.0001,0.0001,
      +0.0001,0.0001,0.0001,0.0000/)
-	f5=(/-0.00844,-0.00701,-0.00701,-0.00728,-0.00732,-0.00736,-0.00737,-0.00735,-0.00731,-0.00721,-0.00717,
+        f5=(/-0.00844,-0.00701,-0.00701,-0.00728,-0.00732,-0.00736,-0.00737,-0.00735,-0.00731,-0.00721,-0.00717,
      +-0.00698,-0.00687,-0.00677,-0.00672,-0.00667,-0.00656,-0.00647,-0.00625,-0.00607,-0.00593,-0.00588,
      +-0.00582,-0.00573,-0.00567,-0.00563,-0.00561,-0.00560,-0.00560,-0.00562,-0.00567,-0.00572,-0.00574,
      +-0.00578,-0.00585,-0.00591,-0.00597,-0.00602,-0.00608,-0.00614,-0.00626,-0.00638,-0.00644,-0.00650,
@@ -10363,19 +10386,19 @@ c clin and Vclin updated July 2013.
      +-0.00603,-0.00540,-0.00479,-0.00378,-0.00302,-0.00272,-0.00246,-0.00208,-0.00183,-0.00167,-0.00158,
      +-0.00155,-0.00154,-0.00152,-0.00152,-0.00152,-0.00150,-0.00148,-0.00146,-0.00144,-0.00140,-0.00138,
      +-0.00137,-0.00137,-0.00137,-0.00137,-0.00137,-0.00137,-0.00136,-0.00136/)
-	f6=(/-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,
+        f6=(/-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,
      +-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,
      +-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,
      +0.006,0.026,0.055,0.092,0.140,0.195,0.252,0.309,0.367,0.425,0.481,0.536,0.588,0.638,0.689,0.736,0.780,
      +0.824,0.871,0.920,0.969,1.017,1.060,1.099,1.135,1.164,1.188,1.211,1.234,1.253,1.271,1.287,1.300,1.312,
      +1.323,1.329,1.345,1.350,1.349,1.342,1.329,1.308,1.282,1.252,1.218,1.183/)
-	f7=(/-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,
+        f7=(/-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,
      +-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,
      +-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,-9.9,
      +0.004,0.017,0.036,0.059,0.088,0.120,0.152,0.181,0.208,0.233,0.256,0.276,0.294,0.309,0.324,0.337,0.350,
      +0.364,0.382,0.404,0.427,0.451,0.474,0.495,0.516,0.534,0.551,0.570,0.589,0.609,0.629,0.652,0.674,0.697,
      +0.719,0.738,0.778,0.803,0.815,0.816,0.809,0.795,0.777,0.754,0.729,0.703/)
-	R1=(/105.00,110.00,111.67,113.10,113.37,113.07,112.36,112.13,111.65,110.64,109.53,108.28,106.99,105.41,
+        R1=(/105.00,110.00,111.67,113.10,113.37,113.07,112.36,112.13,111.65,110.64,109.53,108.28,106.99,105.41,
      +103.61,101.70,99.76,97.93,96.03,94.10,92.08,90.01,87.97,85.99,84.23,82.74,81.54,80.46,79.59,79.05,
      +78.85,78.99,79.47,80.26,81.33,82.86,84.72,86.67,88.73,90.91,93.04,95.08,97.04,98.87,100.53,102.01,
      +103.15,104.00,104.70,105.26,105.61,105.87,106.02,106.03,105.92,105.79,105.69,105.59,105.54,105.61,
@@ -10383,7 +10406,7 @@ c clin and Vclin updated July 2013.
      +125.38,126.90,128.14,129.11,129.86,130.37,130.67,130.81,130.81,130.72,130.57,130.36,130.13,129.90,
      +129.71,129.56,129.49,129.49,129.57,129.71,129.87,130.05,130.22,130.39,130.53,130.63,130.70,130.72,
      +130.87,130.71,130.50,130.26,130.00/)
-	R2=(/272.00,270.00,270.00,270.00,270.00,270.00,270.00,270.00,270.00,270.00,270.00,270.00,270.00,
+        R2=(/272.00,270.00,270.00,270.00,270.00,270.00,270.00,270.00,270.00,270.00,270.00,270.00,270.00,
      +270.00,270.00,270.00,270.00,270.00,270.00,270.01,270.02,270.02,270.03,270.04,270.05,270.06,270.07,
      +270.08,270.09,270.11,270.13,270.15,270.15,270.16,270.16,270.16,270.14,270.11,270.06,270.00,269.83,
      +269.59,269.45,269.30,268.96,268.78,268.59,268.20,267.79,267.58,267.37,266.95,266.54,266.16,265.80,
@@ -10391,44 +10414,44 @@ c clin and Vclin updated July 2013.
      +270.00,270.18,269.42,267.82,265.45,262.41,258.78,254.66,250.11,245.25,240.14,229.55,219.05,214.04,
      +209.32,201.08,195.00,191.61,190.73,191.11,191.98,195.01,199.45,204.93,211.09,217.56,223.99,230.00,
      +241.86,249.34,252.94,253.12,250.39,245.23,238.13,229.56,220.02,210.00/)
-	delta_phiR=(/0.082,0.100,0.096,0.092,0.088,0.086,0.084,0.081,0.078,0.077,0.075,0.073,0.072,0.070,0.069,0.067,
+        delta_phiR=(/0.082,0.100,0.096,0.092,0.088,0.086,0.084,0.081,0.078,0.077,0.075,0.073,0.072,0.070,0.069,0.067,
      +0.065,0.063,0.062,0.061,0.061,0.061,0.062,0.064,0.067,0.072,0.076,0.082,0.087,0.093,0.099,0.104,0.110,
      +0.115,0.120,0.125,0.128,0.131,0.134,0.136,0.138,0.140,0.141,0.141,0.140,0.139,0.138,0.135,0.133,0.130,
      +0.128,0.125,0.122,0.120,0.117,0.115,0.113,0.111,0.109,0.108,0.106,0.105,0.103,0.102,0.100,0.099,0.099,
      +0.098,0.098,0.098,0.099,0.100,0.101,0.102,0.104,0.105,0.106,0.106,0.106,0.105,0.103,0.100,0.097,0.094,
      +0.091,0.088,0.084,0.081,0.078,0.075,0.072,0.070,0.068,0.066,0.064,0.063,0.061,0.060,0.059,0.059,0.059,
      +0.058,0.059,0.059,0.060,0.060,0.060/)
-	delta_phiV=(/0.068,0.084,0.079,0.079,0.080,0.081,0.081,0.082,0.082,0.083,0.083,0.084,0.083,0.083,0.082,0.081,
+        delta_phiV=(/0.068,0.084,0.079,0.079,0.080,0.081,0.081,0.082,0.082,0.083,0.083,0.084,0.083,0.083,0.082,0.081,
      +0.079,0.077,0.075,0.073,0.070,0.067,0.064,0.062,0.060,0.058,0.057,0.057,0.057,0.059,0.061,0.063,0.066,
      +0.069,0.072,0.076,0.079,0.081,0.084,0.086,0.087,0.088,0.089,0.090,0.091,0.092,0.093,0.094,0.094,0.095,
      +0.095,0.095,0.095,0.094,0.093,0.092,0.091,0.089,0.088,0.086,0.085,0.083,0.082,0.081,0.080,0.079,0.079,
      +0.078,0.078,0.078,0.078,0.077,0.077,0.077,0.076,0.075,0.074,0.072,0.071,0.069,0.066,0.064,0.061,0.058,
      +0.056,0.053,0.050,0.047,0.045,0.042,0.039,0.036,0.034,0.033,0.032,0.032,0.032,0.031,0.031,0.032,0.033,
      +0.034,0.033,0.031,0.028,0.025,0.025/)
-	V1=225.
-	V2=300.
-	phi1=(/0.644,0.695,0.698,0.702,0.707,0.711,0.716,0.721,0.726,0.730,0.734,0.738,0.742,0.745,0.748,
+        V1=225.
+        V2=300.
+        phi1=(/0.644,0.695,0.698,0.702,0.707,0.711,0.716,0.721,0.726,0.730,0.734,0.738,0.742,0.745,0.748,
      +0.750,0.752,0.753,0.753,0.753,0.752,0.750,0.748,0.745,0.741,0.737,0.734,0.731,0.728,0.726,0.724,0.723,
      +0.722,0.721,0.720,0.720,0.718,0.717,0.714,0.711,0.708,0.703,0.698,0.693,0.687,0.681,0.675,0.670,0.664,
      +0.658,0.653,0.648,0.643,0.638,0.634,0.629,0.624,0.619,0.615,0.610,0.605,0.599,0.593,0.587,0.581,0.576,
      +0.570,0.564,0.558,0.553,0.548,0.543,0.539,0.535,0.532,0.529,0.527,0.526,0.526,0.526,0.527,0.528,0.530,
      +0.531,0.532,0.534,0.535,0.535,0.536,0.536,0.536,0.536,0.535,0.534,0.533,0.531,0.528,0.526,0.524,0.520,
      +0.515,0.512,0.510,0.509,0.509,0.509,0.510/)
-	phi2=(/0.552,0.495,0.499,0.502,0.505,0.508,0.510,0.514,0.516,0.518,0.520,0.521,0.523,0.525,0.527,
+        phi2=(/0.552,0.495,0.499,0.502,0.505,0.508,0.510,0.514,0.516,0.518,0.520,0.521,0.523,0.525,0.527,
      +0.529,0.530,0.532,0.534,0.536,0.538,0.540,0.541,0.542,0.543,0.543,0.542,0.542,0.541,0.540,0.539,0.538,
      +0.538,0.537,0.537,0.536,0.536,0.536,0.537,0.539,0.541,0.544,0.547,0.550,0.554,0.557,0.561,0.566,0.570,
      +0.573,0.576,0.578,0.580,0.583,0.585,0.589,0.592,0.595,0.599,0.603,0.607,0.611,0.615,0.619,0.622,0.624,
      +0.625,0.626,0.626,0.625,0.624,0.623,0.622,0.620,0.619,0.618,0.618,0.618,0.618,0.618,0.619,0.619,0.619,
      +0.620,0.619,0.619,0.618,0.618,0.617,0.616,0.616,0.616,0.616,0.617,0.619,0.621,0.622,0.624,0.625,0.634,
      +0.636,0.634,0.630,0.622,0.613,0.604,0.604/)
-	tau1=(/0.401,0.398,0.402,0.409,0.418,0.427,0.436,0.445,0.454,0.462,0.470,0.478,0.484,0.490,0.496,
+        tau1=(/0.401,0.398,0.402,0.409,0.418,0.427,0.436,0.445,0.454,0.462,0.470,0.478,0.484,0.490,0.496,
      +0.499,0.502,0.503,0.502,0.499,0.495,0.489,0.483,0.474,0.464,0.452,0.440,0.428,0.415,0.403,0.392,0.381,
      +0.371,0.362,0.354,0.349,0.346,0.344,0.343,0.344,0.345,0.347,0.350,0.353,0.357,0.360,0.363,0.366,0.369,
      +0.372,0.375,0.378,0.381,0.384,0.388,0.393,0.398,0.404,0.410,0.417,0.424,0.431,0.440,0.448,0.457,0.466,
      +0.475,0.483,0.491,0.498,0.505,0.511,0.516,0.521,0.525,0.528,0.530,0.531,0.532,0.532,0.533,0.533,0.534,
      +0.535,0.536,0.537,0.538,0.540,0.541,0.542,0.543,0.543,0.542,0.540,0.538,0.535,0.532,0.528,0.524,0.517,
      +0.514,0.511,0.507,0.503,0.498,0.492,0.487/)
-	tau2=(/0.346,0.348,0.345,0.346,0.349,0.354,0.359,0.364,0.369,0.374,0.379,0.384,0.390,0.397,0.405,
+        tau2=(/0.346,0.348,0.345,0.346,0.349,0.354,0.359,0.364,0.369,0.374,0.379,0.384,0.390,0.397,0.405,
      +0.412,0.419,0.426,0.434,0.441,0.448,0.455,0.461,0.466,0.468,0.468,0.466,0.464,0.458,0.451,0.441,0.430,
      +0.417,0.403,0.388,0.372,0.357,0.341,0.324,0.309,0.294,0.280,0.266,0.255,0.244,0.236,0.229,0.223,0.218,
      +0.215,0.212,0.210,0.210,0.210,0.211,0.213,0.216,0.219,0.224,0.229,0.235,0.243,0.250,0.258,0.266,0.274,
@@ -10467,7 +10490,7 @@ c       delta_c3 = dc3CATW      !Use CA-Taiwan version for now. Can add options 
         e(5)=e5(indx_per)
         e(6)=e6(indx_per)
         v1 = 225.
-        v2 = 300.	!from bssa13_gm_tmr.for
+        v2 = 300.        !from bssa13_gm_tmr.for
 c v1 and v2 are new control velocities. 4/11/2013. R1 and R2 are new May 2013.
 c Set v1, v2 to values in text below equation (4.13) ("pending further study")
             call bssa13_gm_sub4y(T(indx_per),m, r, rjb, v30, mech,  z1, pga4nl,c, Mref(indx_per), 
@@ -10636,7 +10659,7 @@ c modified f2 to eqn (3.11)
       fsb  = alog(amp_total)   !
       
 c Dont reset z1 to -9.9 but do  hardwire delta_z1 = 0.0 in this version:
-c      z1 = -9.9	!should not do this. communicates this to rest of pgm
+c      z1 = -9.9        !should not do this. communicates this to rest of pgm
       delta_z1 = 0.0
       irelation=1
 c need to rework code with irelation some day. SH
@@ -10647,6 +10670,7 @@ c        else
 c          delta_z1 = 0.0
 c        end if
 c      end if
+        delta_z1=delta_z1*0.001        !to put in units km. changed jan 31 2014
       if (per < 0.65) then
         f_delta_z1 = 0.0
       else
@@ -10721,7 +10745,7 @@ c specT = spectral period (s).   iper = index in T array of specT
 c no interpolation. SH. Added option to compute inelastic spectral displacement
 c using the method of Tothong and Cornell March 2013.
 c Output: lnSA = logged median gm (g)
-c      	sigma1 =  SD(lnSA)
+c              sigma1 =  SD(lnSA)
        common/sdi/sdi,dy_sdi,fac_sde
        real, dimension (108):: period
        real, dimension(8):: fac_sde
@@ -10780,7 +10804,7 @@ c     For now, convert hwflag to an equivalent srcSiteA
 c     compute pga on rock
       period0 = 0.0
       pgaRock = 0.0
-      vs30_rock = 1100.	!only with AS_07; not with ASK13.
+      vs30_rock = 1100.        !only with AS_07; not with ASK13.
       depthvs10rock = 0.006
       call AS_072007_model (iper, mag, dip, rake, width, rRup, rjb,R_x,
      1                     vs30_rock, pgaRock,  lnSa, sigma, tau,
@@ -10863,7 +10887,7 @@ c      real tauCorr, sigCorr
       integer iper,count1, count2,  vs30_class, hwflag
       real n, c, z10, c2, e2, a21, a22, test, zhat
 
-c      	Updated coefficients according to AS08 paper by SR from matlab code
+c              Updated coefficients according to AS08 paper by SR from matlab code
       data period / 0.0, -1.0, -2.0, 0.01, 0.02, 0.022, 0.025, 0.029,
      1              0.03, 0.032, 0.035, 0.036, 0.04, 0.042, 0.044, 
      2              0.045, 0.046, 0.048, 0.05, 0.055, 0.06, 0.065, 
@@ -11395,7 +11419,7 @@ c     Set Velocity for break in slope (Eq. 6)
       elseif ( specT .gt. 0.50 ) then
           v1 = exp(8.0-0.795*alog(specT/0.21))
       elseif (specT .eq. -1.0) then
-c      	SR: this is different in paper, 826	
+c              SR: this is different in paper, 826        
           v1 = 700.0
       elseif (specT .eq. -2.0) then
           v1 = 700.0
@@ -11408,7 +11432,7 @@ C     Set the Vs30* (Eq. 5)
           vs = vs30
       else
           vs = v1
-      endif      	
+      endif              
 
 c     Compute site amplification (Eq. 4)  
       if (vs30 .lt. vLinT) then
@@ -11483,9 +11507,9 @@ c        Modified by SR to follow Eq. 13 of AS08 paper
       z1 = 5.
       z2 = 10.       
         if (depthTop .lt. z2) then
-        	sum = sum + a16T*depthTop/10.0
+                sum = sum + a16T*depthTop/10.0
         else
-      	sum = sum + a16T
+              sum = sum + a16T
       endif
 
        
@@ -11589,7 +11613,7 @@ c
       real a36(MAXPER), a37(MAXPER), a38(MAXPER), a39(MAXPER)
       real a40(MAXPER), a41(MAXPER), a42(MAXPER), s5(MAXPER), s6(MAXPER)
       real s1_e(MAXPER), s2_e(MAXPER), s1_m(MAXPER), s2_m(MAXPER), s3(MAXPER), s4(MAXPER)
-	 
+         
       real period(MAXPER), b(MAXPER), vLin(MAXPER)
       real M1, M2, y1, y2, x1, x2, y1z, y2z, x1z, x2z
       real lnSa, Sa1180, rjb, rRup, Rx, Ry0, dip, mag, vs30
@@ -11605,98 +11629,98 @@ c
       data period / 0.0, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 
      1              0.3, 0.4, 0.5, 0.75, 1., 1.5, 2., 3., 4., 5., 6., 7.5, 10., -1.0/
       data Vlin/ 660,680,770,915,960,910,740,590,495,430,360,340,330,330,
-     1			 330,330,330,330,330,330,330,330,330 /
+     1                         330,330,330,330,330,330,330,330,330 /
       data b/ -1.47,-1.46,-1.39,-1.22,-1.15,-1.23,-1.59,-2.01,-2.41,-2.76,
      1         -3.28,-3.6,-3.8,-3.5,-2.4,-1,0,0,0,0,0,0,-2.02 /
       data c4/ 4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5,
-     1     	4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5 /
+     1             4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5 /
       data a1/ 0.587,0.598,0.602,0.707,0.973,1.169,1.442,1.637,1.701,1.712,
      1     1.662,1.571,1.299,1.043,0.665,0.329,-0.060,-0.299,-0.562,-0.875,-1.303,-1.928,5.975 /
       data a2/ -0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,
-     1      	-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,
+     1              -0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,
      2       -0.765,-0.711,-0.634,-0.529,-0.919 /
       data a3/ 0.275,0.275,0.275,0.275,0.275,0.275,0.275,0.275,0.275,0.275,
      1        0.275,0.275,0.275,0.275,0.275,0.275,0.275,0.275,0.275,0.275,
      2        0.275,0.275,0.275 /
       data a4/ -0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,
-     1		   -0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1 /
+     1                   -0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1 /
       data a5/ -0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,
-     1     	-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41 /
+     1             -0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41,-0.41 /
       data a6/ 2.154,2.146,2.157,2.085,2.029,2.041,2.121,2.224,2.312,2.338,2.469,
-     1       	2.559,2.682,2.763,2.836,2.897,2.906,2.889,2.898,2.896,2.870,2.843,2.366 /
+     1               2.559,2.682,2.763,2.836,2.897,2.906,2.889,2.898,2.896,2.870,2.843,2.366 /
       data a7/ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 /
       data a8/ -0.015,-0.015,-0.015,-0.015,-0.015,-0.015,-0.022,-0.03,-0.038,-0.045,
-     1        	-0.055,-0.065,-0.095,-0.11,-0.124,-0.138,-0.172,-0.197,-0.218,-0.235,
-     2        	-0.255,-0.285,-0.094 /
+     1                -0.055,-0.065,-0.095,-0.11,-0.124,-0.138,-0.172,-0.197,-0.218,-0.235,
+     2                -0.255,-0.285,-0.094 /
       data a9/ 6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,
-     1 		   6.75,6.75,6.75,6.82,6.92,7,7.06,7.15,7.25,6.75 /
+     1                    6.75,6.75,6.75,6.82,6.92,7,7.06,7.15,7.25,6.75 /
       data a10/ 1.735,1.718,1.615,1.358,1.258,1.310,1.660,2.220,2.770,3.250,
-     1 		    3.990,4.450,4.750,4.300,2.650,0.550,-0.950,-0.950,-0.930,-0.910,
-     2 			-0.875,-0.800,2.36 /
+     1                     3.990,4.450,4.750,4.300,2.650,0.550,-0.950,-0.950,-0.930,-0.910,
+     2                         -0.875,-0.800,2.36 /
       data a11/ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /
       data a12/ -0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,
-     1 			-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1 /
+     1                         -0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1 /
       data a13/ 0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.58,0.56,0.53,
-     1 			0.50,0.42,0.35,0.20,0,0,0,0,0,0.25 /
+     1                         0.50,0.42,0.35,0.20,0,0,0,0,0,0.25 /
       data a14/ -0.30,-0.30,-0.30,-0.30,-0.30,-0.30,-0.30,-0.30,-0.24,-0.19,
-     1 		    -0.11,-0.04,0.07,0.15,0.27,0.35,0.46,0.54,0.61,0.65,0.72,0.80,0.22 /
+     1                     -0.11,-0.04,0.07,0.15,0.27,0.35,0.46,0.54,0.61,0.65,0.72,0.80,0.22 /
       data a15/ 1.10,1.10,1.10,1.10,1.10,1.10,1.10,1.10,1.10,1.03,0.92,0.84,
-     1 		    0.68,0.57,0.42,0.31,0.16,0.05,-0.04,-0.11,-0.19,-0.30,0.90 /
+     1                     0.68,0.57,0.42,0.31,0.16,0.05,-0.04,-0.11,-0.19,-0.30,0.90 /
       data a17/ -0.0072,-0.0073,-0.0075,-0.0080,-0.0089,-0.0095,-0.0095,-0.0086,
-     1        	-0.0074,-0.0064,-0.0043,-0.0032,-0.0025,-0.0025,-0.0022,-0.0019,-0.0015,
-     2        	-0.0010,-0.0010,-0.0010,-0.0010,-0.0010,-0.0005 /
+     1                -0.0074,-0.0064,-0.0043,-0.0032,-0.0025,-0.0025,-0.0022,-0.0019,-0.0015,
+     2                -0.0010,-0.0010,-0.0010,-0.0010,-0.0010,-0.0005 /
       data a43/ 0.10,0.10,0.10,0.10,0.10,0.10,0.10,0.10,0.10,0.10,0.10,0.10,
-     1 	        0.14,0.165,0.22,0.26,0.34,0.41,0.51,0.55,0.55,0.42,0.28 /
+     1                 0.14,0.165,0.22,0.26,0.34,0.41,0.51,0.55,0.55,0.42,0.28 /
       data a44/ 0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.07,
-     1 			0.10,0.14,0.165,0.21,0.25,0.30,0.32,0.32,0.32,0.29,0.22,0.15 /
+     1                         0.10,0.14,0.165,0.21,0.25,0.30,0.32,0.32,0.32,0.29,0.22,0.15 /
       data a45/ 0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.03,0.06,
-     1 			0.10,0.14,0.165,0.20,0.22,0.23,0.23,0.22,0.20,0.17,0.14,0.09 /
+     1                         0.10,0.14,0.165,0.20,0.22,0.23,0.23,0.22,0.20,0.17,0.14,0.09 /
       data a46/ -0.05,-0.05,-0.05,-0.05,-0.05,-0.05,-0.05,-0.03,0.00,0.03,
-     1 			0.06,0.09,0.13,0.14,0.16,0.16,0.16,0.14,0.13,0.10,0.08,0.08,0.07 /
+     1                         0.06,0.09,0.13,0.14,0.16,0.16,0.16,0.14,0.13,0.10,0.08,0.08,0.07 /
       data a25/ -0.0015,-0.0015,-0.0016,-0.0020,-0.0027,-0.0033,-0.0035,
-     1         	  -0.0033,-0.0029,-0.0027,-0.0023,-0.0020,-0.0010,-0.0005,-0.0004,
-     2         	  -0.0002,0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,-0.0001 /
+     1                   -0.0033,-0.0029,-0.0027,-0.0023,-0.0020,-0.0010,-0.0005,-0.0004,
+     2                   -0.0002,0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,-0.0001 /
       data a28/ 0.0025,0.0024,0.0023,0.0027,0.0032,0.0036,0.0033,0.0027,
-     1         	  0.0024,0.0020,0.0010,0.0008,0.0007,0.0007,0.0006,0.0003,0.0000,
-     2         	  0.0000,0.0000,0.0000,0.0000,0.0000,0.0005 /
+     1                   0.0024,0.0020,0.0010,0.0008,0.0007,0.0007,0.0006,0.0003,0.0000,
+     2                   0.0000,0.0000,0.0000,0.0000,0.0000,0.0005 /
       data a29/ -0.0034,-0.0033,-0.0034,-0.0033,-0.0029,-0.0025,-0.0025,
-     1         	  -0.0031,-0.0036,-0.0039,-0.0048,-0.0050,-0.0041,-0.0032,-0.0020,
-     2         	  -0.0017,-0.0020,-0.0020,-0.0020,-0.0020,-0.0020,-0.0020,-0.0037 /
+     1                   -0.0031,-0.0036,-0.0039,-0.0048,-0.0050,-0.0041,-0.0032,-0.0020,
+     2                   -0.0017,-0.0020,-0.0020,-0.0020,-0.0020,-0.0020,-0.0020,-0.0037 /
       data a31/ -0.1503,-0.1479,-0.1447,-0.1326,-0.1353,-0.1128,0.0383,
-     1         	  0.0775,0.0741,0.2548,0.2136,0.1542,0.0787,0.0476,-0.0163,-0.1203,
-     2         	  -0.2719,-0.2958,-0.2718,-0.2517,-0.1337,-0.0216,-0.1462 /
+     1                   0.0775,0.0741,0.2548,0.2136,0.1542,0.0787,0.0476,-0.0163,-0.1203,
+     2                   -0.2719,-0.2958,-0.2718,-0.2517,-0.1337,-0.0216,-0.1462 /
       data a36/ 0.2650,0.2550,0.2490,0.2020,0.1260,0.0220,-0.1360,-0.0780,
-     1         	  0.0370,-0.0910,0.1290,0.3100,0.5050,0.3580,0.1310,0.1230,0.1090,
-     2         	  0.1350,0.1890,0.2150,0.1660,0.0920,0.3770 /
+     1                   0.0370,-0.0910,0.1290,0.3100,0.5050,0.3580,0.1310,0.1230,0.1090,
+     2                   0.1350,0.1890,0.2150,0.1660,0.0920,0.3770 /
       data a37/ 0.3370,0.3280,0.3200,0.2890,0.2750,0.2560,0.1620,0.2240,
-     1         	  0.2480,0.2030,0.2320,0.2520,0.2080,0.2080,0.1080,0.0680,-0.0230,
-     2         	  0.0280,0.0310,0.0240,-0.0610,-0.1590,0.2120 /
+     1                   0.2480,0.2030,0.2320,0.2520,0.2080,0.2080,0.1080,0.0680,-0.0230,
+     2                   0.0280,0.0310,0.0240,-0.0610,-0.1590,0.2120 /
       data a38/ 0.1880,0.1840,0.1800,0.1670,0.1730,0.1890,0.1080,0.1150,
-     1         	  0.1220,0.0960,0.1230,0.1340,0.1290,0.1520,0.1180,0.1190,0.0930,
-     2         	  0.0840,0.0580,0.0650,0.0090,-0.0500,0.1570 /
+     1                   0.1220,0.0960,0.1230,0.1340,0.1290,0.1520,0.1180,0.1190,0.0930,
+     2                   0.0840,0.0580,0.0650,0.0090,-0.0500,0.1570 /
       data a39/ 0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,
-     1         	  0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,
-     2         	  0.0000,0.0000,0.0000,0.0000,0.0000,0.0000 /
+     1                   0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,
+     2                   0.0000,0.0000,0.0000,0.0000,0.0000,0.0000 /
       data a40/ 0.0880,0.0880,0.0930,0.1330,0.1860,0.1600,0.0680,0.0480,
-     1         	  0.0550,0.0730,0.1430,0.1600,0.1580,0.1450,0.1310,0.0830,0.0700,
-     2         	  0.1010,0.0950,0.1330,0.1510,0.1240,0.0950 /
+     1                   0.0550,0.0730,0.1430,0.1600,0.1580,0.1450,0.1310,0.0830,0.0700,
+     2                   0.1010,0.0950,0.1330,0.1510,0.1240,0.0950 /
       data a41/ -0.1960,-0.1940,-0.1750,-0.0900,0.0900,0.0060,-0.1560,
-     1         	  -0.2740,-0.2480,-0.2030,-0.1540,-0.1590,-0.1410,-0.1440,-0.1260,
-     2         	  -0.0750,-0.0210,0.0720,0.2050,0.2850,0.3290,0.3010,-0.0380 /
+     1                   -0.2740,-0.2480,-0.2030,-0.1540,-0.1590,-0.1410,-0.1440,-0.1260,
+     2                   -0.0750,-0.0210,0.0720,0.2050,0.2850,0.3290,0.3010,-0.0380 /
       data a42/ 0.0440,0.0610,0.1620,0.4510,0.5060,0.3350,-0.0840,
-     1         	  -0.1780,-0.1870,-0.1590,-0.0230,-0.0290,0.0610,0.0620,0.0370,
-     2         	  -0.1430,-0.0280,-0.0970,0.0150,0.1040,0.2990,0.2430,0.0650 /
+     1                   -0.1780,-0.1870,-0.1590,-0.0230,-0.0290,0.0610,0.0620,0.0370,
+     2                   -0.1430,-0.0280,-0.0970,0.0150,0.1040,0.2990,0.2430,0.0650 /
 
       data s1_e/ 0.754,0.760,0.781,0.810,0.810,0.810,0.801,0.789,0.770,0.740,
-     1		   0.699,0.676,0.631,0.609,0.578,0.555,0.548,0.527,0.505,0.477,
-     2		   0.457,0.429,0.662 /
+     1                   0.699,0.676,0.631,0.609,0.578,0.555,0.548,0.527,0.505,0.477,
+     2                   0.457,0.429,0.662 /
       data s2_e/ 0.520,0.520,0.520,0.530,0.540,0.550,0.560,0.565,0.570,0.580,
-     1		   0.590,0.600,0.615,0.630,0.640,0.650,0.640,0.630,0.630,0.630,
-     2		   0.630,0.630,0.51 /
+     1                   0.590,0.600,0.615,0.630,0.640,0.650,0.640,0.630,0.630,0.630,
+     2                   0.630,0.630,0.51 /
       data s3/ 0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,
-     1 		   0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.38 /
+     1                    0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.38 /
       data s4/ 0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,
-     1 		   0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.38 /
+     1                    0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.38 /
       data s1_m/ 0.741,0.747,0.769,0.798,0.798,0.795,0.773,0.753,0.729,
      1         0.693,0.644,0.616,0.566,0.541,0.506,0.48,0.472,0.447,0.425,
      2         0.395,0.378,0.359,0.66 /
@@ -11714,14 +11738,14 @@ c
       n = 1.5
 
 C     c is 2400 for PGV and 2.4 for all other periods
-      if (period(iper) .eq. -1) then	
+      if (period(iper) .eq. -1) then        
          c = 2400.0
       else
          c = 2.4
       endif
 
     
-c	  magnitude dependent taper for C4. (eq. 4.4)
+c          magnitude dependent taper for C4. (eq. 4.4)
       if ( mag .ge. 5. ) then
         c4_mag = c4(iper)
       elseif ( mag .ge. 4.) then
@@ -11729,10 +11753,10 @@ c	  magnitude dependent taper for C4. (eq. 4.4)
       else
         c4_mag = 1.
       endif
-		
+                
 c     Set distance (eq 4.3)
       R = sqrt(rRup**2 + c4_mag**2)
-       	  
+                 
 C     Base Model (eq 4.2)
       M1 = a9(iper)
       M2 = 5.0
@@ -11775,15 +11799,15 @@ c     Set VS30_star (eq 4.8 and 4.9)
       if ( vs30 .lt. v1 ) then
          vs30Star = vs30
       else
-	vs30Star = v1
-      endif		
+        vs30Star = v1
+      endif                
 
 c     Compute site amplification (Eq. 4.7)  
       if (vs30 .lt. vLin(iPer)) then
         f5 = a10(iper)*alog(vs30Star/vLin(iper)) - b(iper)*alog(c+Sa1180) 
      1              + b(iper)*alog(Sa1180+c*((vs30Star/vLin(iper))**(n)) )
       else
-     	f5 = (a10(iper) + b(iper)*n) * alog(vs30Star/vLin(iper))
+             f5 = (a10(iper) + b(iper)*n) * alog(vs30Star/vLin(iper))
       endif
 
 c     Set CA z1 reference (eq 4.18). This z1_ref was passed in (assuming constant Vs30 for all sites in map)
@@ -11794,13 +11818,13 @@ c        z1_ref = exp ( -7.67/4. * alog( (Vs30**4 + 610.**4)/(1360.**4+610.**4) 
 c     Set Japan z1 reference (eq 4.19)
         z1_ref = exp ( -5.23/2. * alog( (Vs30**2 + 412.**2)/(1360.**2+412.**2) ) ) / 1000.
        endif
-	  
+          
 C    if z1 is unknown, input z1<0 and then reference is used. (R.K.)
       if (z1 .lt. 0. ) then
-		z1 = z1_ref
+                z1 = z1_ref
       endif
-	  
-	  
+          
+          
 C     Soil Depth Model - Interpolate between mid Vs30 bins (eq 4.17)
       if ( vs30 .lt. 150. ) then 
         y1z = a43(iper) 
@@ -11828,10 +11852,10 @@ C     Soil Depth Model - Interpolate between mid Vs30 bins (eq 4.17)
         x1z = 700. 
         x2z = 1000.
       endif        
-	  
+          
        f10 = (y1z + (y2z-y1z)/(x2z-x1z))*alog( (z1+0.01) /(z1_ref+0.01) )
-	  
-	  
+          
+          
 c     Compute HW taper1 (eq 4.11) 
       if ( dip .lt. 30. ) then
         HW_taper1 = 60./ 45.
@@ -11850,7 +11874,7 @@ c     Compute HW taper2 (eq. 4.12)
       endif
 
 c     Compute HW taper 3 (eq. 4.13)
-C	  April 11, correction by ronnie for HW_taper3 when Rx.gt.R2
+C          April 11, correction by ronnie for HW_taper3 when Rx.gt.R2
       h1 = 0.25
       h2 = 1.5
       h3 = -0.75
@@ -11883,7 +11907,7 @@ c     Compute HW taper 5 (eq. 4.15b)  **** No Ry0 version ***
         endif
       else
 C     Compute HW taper 5 (eq. 4.15a)  **** Ry0 version ***     
-        Ry1 = Rx * tan20		!tan(20.*3.1415926/180.)
+        Ry1 = Rx * tan20                !tan(20.*3.1415926/180.)
         if ( Ry0 .lt. Ry1 ) then
           HW_taper5 = 1.
         elseif ( Ry0-Ry1 .lt. 5. ) then
@@ -11904,7 +11928,7 @@ C     Calcualte the Regional delta (for site response and anelastic attenuation)
 
 C     Japan
       if ( Region .eq. 10 ) then
-		
+                
       if ( vs30 .lt. 150. ) then 
         y1 = a36(iper) 
         y2 = a36(iper)
@@ -11949,8 +11973,8 @@ C     Japan
       
          f13 = y1 + (y2-y1)/(x2-x1) * (Vs30-x1)
       
-	     f_Reg = f13 + a29(iper)*rRup
-	  
+             f_Reg = f13 + a29(iper)*rRup
+          
 C     Taiwan
       elseif (Region .eq. 3) then
         f_Reg = a31(iper)*alog(vs30Star/vLin(iper)) + a25(iper)*rRup
@@ -11961,7 +11985,7 @@ C     China
         f_Reg = 0.0
       endif
 
-	  
+          
 C     Set the Sigma Values
       
       if (region .ne. 10)  then
@@ -11982,19 +12006,19 @@ c     Compute within-event term, phiA, for known Vs30
         else
            phiA_measured = s2_m(iper)
         endif
-	  
-	  
+          
+          
 C     choose phiA by Vs30 class
         if (vs30_class .eq. 0 ) then
-	     phiA = phiA_estimated
+             phiA = phiA_estimated
         elseif (vs30_class .eq. 1) then
-		 phiA = phiA_measured
+                 phiA = phiA_measured
         else
-	     stop 99
+             stop 99
         endif
 
       else
-	  
+          
 
 C calculate phi_A for Japan (eq. 7.3)
         if (Rrup .lt. 30.) then
@@ -12005,7 +12029,7 @@ C calculate phi_A for Japan (eq. 7.3)
            phiA = s6(iper)
         endif
       endif
-	  
+          
 c     Compute between-event term, tau (eq. 7.2)
       if (mag .lt. 5.0) then
          tauA = s3(iper)
@@ -12036,13 +12060,13 @@ C     Compute tau, with non-linear effects (eq. 7.9)
       
 c     Compute median ground motion (eq. 4.1)
       lnSa = f1 + f4 + f5 + f6 + f7 + f8 + f10 +f_Reg 
-c	if(rjb.lt.100.and.period(iper).eq.0.2)write(85,*)exp(lnSa),phi,tau,sqrt(phi**2+tau**2), mag,Rjb
+c        if(rjb.lt.100.and.period(iper).eq.0.2)write(85,*)exp(lnSa),phi,tau,sqrt(phi**2+tau**2), mag,Rjb
       return
-      end    subroutine ASK13_v11_model  			
+      end    subroutine ASK13_v11_model                          
 
       subroutine AS2013_v5_model (iper, mag, dip, FltWidth, ZTOR, Frv, Fn, rRup, rjb, Rx, Ry0, 
      1                     vs30, Sa1100, Z1, z1_ref, hwflag, vs30_class, lnSa, phi, tau)
-c May 15 2013 update. z1_ref is input rather than computed here.
+c May 15 2013 update. z1_ref is input rather than computed here. No longer used.
 c  
       implicit none
       integer MAXPER     
@@ -12067,71 +12091,71 @@ c
       data period / 0.00, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 
      1              0.3, 0.4, 0.5, 0.75, 1., 1.5, 2., 3., 4., 5., 6., 7.5, 10. /
       data Vlin/ 660.,680.,770.,800.,800.,800.,740.,590.,495.,430.,360.,340.,330.,330.,
-     1			 330.,330.,330.,330.,330.,330.,330.,330. /
+     1                         330.,330.,330.,330.,330.,330.,330.,330. /
       data b/ -1.47,-1.459,-1.39,-1.219,-1.152,-1.23,-1.587,-2.012,-2.411,-2.757,
-     1 		  -3.278,-3.599,-3.8,-3.5,-2.4,-1,0,0,0,0,0,0 /
+     1                   -3.278,-3.599,-3.8,-3.5,-2.4,-1,0,0,0,0,0,0 /
       data c4/ 6,6,6,6,6,5.9,5.8,5.7,5.6,5.5,5.2,4.8,4.4,4,3.75,3.5,3.25,
-     1		   3,3,3,3,3 /
+     1                   3,3,3,3,3 /
       data s1/ 0.754,0.760,0.781,0.810,0.810,0.810,0.801,0.789,0.770,0.740,
-     1		   0.699,0.676,0.631,0.609,0.578,0.555,0.548,0.527,0.505,0.477,
-     2		   0.457,0.429 /
+     1                   0.699,0.676,0.631,0.609,0.578,0.555,0.548,0.527,0.505,0.477,
+     2                   0.457,0.429 /
       data s2/ 0.520,0.520,0.520,0.530,0.540,0.550,0.560,0.565,0.570,0.580,
-     1		   0.590,0.600,0.615,0.630,0.640,0.650,0.640,0.630,0.630,0.630,
-     2		   0.630,0.630 /
+     1                   0.590,0.600,0.615,0.630,0.640,0.650,0.640,0.630,0.630,0.630,
+     2                   0.630,0.630 /
       data s3/ 0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,
-     1 		   0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47 /
+     1                    0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47,0.47 /
       data s4/ 0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,
-     1 		   0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36 /
+     1                    0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36 /
 
       data a1/ 0.464,0.473,0.4569,0.652,0.950,1.160,1.487,1.712,1.796,1.849,
-     1		   1.825,1.768,1.543,1.292,0.855,0.521,0.160,-0.070,-0.410,
-     2 	       -0.838,-1.433,-2.368 /
+     1                   1.825,1.768,1.543,1.292,0.855,0.521,0.160,-0.070,-0.410,
+     2                -0.838,-1.433,-2.368 /
       data a2/ -0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,
-     1 		   -0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,
-     2 		   -0.756,-0.700,-0.620,-0.515 /
+     1                    -0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,-0.790,
+     2                    -0.756,-0.700,-0.620,-0.515 /
       data a3/ 0.281,0.281,0.281,0.281,0.278,0.270,0.258,0.250,0.242,0.239,
-     1 		   0.231,0.230,0.230,0.230,0.230,0.230,0.230,0.230,0.230,0.230,
-     2 		   0.230,0.230 /
+     1                    0.231,0.230,0.230,0.230,0.230,0.230,0.230,0.230,0.230,0.230,
+     2                    0.230,0.230 /
       data a4/ -0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,
-     1		   -0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1 /
+     1                   -0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1 /
       data a5/ -0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,
-     1 		   -0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49 /
+     1                    -0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49,-0.49 /
       data a6/ 2.28,2.28,2.25,2.18,2.13,2.14,2.19,2.25,2.30,2.35,2.45,2.55,2.65,
-     1 		   2.70,2.75,2.75,2.75,2.75,2.75,2.75,2.75,2.75 /
+     1                    2.70,2.75,2.75,2.75,2.75,2.75,2.75,2.75,2.75 /
       data a7/ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /
       data a8/ 0,0,0,0,0,0,-0.029,-0.050,-0.066,-0.079,-0.099,-0.115,-0.144,
-     1 	       -0.165,-0.194,-0.214,-0.243,-0.264,-0.270,-0.270,-0.270,-0.270 /
+     1                -0.165,-0.194,-0.214,-0.243,-0.264,-0.270,-0.270,-0.270,-0.270 /
       data a9/ 6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,6.75,
-     1 		   6.75,6.75,6.75,6.82,6.92,7,7.06,7.145,7.25 /
+     1                    6.75,6.75,6.75,6.82,6.92,7,7.06,7.145,7.25 /
       data a10/ 1.735,1.718,1.615,1.358,1.258,1.310,1.660,2.220,2.770,3.250,
-     1 		    3.990,4.450,4.750,4.300,2.650,0.550,-0.950,-0.950,-0.930,-0.910,
-     2 			-0.875,-0.800 /
+     1                     3.990,4.450,4.750,4.300,2.650,0.550,-0.950,-0.950,-0.930,-0.910,
+     2                         -0.875,-0.800 /
       data a11/ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /
       data a12/ -0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,
-     1 			-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1 /
+     1                         -0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1 /
       data a13/ 0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.58,0.56,0.53,
-     1 			0.50,0.42,0.35,0.20,0,0,0,0,0 /
+     1                         0.50,0.42,0.35,0.20,0,0,0,0,0 /
       data a14/ -0.30,-0.30,-0.30,-0.30,-0.30,-0.30,-0.30,-0.30,-0.24,-0.19,
-     1 		    -0.11,-0.04,0.07,0.15,0.27,0.35,0.46,0.54,0.61,0.65,0.72,0.80 /
+     1                     -0.11,-0.04,0.07,0.15,0.27,0.35,0.46,0.54,0.61,0.65,0.72,0.80 /
       data a15/ 1.10,1.10,1.10,1.10,1.10,1.10,1.10,1.10,1.10,1.03,0.92,0.84,
-     1 		    0.68,0.57,0.42,0.31,0.16,0.05,-0.04,-0.11,-0.19,-0.30 /
+     1                     0.68,0.57,0.42,0.31,0.16,0.05,-0.04,-0.11,-0.19,-0.30 /
       data a17/ -0.0066,-0.0066,-0.0066,-0.0075,-0.0092,-0.0101,-0.0097,
-     1 		    -0.0084,-0.0074,-0.0064,-0.0043,-0.0032,-0.0025,-0.0022,
-     2 			-0.0016,-0.0013,-0.0010,-0.0010,-0.0010,-0.0010,-0.0010,-0.0010 /
+     1                     -0.0084,-0.0074,-0.0064,-0.0043,-0.0032,-0.0025,-0.0022,
+     2                         -0.0016,-0.0013,-0.0010,-0.0010,-0.0010,-0.0010,-0.0010,-0.0010 /
       data a43/ 0.10,0.10,0.10,0.10,0.10,0.10,0.10,0.10,0.10,0.10,0.10,0.10,
-     1 	        0.14,0.165,0.22,0.26,0.34,0.41,0.51,0.55,0.55,0.42 /
+     1                 0.14,0.165,0.22,0.26,0.34,0.41,0.51,0.55,0.55,0.42 /
       data a44/ 0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.07,
-     1 			0.10,0.14,0.165,0.21,0.25,0.30,0.32,0.32,0.32,0.29,0.22 /
+     1                         0.10,0.14,0.165,0.21,0.25,0.30,0.32,0.32,0.32,0.29,0.22 /
       data a45/ 0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.03,0.06,
-     1 			0.10,0.14,0.165,0.20,0.22,0.23,0.23,0.22,0.20,0.17,0.14 /
+     1                         0.10,0.14,0.165,0.20,0.22,0.23,0.23,0.22,0.20,0.17,0.14 /
       data a46/ -0.05,-0.05,-0.05,-0.05,-0.05,-0.05,-0.05,0.03,0.00,0.03,
-     1 			0.06,0.09,0.13,0.14,0.16,0.16,0.16,0.14,0.13,0.10,0.08,0.08 /
+     1                         0.06,0.09,0.13,0.14,0.16,0.16,0.16,0.14,0.13,0.10,0.08,0.08 /
      
       n = 1.5
       c = 2.4
      
 
-c	  magnitude dependent taper for C4.
+c          magnitude dependent taper for C4.
       if ( mag .ge. 5. ) then
         c4_mag = c4(iper)
       elseif ( mag .ge. 4.) then
@@ -12139,10 +12163,10 @@ c	  magnitude dependent taper for C4.
       else
         c4_mag = 1.
       endif
-		
+                
 c     Set distance (eq 3)
       R = sqrt(rRup**2 + c4_mag**2)
-       	  
+                 
 C     Base Model (eq 2)
       M1 = a9(iper)
       M2 = 5.0
@@ -12185,15 +12209,15 @@ c     Set VS30_star (eq 5)
       if ( vs30 .lt. v1 ) then
          vs30Star = vs30
       else
-	vs30Star = v1
-      endif		
+        vs30Star = v1
+      endif                
 
 c     Compute site amplification (Eq. 4)  
       if (vs30 .lt. vLin(iPer)) then
         f5 = a10(iper)*alog(vs30Star/vLin(iper)) - b(iper)*alog(c+Sa1100) 
      1              + b(iper)*alog(Sa1100+c*((vs30Star/vLin(iper))**(n)) )
       else
-     	f5 = (a10(iper) + b(iper)*n) * alog(vs30Star/vLin(iper))
+             f5 = (a10(iper) + b(iper)*n) * alog(vs30Star/vLin(iper))
       endif
 
 c     Set CA z1 reference (eq 18) in main.
@@ -12228,7 +12252,7 @@ c     Compute HW taper2 (eq. 10)
       endif
 
 c     Compute HW taper 3 (eq. 11)
-C	  April 11, correction by ronnie for HW_taper3 when Rx.gt.R2
+C          April 11, correction by ronnie for HW_taper3 when Rx.gt.R2
       h1 = 0.25
       h2 = 1.5
       h3 = -0.75
@@ -12274,7 +12298,7 @@ c     Hanging wall Model (eq 8)
       else
         f4 = 0.
       endif
-	
+        
 C     Set the Sigma Values
       
 c     Compute within-event term, phiA, at the surface for linear site response (eq 23)

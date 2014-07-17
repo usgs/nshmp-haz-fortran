@@ -1,4 +1,6 @@
 c--- program hazSUBXnga.test.f : long header version
+c Feb 19 2014: Add hard-rock coeffs. to Zhao (ch in Zhao table 5). This allows
+c            site response to decrease as Vs30 increases above 800 m/s.
 c Jan 21 2014: Correct NAAsub (BCHydro) sigma to 0.74.
 c Jan 21, 2014: NAAsub: DelC has been corrected to Kofi Addo email of Jan 13.
 c Jan 17 2014: Add 1.5s coeffs to AM09 and to ABsub. 
@@ -174,14 +176,14 @@ c Also compatible with Windows computers and gfortran compiler.
         real*4 :: extra(10)
       end type header_type
       type(header_type) :: headr,hdv30
-      logical lxyin, verbose, on_top_of_rup,petersen_corr,pcorab,go_norm/.false./,sdi
+      logical lxyin, verbose/.false./, on_top_of_rup,petersen_corr,pcorab,go_norm/.false./,sdi
       real, dimension(500):: magmin,magmax,ar
       real magminn
 c  ar=aspect ratio for floating ruptures.
       real, dimension(33):: slat,slong
       character*4 sname(33),date*8,time*10,zone*5
       real*8 dp,pr0,emax/3.0/, sqrt2/1.4142135623/
-      real vs30,pr00,prl,prlr,prr,rtot,eps
+      real vs30,pr00,prl,prlr,prr,rtot,eps,xmag
       integer readn,nrec,i,ival(8),ivs,immax/1/,npd,nper,backarc
 c ivs indicator variable for NEHRP class, using Zhao subroutine, added May 21 2007
       character nameout*78,name*80,adum*80
@@ -255,7 +257,8 @@ c NAAper = period set for Norm's BC Hydro subduction model. 0.00 for 0 s (PGA) t
        ptail = (/0.9772499,.8413447,0.5,.1586553,.022750139,
      + 0.0013499/)
        ztop = (/20.,50./)
-c On solaris systems, at least, software can keep tract of user
+	sdi=.false.
+c On solaris systems, at least, software can keep track of user
       call getlog(adum)
       headr%name(5)='Run by '//adum(1:24)
       call getarg(0,adum)      !keep tract of program name
@@ -330,8 +333,9 @@ c      write(*,*)tarray
       inquire(file=name,exist=isok)
       if(isok)then
       open(unit=1,file=name,status='old')
-      write(6,*)'HazSUBXnga.test updated May 9 2013;  input file ',name
+      write(6,*)'HazSUBXnga.test updated Feb 14 2014;  input file ',name
       write(6,*)'Date of run ',date,' at ',time
+	 write (6,*)'sdi ',sdi
       else
       write(6,*)'hazSUBXnga.test: File not found: ',name
       stop 'Put in working dir and retry'
@@ -969,7 +973,14 @@ c find nearest gridpoint in vs30 array to the site with coords rx,ry
         if(vs30 > 599.)then
         rock = .true.
         soil = .false.      !this is used for getSadigh for example
-        ivs=1            !ivs is used in getzhao for site response variability. 1=bc rock
+        if(vs30 > 1020.)then
+        ivs=0	!new feb 19 2014
+        elseif(vs30 > 800.)then
+        ivs=-1
+        else
+        ivs=1            !ivs is used in getzhao for site response variability.
+c         1=bc rock
+	endif	!rock possibilities
         else
         soil = .true.
         rock = .false.
@@ -2809,6 +2820,8 @@ C     Now correct for reference Vs30m = 1100 m/sec
       end  subroutine Gregor06                                                                     
                                                    
       subroutine zhao(iper,ip,xmag,dist,gnd,sigmaf,ivs, islab,hslab)
+c hard-rock ch coeff added Feb 19 2014. SHarmsen.
+c
 c predicted interface g.m. followed Advisory Panel meeting & suggs. Apr 2007
 c compute median and sigmaf for the Zhao model with Somerville correction
 c
@@ -2823,7 +2836,7 @@ c            or DEEP events, with islab =1 (not used here))
 c            If islab =0, an interface term si lowers median for T >= 0.5 s.
 c
       parameter (nper=22,hi=20.,sqrt2=1.41421356,xmagc=6.3,gcor=6.88806)
-      real, dimension (nper):: a,b,c,d,e,c1,c2,c3,qi,wi,ps,
+      real, dimension (nper):: a,b,c,d,e,ch,c1,c2,c3,qi,wi,ps,
      & qs,ws,si,sr,ss,ssl,sig,tau,tauI,tauS,per,sigt
       real afac,dist,hfac,site,sigma,sigmaf,dy_sdi
 c coefficients from Zhao source code not from BSSA tables: more precision in his software.      
@@ -2878,9 +2891,13 @@ c col II, Zhao et al.
 	tauS=(/0.321,0.378,0.420,0.372,0.324,0.294,0.284,
      &    0.278,0.272,0.285,0.290,0.29615661,0.299,0.289,0.286,0.277,0.282,0.300,
      &    0.292,0.274,0.281,0.296/)
-c c1 = rock site term, for NEHRP A and B, vs > 600 m/s. SCI from Zhao table 2 p 901 bssa june 2006
+c ch = relatively hard rock site term NEHRP B+ to A- Added Feb 19 2014.
+c   You can get a B- rock model as avg(c1,ch) that should work when vs is 900 m/s
+c c1 = rock site term, for NEHRPBC and B, vs > 600 m/s. SCI from Zhao table 2 p 901 bssa june 2006
 c c2 = stiff soil term for NEHRP C (SCII)
 c c3 = soft soil term for NEHRP D  (SCIII)
+        ch=(/0.293,0.939,1.499,1.462,1.280,1.121,0.852,0.365,-0.207,-0.705,-1.144,-1.4,
+     &    -1.609,-2.023,-2.451,-3.243,-3.888,-4.783,-5.444,-5.839,-6.598,-6.752/)
 	c1=(/1.1111,1.6845,2.0609,1.9165,1.6688,1.4683,
      &         1.1720,0.6548,0.0713,-0.4288,-0.8656,-1.099344,-1.3250,-1.7322,
      &      -2.1522,-2.9226,-3.5476,-4.4102,-5.0492,-5.4307,-6.1813,
@@ -2914,7 +2931,11 @@ c Ps, Qs, and Ws for deep intraplate eqs; see last several columns of Table 6
      &       -0.0515,-0.0395,-0.0183,-0.0008,0.0136,0.0254,0.030538963,0.0352,
      &        0.0432,0.0498,0.0612,0.0674,0.0692,0.0622,0.0496,0.0150,
      &       -0.0268/)
-      if(ivs.eq.1)then
+	if(ivs.eq.0)then
+	site=ch(ip)
+	elseif(ivs.eq.-1)then
+	site=0.5*(ch(ip)+c1(ip))	!average of B+ and BC rock coef. new 2/19/2014
+      elseif(ivs.eq.1)then
       site=c1(ip)
       elseif(ivs.eq.2)then
       site=c2(ip)
@@ -3307,13 +3328,14 @@ c Written by C. Mueller, USGS.
 
 
       subroutine getNAAsub(ip, iq, Fevnt, Ffaba, xmag, R, zH, sigmaf, gm, delCi, Vs30)
+c delC was modified to be period dependent jan 21 2014
 c This is Abrahamson 2012 BCHydro Subduction model that was developed using the dataset of 
 c acceleration response spectra of the geometrical mean 5% spectral damping. The coefficients
 c  have been written for periods: pga, 0.050, 0.075,0.100, 0.150,0.200,0.250,0.300,0.400,
 c 0.500, 0.600, 0.750, 1.000, 1.500, 2.000, 2.500, 3.000, 4.000, 5.000, 6.000, 7.500, 10.000.
 c
 c
-c Jan 7 2014: pgaRock has been corrected. SHarmsen. PgaRock is Norms PGA1000.
+c Jan 7 2014: pgaRock has been corrected. SHarmsen. PgaRock is Norm's PGA1000.
 c Jan 21, 2014: DelC has been corrected to Kofi Addo email of Jan 13. Effect of this change
 c 	on PGA and 5hz medians is approx 20% raise.
 c For values of T=0.02sec, use PGA values
@@ -3336,7 +3358,7 @@ c*******************************************************************************
 c Note delCi changes the median by about 57%. It affects a magnitude dep. as well.
 c delC is made period dependent, Jan 21 2014.
 	implicit none
-	real sqrt2
+	real sqrt2,Vs30
 	parameter (sqrt2=1.414213562)
         common/sdi/sdi,dy_sdi,fac_sde
 	real, dimension(22):: NAAper,b,theta1, theta2, theta6, theta7, theta8, vlin,
@@ -3348,7 +3370,7 @@ c delC is made period dependent, Jan 21 2014.
 	real c1/7.8/, c/1.88/, n/1.18/
 	real theta3/0.1/, theta4/0.9/, theta5/0.0/, theta9/0.4/
 	real fMag,PGArock,gm, fMagp,fDepthp,ftermp, fSitep
-	real fDepth,  fSite, Vs30, VsStar
+	real fDepth,  fSite, VsStar
 	real Rmax
 	real sigma/0.74/,sigmaf	!sigma changed from 0.77 jan 21 2014 SH. Addo email, jan 20 2014
 	logical sdi
@@ -3486,7 +3508,7 @@ C Calulate ground motion of Base Function
 	
 	
 	subroutine getAtkinsub(ipg,ip,rcd,M,vs30,backarc,gnd,sigmaf)
-	real rcd,M,vs30,gnd,sigma,sfac,gfac,gnd0,gndp,gnd0p,pganl
+	real rcd,M,vs30,gnd,sfac,gfac,gnd0,gndp,gnd0p,pganl
 c Atkinson and Macias (BSSA, 2009) for great cascadia subduction eqs M>=7.5
 c add 1.5s coeffs SH Jan 17 2014. Interpolate on log(T).
 c	input variables:
@@ -3509,7 +3531,7 @@ c
 	parameter (np=16)
 	parameter (gfac=6.8875526,sfac=2.3025851,sqrt2=1.4142136)
         common/sdi/sdi,dy_sdi,fac_sde
-        real dy_sdi,rhat, sigmaf,sdisd
+        real dy_sdi,rhat, sigma,sigmaf,sdisd
         real, dimension (8):: fac_sde
 c base10 to natural logs. cm/s/s to g
 	logical sdi
