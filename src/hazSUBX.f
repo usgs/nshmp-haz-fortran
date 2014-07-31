@@ -232,7 +232,7 @@ c from ba_02apr07_usnr.xls coef file. use for nonlinear site response, getgeom
      + 0.150, 0.200, 0.250, 0.300, 0.400, 0.500, 0.750, 1.000,
      + 1.500, 2.000, 3.000, 4.000, 5.000, 7.500,10.0/)
 C extend getgeom to long periods.
-c coeffs from Bob Youngs' spreadsheet in email of Nov 17 2008.
+c coeffs from Bob Youngs spreadsheet in email of Nov 17 2008.
       pdAM = (/0.0,0.05,0.1,0.2,0.3,0.4,0.5,1.,1.5,2.,2.5,3.,4.,5.,7.7,10./)
       pergeo= (/0.,0.2,1.0,0.1,0.3,0.5,2.0,0.4,0.75,1.5,3.,4.,5./)      
       perab= (/0.,0.2,1.0,0.1,0.3,0.4,0.5,0.75,1.5,2.0,3.0/)      
@@ -911,7 +911,7 @@ c store this in m= 24 bin.
 c      endif
       write(6,*)' Cumulative annual rate of subd events: ',rtot
       write(6,*)' This is equivalent to recurr. interval of ',1./rtot,' yrs'
-c---Here's the guts
+c---Heres the guts
 c
 c---loop through receiver sites 250 at a time. Why 250 at a time? big mystery.
       i = 0
@@ -2399,7 +2399,7 @@ c array constructors oct 2006
          pergeo= (/0.,0.2,1.0,0.1,0.3,0.5,2.0,.4,0.75,1.5,3.,4.,5./)    
 C vgeo is a reference vs30 for Geomatrix, 760 m/s rock, 300 m/s soil.
 c Additional siteamp will be wrt these values from Frankel discussion july 7.
-c the 475 value isn't currently used. A coeff. set that represents very stiff soil (NEHRP C)
+c the 475 value isnt currently used. A coeff. set that represents very stiff soil (NEHRP C)
 c with something like 475 to 500 m/s could go with this. Currently there is a discontinuity
 c when switching between rock and soil coeffs, currently at 520 m/s Vs30.
 	vgeo=(/760.,300.,475./)
