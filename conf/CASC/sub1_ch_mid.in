@@ -32,7 +32,7 @@
 .005 .0075 0.0113 .0169 .0253 .0380 .0570 .0854 .128 .192 .288 .432 .649 .973 1.46 2.19 3.28 4.92 7.38 
 5.
 1. 1000.
-1 2 3   Cascadia Megathrust - Goldfinger Case B Characteristic, rate based on 0.001 total and Goldfinger proportion
+1 2 3   Cascadia Megathrust - Goldfinger Case B Characteristic ! rate based on 0.001 total and Goldfinger proportion
  8.78  0.0001739   0.333   Papazachos et al. (2004)   
  8.44  0.0001739   0.334   Strasser et al. (2010)
  8.53  0.0001739   0.333   Murotani et al. (2008)
