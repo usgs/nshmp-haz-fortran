@@ -1,17 +1,17 @@
-0 		    Template for ceus characteristic (rlme) a-grid files
+0 		    !Template for ceus characteristic (rlme) a-grid files
 24.6 50. .1
 -115. -65. .1
 760 1
-1 5 1 1             dtor fix at 5 km
+1 5 1 1             !dtor fix at 5 km
 1 00 0
 5. 1000. 
-37.600000 39.700000 0.100000  a-grid extents 
+37.600000 39.700000 0.100000  !a-grid extents 
 -88.600000 -86.600000 0.100000
-0 7.250000 7.250000 0.1 3.0     Characteristic magnitude
+0 7.250000 7.250000 0.1 3.0     !Characteristic magnitude
 2 0 0  0
 ../conf/CEUS/gridded/GR_DOS/Wabash_RLME.xls.agrid
 1. 0
-26.639674     fixed-strike angle. Dont use avg distance in meanrjb.bin
+26.639674     !fixed-strike angle. Dont use avg distance in meanrjb.bin
 3
 0. 0. 0. PGA
 ../out/Wabash_RLME_2014.725.pga
