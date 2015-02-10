@@ -1,0 +1,11 @@
+1
+3
+../out/2014WUSzeng.65.pga.m
+1
+../out/2014WUSzeng.char.pga.m
+0.667
+../out/2014WUSzeng.gr.pga.m
+0.333
+1
+../out/combine/wus_flts_zeng.pga.m
+0
