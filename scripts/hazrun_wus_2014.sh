@@ -11,7 +11,7 @@ FAULT=$BIN/hazFXnga13l
 GRID=$BIN/hazgridXnga13l
 WUS_CONF=$CONF/WUS
 
-WUS_FAULTS=1
+WUS_FAULTS=0
 WUS_GRIDDED=1
 
 # Western US Faults
@@ -29,13 +29,12 @@ if (( $WUS_FAULTS == 1 )); then
         $FAULT $D_WUS_F/2014WUSzeng.gr.in > $LOG/log_2014WUSzeng.gr.txt
 
 	# WUS faults - geologic model
-        $FAULT $D_WUS_F/2014WUSgeo.65.in > $LOG/log_2014WUSgeo.65.txt
-        $FAULT $D_WUS_F/2014WUSgeo.char.in > $LOG/log_2014WUSgeo.char.txt
-        $FAULT $D_WUS_F/2014WUSgeo.gr.in > $LOG/log_2014WUSgeo.gr.txt
-        $FAULT $D_WUS_F/Seattle.char.in > $LOG/log_Seattle.char.txt
-        $FAULT $D_WUS_F/Seattle.gr.in > $LOG/log_Seattle.gr.txt
-        $FAULT $D_WUS_F/wasatch_slc.cluster.in > $LOG/log_wasatch_slc.cluster.txt
-        $FAULT $D_WUS_F/wasatch_slc.noclu.in > $LOG/log_wasatch_slc.noclu.txt
+        for inputf in 2014WUSgeo.65.in 2014WUSgeo.char.in 2014WUSgeo.gr.in Seattle.char.in Seattle.gr.in wasatch_slc.cluster.in wasatch_slc.noclu.in ; do
+          logf=`echo $inputf | sed 's/in$/txt/' | awk '{print "../logs/log_"$1}'`
+          echo "Running $inputf..."
+          echo "logfile: $logf"
+          $FAULT $D_WUS_F/$inputf > $logf
+        done
 
 fi
 
@@ -45,72 +44,52 @@ if (( $WUS_GRIDDED == 1 )); then
 	D_WUS_G=$WUS_CONF/gridded
 	
 	# WUS-extensional
-        $GRID $D_WUS_G/WUSmap_2014_adSm_r.ch.in > $LOG/log_WUSmap_2014_adSm_r.ch.txt
-        $GRID $D_WUS_G/WUSmap_2014_adSm_r.gr.in > $LOG/log_WUSmap_2014_adSm_r.gr.txt
-        $GRID $D_WUS_G/WUSmap_2014_adSm_r_M8.in > $LOG/log_WUSmap_2014_adSm_r_M8.txt
-        $GRID $D_WUS_G/WUSmap_2014_adSm_ss.ch.in > $LOG/log_WUSmap_2014_adSm_ss.ch.txt
-        $GRID $D_WUS_G/WUSmap_2014_adSm_ss.gr.in > $LOG/log_WUSmap_2014_adSm_ss.gr.txt
-        $GRID $D_WUS_G/WUSmap_2014_adSm_ss_M8.in > $LOG/log_WUSmap_2014_adSm_ss_M8.txt
-        $GRID $D_WUS_G/WUSmap_2014_fixSm_r.ch.in > $LOG/log_WUSmap_2014_fixSm_r.ch.txt
-        $GRID $D_WUS_G/WUSmap_2014_fixSm_r.gr.in > $LOG/log_WUSmap_2014_fixSm_r.gr.txt
-        $GRID $D_WUS_G/WUSmap_2014_fixSm_r_M8.in > $LOG/log_WUSmap_2014_fixSm_r_M8.txt
-        $GRID $D_WUS_G/WUSmap_2014_fixSm_ss.ch.in > $LOG/log_WUSmap_2014_fixSm_ss.ch.txt
-        $GRID $D_WUS_G/WUSmap_2014_fixSm_ss.gr.in > $LOG/log_WUSmap_2014_fixSm_ss.gr.txt
-        $GRID $D_WUS_G/WUSmap_2014_fixSm_ss_M8.in > $LOG/log_WUSmap_2014_fixSm_ss_M8.txt
-
+	for inputf in EXTmap_2014_adSm_n.ch.in EXTmap_2014_adSm_n.gr.in EXTmap_2014_adSm_n_M8.in EXTmap_2014_adSm_ss.ch.in EXTmap_2014_adSm_ss.gr.in EXTmap_2014_adSm_ss_M8.in EXTmap_2014_fixSm_n.ch.in EXTmap_2014_fixSm_n.gr.in EXTmap_2014_fixSm_n_M8.in EXTmap_2014_fixSm_ss.ch.in EXTmap_2014_fixSm_ss.gr.in EXTmap_2014_fixSm_ss_M8.in; do
+          logf=`echo $inputf | sed 's/in$/txt/' | awk '{print "../logs/log_"$1}'`
+          echo "Running $inputf..."
+          echo "logfile: $logf"
+          $GRID $D_WUS_G/$inputf > $logf
+        done
 
         # WUS-compressional
-        $GRID $D_WUS_G/WUSmap_2014_adSm_r.ch.in > $LOG/log_WUSmap_2014_adSm_r.ch.txt
-        $GRID $D_WUS_G/WUSmap_2014_adSm_r.gr.in > $LOG/log_WUSmap_2014_adSm_r.gr.txt
-        $GRID $D_WUS_G/WUSmap_2014_adSm_r_M8.in > $LOG/log_WUSmap_2014_adSm_r_M8.txt
-        $GRID $D_WUS_G/WUSmap_2014_adSm_ss.ch.in > $LOG/log_WUSmap_2014_adSm_ss.ch.txt
-        $GRID $D_WUS_G/WUSmap_2014_adSm_ss.gr.in > $LOG/log_WUSmap_2014_adSm_ss.gr.txt
-        $GRID $D_WUS_G/WUSmap_2014_adSm_ss_M8.in > $LOG/log_WUSmap_2014_adSm_ss_M8.txt
-        $GRID $D_WUS_G/WUSmap_2014_fixSm_r.ch.in > $LOG/log_WUSmap_2014_fixSm_r.ch.txt
-        $GRID $D_WUS_G/WUSmap_2014_fixSm_r.gr.in > $LOG/log_WUSmap_2014_fixSm_r.gr.txt
-        $GRID $D_WUS_G/WUSmap_2014_fixSm_r_M8.in > $LOG/log_WUSmap_2014_fixSm_r_M8.txt
-        $GRID $D_WUS_G/WUSmap_2014_fixSm_ss.ch.in > $LOG/log_WUSmap_2014_fixSm_ss.ch.txt
-        $GRID $D_WUS_G/WUSmap_2014_fixSm_ss.gr.in > $LOG/log_WUSmap_2014_fixSm_ss.gr.txt
-        $GRID $D_WUS_G/WUSmap_2014_fixSm_ss_M8.in > $LOG/log_WUSmap_2014_fixSm_ss_M8.txt
-        # WUS-compressional, complement Puget region
-        $GRID $D_WUS_G/noPuget_2014_adSm_r.ch.in > $LOG/log_noPuget_2014_adSm_r.ch.txt
-        $GRID $D_WUS_G/noPuget_2014_adSm_r.gr.in > $LOG/log_noPuget_2014_adSm_r.gr.txt
-        $GRID $D_WUS_G/noPuget_2014_adSm_r_M8.in > $LOG/log_noPuget_2014_adSm_r_M8.txt
-        $GRID $D_WUS_G/noPuget_2014_adSm_ss.ch.in > $LOG/log_noPuget_2014_adSm_ss.ch.txt
-        $GRID $D_WUS_G/noPuget_2014_adSm_ss.gr.in > $LOG/log_noPuget_2014_adSm_ss.gr.txt
-        $GRID $D_WUS_G/noPuget_2014_adSm_ss_M8.in > $LOG/log_noPuget_2014_adSm_ss_M8.txt
-        $GRID $D_WUS_G/noPuget_2014_fixSm_r.ch.in > $LOG/log_noPuget_2014_fixSm_r.ch.txt
-        $GRID $D_WUS_G/noPuget_2014_fixSm_r.gr.in > $LOG/log_noPuget_2014_fixSm_r.gr.txt
-        $GRID $D_WUS_G/noPuget_2014_fixSm_r_M8.in > $LOG/log_noPuget_2014_fixSm_r_M8.txt
-        $GRID $D_WUS_G/noPuget_2014_fixSm_ss.ch.in > $LOG/log_noPuget_2014_fixSm_ss.ch.txt
-        $GRID $D_WUS_G/noPuget_2014_fixSm_ss.gr.in > $LOG/log_noPuget_2014_fixSm_ss.gr.txt
-        $GRID $D_WUS_G/noPuget_2014_fixSm_ss_M8.in > $LOG/log_noPuget_2014_fixSm_ss_M8.txt
-        $GRID $D_WUS_G/puget_2014_r.ch.in > $LOG/log_puget_2014_r.ch.txt
-        $GRID $D_WUS_G/puget_2014_r.gr.in > $LOG/log_puget_2014_r.gr.txt
-        $GRID $D_WUS_G/puget_2014_r_M8.in > $LOG/log_puget_2014_r_M8.txt
-        $GRID $D_WUS_G/puget_2014_ss.ch.in > $LOG/log_puget_2014_ss.ch.txt
-        $GRID $D_WUS_G/puget_2014_ss.gr.in > $LOG/log_puget_2014_ss.gr.txt
-        $GRID $D_WUS_G/puget_2014_ss_M8.in > $LOG/log_puget_2014_ss_M8.txt
+	for inputf in WUSmap_2014_adSm_r.ch.in WUSmap_2014_adSm_r.gr.in WUSmap_2014_adSm_r_M8.in WUSmap_2014_adSm_ss.ch.in WUSmap_2014_adSm_ss.gr.in WUSmap_2014_adSm_ss_M8.in WUSmap_2014_fixSm_r.ch.in WUSmap_2014_fixSm_r.gr.in WUSmap_2014_fixSm_r_M8.in WUSmap_2014_fixSm_ss.ch.in WUSmap_2014_fixSm_ss.gr.in WUSmap_2014_fixSm_ss_M8.in; do
+          logf=`echo $inputf | sed 's/in$/txt/' | awk '{print "../logs/log_"$1}'`
+          echo "Running $inputf..."
+          echo "logfile: $logf"
+          $GRID $D_WUS_G/$inputf > $logf
+        done
 
+        # WUS-compressional, complement Puget region
+	for inputf in noPuget_2014_adSm_r.ch.in noPuget_2014_adSm_r.gr.in noPuget_2014_adSm_r_M8.in noPuget_2014_adSm_ss.ch.in noPuget_2014_adSm_ss.gr.in noPuget_2014_adSm_ss_M8.in noPuget_2014_fixSm_r.ch.in noPuget_2014_fixSm_r.gr.in noPuget_2014_fixSm_r_M8.in noPuget_2014_fixSm_ss.ch.in noPuget_2014_fixSm_ss.gr.in noPuget_2014_fixSm_ss_M8.in puget_2014_r.ch.in puget_2014_r.gr.in puget_2014_r_M8.in puget_2014_ss.ch.in puget_2014_ss.gr.in puget_2014_ss_M8.in; do
+          logf=`echo $inputf | sed 's/in$/txt/' | awk '{print "../logs/log_"$1}'`
+          echo "Running $inputf..."
+          echo "logfile: $logf"
+          $GRID $D_WUS_G/$inputf > $logf
+        done
 
         # gridded fault hazard from Bird geodetic model
-        $GRID $D_WUS_G/WUS_zones_PB.in > $LOG/log_WUS_zones_PB.txt
+	for inputf in WUS_zones_PB.in; do
+          logf=`echo $inputf | sed 's/in$/txt/' | awk '{print "../logs/log_"$1}'`
+          echo "Running $inputf..."
+          echo "logfile: $logf"
+          $GRID $D_WUS_G/$inputf > $logf
+        done
 
         # WUS shear zones
-        $GRID $D_WUS_G/shear2_2014.in > $LOG/log_shear2_2014.txt
-        $GRID $D_WUS_G/shear3_2014.in > $LOG/log_shear3_2014.txt
-        $GRID $D_WUS_G/shear4_2014.in > $LOG/log_shear4_2014.txt
+	for inputf in shear2_2014.in shear3_2014.in shear4_2014.in; do
+          logf=`echo $inputf | sed 's/in$/txt/' | awk '{print "../logs/log_"$1}'`
+          echo "Running $inputf..."
+          echo "logfile: $logf"
+          $GRID $D_WUS_G/$inputf > $logf
+        done
 
         # deep seismicity - CA, coastal OR, puget sound
-        $GRID $D_WUS_G/CAdeep.2014.in > $LOG/log_CAdeep.2014.txt
-        $GRID $D_WUS_G/CAdeepMmax75.2014.in > $LOG/log_CAdeepMmax75.2014.txt
-        $GRID $D_WUS_G/CAdeepMmax8.2014.in > $LOG/log_CAdeepMmax8.2014.txt
-        $GRID $D_WUS_G/coastalOR_deep.in > $LOG/log_coastalOR_deep.txt
-        $GRID $D_WUS_G/coastalOR_deep_Mmax75.in > $LOG/log_coastalOR_deep_Mmax75.txt
-        $GRID $D_WUS_G/coastalOR_deep_Mmax8.in > $LOG/log_coastalOR_deep_Mmax8.txt
-        $GRID $D_WUS_G/pacnwdeep.2014.in > $LOG/log_pacnwdeep.2014.txt
-        $GRID $D_WUS_G/pacnwdeep_Mmax75.2014.in > $LOG/log_pacnwdeep_Mmax75.2014.txt
-        $GRID $D_WUS_G/pacnwdeep_Mmax8.2014.in > $LOG/log_pacnwdeep_Mmax8.2014.txt
+	for inputf in CAdeep.2014.in CAdeepMmax75.2014.in CAdeepMmax8.2014.in coastalOR_deep.in coastalOR_deep_Mmax75.in coastalOR_deep_Mmax8.in pacnwdeep.2014.in pacnwdeep_Mmax75.2014.in pacnwdeep_Mmax8.2014.in; do
+          logf=`echo $inputf | sed 's/in$/txt/' | awk '{print "../logs/log_"$1}'`
+          echo "Running $inputf..."
+          echo "logfile: $logf"
+          $GRID $D_WUS_G/$inputf > $logf
+        done
 
 fi
 

@@ -9,7 +9,7 @@
 # CHECK INPUT PARAMETERS
 reqparams=2
 if [ $# -ne $reqparams ]; then
-  echo "USAGE: $0 [path to NSHMP/trunk directory] [email address for final notification]"
+  echo "USAGE: $0 [path to NSHMP directory] [email address for final notification]"
   echo "Email will be sent to user when processing is completed"
   exit
 fi
@@ -25,6 +25,7 @@ time1=`date`
 if [ -d $scripts_path ]; then
   cd $scripts_path
   chmod 750 hazrun_*.sh
+  chmod 750 combine2014_all.sh
 else
   echo "$scripts path does not exist"
   exit
@@ -33,6 +34,7 @@ fi
 # create the out and logs directories for output 
 if [ ! -d ../out ]; then
   mkdir ../out
+  mkdir ../out/combine
 fi
 if [ ! -d ../logs ]; then
   mkdir ../logs
@@ -46,54 +48,33 @@ cd ..
 make
 cd $scripts_path
 
-#check that meanrjb.bin file exists in the bin directory
-# option 1 is for WC SRL - used for all gridded seismicity in 2008 maps
+# create all required rjb files
 cd ../bin
-#./getmeanrjf << END
 if [ ! -f meanrjb.bin ]; then
 ./getmeanrjf.v2 << END
 1
 END
   mv rjbmean.bin.srl meanrjb.bin
   mv rjbmean.dat.srl meanrjb_srl.dat
+./getmeanrjf.v2 << END
+2
+END
+./getmeanrjf.v2 << END
+3
+END
 fi
 
 # cd to scripts directory for consistency with hazard input files
 cd $scripts_path
 
 # run hazard calculation scripts
-for reg in wus ca casc ceus; do
-  scr_nm=hazrun_${reg}.sh 
-  logf=../logs/log_${reg}.txt
-  echo "running $scr_nm - $logf"
+for scr_nm in hazrun_casc_2014.sh hazrun_ceus_2014.sh hazrun_wus_2014.sh; do
+  reg=`echo $scr_nm | cut -d_ -f2`
+  logf=../logs/log_${reg}_2014.txt
+  echo "Running $scr_nm - $logf"
   ./$scr_nm >& $logf
 done
-#./hazrun_wus.sh >& ../logs/log_hazrun_wus.txt
-#./hazrun_ca.sh >& ../logs/log_hazrun_ca.txt
-#./hazrun_casc.sh >& ../logs/log_hazrun_casc.txt
-#./hazrun_ceus.sh >& ../logs/log_hazrun_ceus.txt
 time5a=`date`
-
-# combine the WUS output files, CEUS output files, merge WUS-CEUS
-echo "running combine_wus.sh log_combine_wus.txt"
-./combine_wus.sh >& ../logs/log_combine_wus.txt
-echo "running combine_ceus_wus.sh log_combine_ceus_wus.txt"
-./combine_ceus_wus.sh >& ../logs/log_combine_ceus_wus.txt
-
-# plot 2% in 50 yrs results for and convert to pdf
-# no plotting in this version
-#plot_haz_maps_2pc50.gmt ../out/combine/us_hazard.pga.2pc50
-#plot_haz_maps_2pc50.gmt ../out/combine/us_hazard.1hz.2pc50
-#plot_haz_maps_2pc50.gmt ../out/combine/us_hazard.5hz.2pc50
-#if [ ! -d ../figs ]; then
-#  mkdir ../figs
-#fi
-#ps2pdf pl_us_hazard_pga_2pc50.ps ../figs/pl_us_hazard_pga_2pc50.pdf
-#mv pl_us_hazard_pga_2pc50.ps ../figs/
-#ps2pdf pl_us_hazard_1hz_2pc50.ps ../figs/pl_us_hazard_1hz_2pc50.pdf
-#mv pl_us_hazard_1hz_2pc50.ps ../figs/
-#ps2pdf pl_us_hazard_5hz_2pc50.ps ../figs/pl_us_hazard_5hz_2pc50.pdf
-#mv pl_us_hazard_5hz_2pc50.ps ../figs/
 
 # send mail to user
 time2=`date`
@@ -103,15 +84,9 @@ $0 script completed
 Start time: $time1
 End time: $time2
 
-Started WUS: $time1a
-Finished WUS/Started CA: $time2a
-Finished CA/Started Casc: $time3a
-Finished Casc/Started CEUS: $time4a
-Finished CEUS: $time5a
 NO Plotting in this version of the script
 
 
-All hazard calculations written to file
+All hazard calculations written to files in out/ directory.
 
 ENDMAIL
-

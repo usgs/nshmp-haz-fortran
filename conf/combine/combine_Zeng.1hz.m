@@ -1,0 +1,11 @@
+1
+3
+../out/2014WUSzeng.65.1hz.m
+1
+../out/2014WUSzeng.char.1hz.m
+0.667
+../out/2014WUSzeng.gr.1hz.m
+0.333
+1
+../out/combine/wus_flts_zeng.1hz.m
+0
