@@ -51,7 +51,7 @@
 0
 1.
 0.0 1		!NMSZ source has no aleatory dM uncert
-1 1  5   New Madrid western fault; 0.05 weight !* magwt= 0.1, 0.1, 0.5, 0.2, 0.1
+1 1  5   New Madrid western fault !0.05 weight !* magwt= 0.1, 0.1, 0.5, 0.2, 0.1
 6.8 0.00002 0.005
 7.1 0.00002 0.005
 7.5  0.00002 0.025
@@ -63,7 +63,7 @@
 36.734 -89.886
 36.346 -89.830
 35.647 -90.719
-1 1  5   New Madrid mid-western fault; 0.1 weight !* magwt= 0.1, 0.1, 0.5, 0.2, 0.1
+1 1  5   New Madrid mid-western fault !0.1 weight !* magwt= 0.1, 0.1, 0.5, 0.2, 0.1
 6.8 0.00002 0.01
 7.1 0.00002 0.01
 7.5  0.00002 0.05
@@ -75,7 +75,7 @@
 36.710 -89.734
 36.293 -89.667
 35.533 -90.667
-1 1  5   New Madrid eastern fault; 0.05 weight !* magwt= 0.1, 0.1, 0.5, 0.2, 0.1
+1 1  5   New Madrid eastern fault !0.05 weight !* magwt= 0.1, 0.1, 0.5, 0.2, 0.1
 6.8 0.00002 0.005
 7.1 0.00002 0.005
 7.5  0.00002 0.025
@@ -87,7 +87,7 @@
 36.639 -89.279
 36.135 -89.178
 35.260 -90.415
-1 1  5   New Madrid mid-eastern fault; 0.1 weight !* magwt= 0.1, 0.1, 0.5, 0.2, 0.1
+1 1  5   New Madrid mid-eastern fault !0.1 weight !* magwt= 0.1, 0.1, 0.5, 0.2, 0.1
 6.8 0.00002 0.01
 7.1 0.00002 0.01
 7.5  0.00002 0.05
@@ -99,7 +99,7 @@
 36.663 -89.431
 36.188 -89.341
 35.346 -90.507
-1 1  5    New Madrid central fault; 0.7 weight !* magwt= 0.1, 0.1, 0.5, 0.2, 0.1
+1 1  5    New Madrid central fault !0.7 weight !* magwt= 0.1, 0.1, 0.5, 0.2, 0.1
 6.8 0.00002 0.07
 7.1 0.00002 0.07
 7.5  0.00002 0.35
