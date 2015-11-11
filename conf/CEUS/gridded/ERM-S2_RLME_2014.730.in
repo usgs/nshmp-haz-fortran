@@ -5,8 +5,8 @@
 1 5 1 1             !dtor fix at 5 km
 1 00 0
 5. 1000. 
-35.100000 36.200000 0.100000  !a-grid extents 
--90.500000 -89.100000 0.100000
+34.800000 36.200000 0.100000  !a-grid extents 
+-90.300000 -89.100000 0.100000
 0 7.300000 7.300000 0.1 3.0     !Characteristic magnitude
 2 0 0  0
 ../conf/CEUS/gridded/GR_DOS/ERM-S2_RLME.xls.agrid
