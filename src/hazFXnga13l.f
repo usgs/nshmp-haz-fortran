@@ -1,5 +1,9 @@
-c--- program  hazFXnga13l.f; 01/27/2015; Use  with NGA relations, or others.
-c of the below optimistic comments, only getToro was finished jan 24.
+c--- program  hazFXnga13l.f; 03/16/2015; Use  with NGA relations, or others.
+c March 16, 2015: remove a repeated line of code in the GR-without-uncert loop.
+c  This repeated line caused CEUS GMM calculations to be skipped for GR-distr.
+c	source magnitudes. Discovery by Morgan Moschetti, 3/16/2015.
+c Feb 12, 2015: modify code to handle PGV in CEUS (for two Atkinson relations only)
+c	PGV units are cm/s. There is a clamp at 400 cm/s for these relations.
 c Oct 30 2014: repair /gail3/ common to have freq(14) dimension.
 c Mar 14, 2014: A08', AB06', and Pez11 all have added 1.5-s table entries. Tables
 c with additional 1.5s end in .rev instead of .dat
@@ -468,7 +472,7 @@ c so that this code has compatibility with Linux cluster-computer compilers.
       end type header_type
       type(header_type) :: headr, hdvs30
 c hdvs30 might be used if variable vs30 is read in.
-      real magmin(nfltmx,12),magmax(nfltmx,12), mmax,clamp(8),wts
+      real magmin(nfltmx,12),magmax(nfltmx,12), mmax,clamp(9),wts
 c clamp can limit the probabilistic motion in CEUS. THis is applied in main
 c in hazFXnga13l (Clamp applied in CEUS only. Set clamp(i) to 0 to skip this constraint).
 c
@@ -553,7 +557,8 @@ c value. The customary 0.1 dM wont work when M precision is carried to 2 dec. pl
       real, dimension (108) :: peras08
       real, dimension (107):: perbssa13
       real, dimension (6) :: ptail,perdahl
-      real, dimension(npmx):: period,perx,wtsum,safix
+      real, dimension(npmx):: period,wtsum,safix
+      real, dimension(9):: perx		!add -1 for PGV in ceus
       real, dimension(nfltmx,12) :: a,b,dmag
       real, dimension(nfltmx,12):: cmag,crate
       real, dimension(nfltmx):: dip,dip0,width,depth0,tlen,cDPP
@@ -604,14 +609,16 @@ c perb = Boore-Atkinson NGA 4/2007 period set, -1 = pgv. N(T)= 23. 10 s is longe
      + 1.500, 2.000, 3.000, 4.000, 5.0, 7.5, 10.0/)
 c perx = a default set of spectral periods used in 2002 PSHA maps. PGV=-1 was not
 c available then and should not be tried for those models
-       perx = (/0.,0.2,1.0,0.1,0.3,0.5,1.5,2.0/)	!add 1.5s jan 31 2014
+       perx = (/0.,0.2,1.0,0.1,0.3,0.5,1.5,2.0,-1.0/)	!add 1.5s jan 31 2014. 
+c add PGV feb 12 2015. Testing for ceus
        percy13=     (/  0.0100, 0.0200, 0.0300, 0.0400, 0.0500,
      1              0.0750, 0.1000, 0.1200, 0.1500, 0.1700,
      1              0.2000, 0.2500, 0.3000, 0.4000, 0.5000,
      1              0.7500, 1.0000, 1.5000, 2.0000, 3.0000,
      1              4.0000, 5.0000, 7.5000,10.0000/)
        gmwt = (/0.63, 0.185, 0.185/)      !weights for gm uncert branches
-       clamp = (/3.,6.,3.,6.,6.,6.,3.,300./)
+c The final clamp is associated with PGV and is 400 cm/s. SH Feb 12 2014.
+       clamp = (/3.,6.,3.,6.,6.,6.,3.,0.,400./)
       pdgk= (/0.,0.01,0.02,0.03,0.04,0.06,0.08,0.1,0.12,0.14,
      &         0.16,0.18,0.20,0.22,0.24,0.27,0.30,0.33,
      &         0.36,0.4,0.46,0.5,0.6,0.75,0.85,1.0,1.5,
@@ -795,7 +802,7 @@ c adum could be sa(g) or pgv (cm/s). need flexible format
             endif
       endif
       write (6,61)date,time,name
-61      format('# *** hazFXnga13l 03/14/2014 log file. Pgm run on ',a,' at ',a,/,
+61      format('# *** hazFXnga13l 03/16/2015 log file. Pgm run on ',a,' at ',a,/,
      +'# *** Input control file: ',a)
       if(poly)write(6,*)'hazFXnga13l: Polygon file &npts: ',polygon,npmax
 c Below bypasses are based on file name. Bypass wont work if file names change
@@ -989,8 +996,8 @@ c---loop through periods
       k=1
       dowhile(per.ne.perx(k))
       k=k+1
-      if(k.gt.8)then
-      write(6,*) '*** Input period not in 2002 group ***', per
+      if(k.gt.9)then
+      write(6,*) '*** Input period not in 2014 group ***', per
       write(6,*)'Warning: some atten relations may not be ready.'
       write(6,*)'Warning 2: clamp is only prepared for 2002 group.'
       k=6
@@ -999,6 +1006,7 @@ c---loop through periods
       enddo
 801      write(6,*)'Period ',per,' underway'
       iper(ip)=k
+      print *,iper(ip),' iper(ip);',ip,' ip'
       if(wind.gt.0.)then
       cluster=.false.
       l_gnd_ep(ip)=.true.
@@ -1190,7 +1198,8 @@ c prepare look-up tables for certain CEUS relations.
         stop' CEUS11 models close encounter with an unknown period'
         endif
 c try to use the stated frequencies. 
-        dowhile(abs(fr-a11fr(kf)).gt.0.002)
+        dowhile(abs(fr-a11fr(kf)).gt.0.005)	!modified feb 10 2015.
+c 3.33 hz should be equal to 0.3-s SA. A difference less tha 0.005 insures this.
         kf=kf+1
         if(kf.gt.14)stop' period not in A06,A08,P11 set'
         enddo
@@ -1206,16 +1215,18 @@ c        name ='GR/A08revA_Rjb.dat'
         callme(1)=.false.
         endif 
         ia08(ip)=kf  
+        print *,per,ip,ia08(ip),' ia08(ip)'
         elseif(ipia.eq.26)then
          if(callme(2))then
 c       name ='GR/AB06revA_Rcd.dat'
        name ='GR/AB06revA_Rcd.rev'
-        print *,'calling GailTable AB06revA_Rcd fr,per=',fr,per,kf
+        print *,'calling GailTable AB06revA_Rcd.rev fr,per=',fr,per,kf
              open(3,file=name,status='old',err=202)
        call GailTable(2)
        callme(2)=.false.
        endif
         ia06(ip)=kf 
+        print *,per,ip,ia06(ip),' ia06(ip)'
         elseif(ipia.eq.27)then
         if(per.lt.0.0)stop' Pezeshk 2011 does not have PGV coeffs'
         if(callme(3))then
@@ -2608,6 +2619,7 @@ c CEUS pre-nga (2002 atten models) added 3 new CENA models defined by tables. Ma
              sigma = 0.3*2.303
        gnd(1) = amean11(xmag,rkm,rjbp,vs30,ip,jf,ka)
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
+cc        if(jf.eq.14)print *,iq,clamp(iq),' pgv',exp(gnd(1))
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
        elseif(ipia.eq.26)then
@@ -2616,8 +2628,9 @@ c     print *,gnd,rkm,ip,jf,ka
        ka=2
              sigma = 0.3*2.303
        gnd(1) = amean11(xmag,rkm,rjbp,vs30,ip,jf,ka)
+cc        if(jf.eq.14)print *,iq,clamp(iq),' pgv',exp(gnd(1))
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
-       if(gnd(1).gt.1.79)print *,exp(gnd(1)),rkm,ip,jf,ka,rx,ry
+c       if(gnd(1).gt.1.79)print *,exp(gnd(1)),rkm,ip,jf,ka,rx,ry
        sigmaf = 1./sqrt2/sigma
        elseif(ipia.eq.27)then
        rkm=max(rrup,1.)	!keep source at least 1km away. Pez model Can blow up. SH June27 
@@ -2664,6 +2677,7 @@ c in 2002 was used only for CEUS sources. The precomputed p() array does
 c not work for this case because truncation is no longer at mu+3sig
       test0=gnd(1)+3.*sigma
       test= exp(test0)
+      if(iq.eq.9)write(25,*)gnd(1),clamp(iq),iq,test
       if(clamp(iq).lt.test .and. clamp(iq).gt.0.) then
       clamp2= alog(clamp(iq))
       sigmasq=1./sigma/sqrt2
@@ -2979,6 +2993,7 @@ c added 3 new CENA models defined by tables. Mar 2011. 25&26 are Gail Atkinson. 
        ka=1
              sigma = 0.3*2.303
        gnd(1) = amean11(xmag2,rkm,rjbp,vs30,ip,jf,ka)
+cc        if(jf.eq.14)print *,iq,clamp(iq),' pgv',exp(gnd(1))
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
 c     print *,gnd,rkm,ip,jf,ka
       sigmaf = 1./sqrt2/sigma
@@ -3036,6 +3051,7 @@ c in 2002 was used only for CEUS sources. The precomputed p() matrix does
 c not work for this case because truncation is no longer at mu+3sig
       test0=gnd(1)+3.*sigma
       test= exp(test0)
+      if(iq.eq.9)write(25,*)gnd(1),clamp(iq),iq,test
       if(clamp(iq).lt.test .and. clamp(iq).gt.0.) then
       clamp2= alog(clamp(iq))
       sigmasq=1./sigma/sqrt2
@@ -3333,7 +3349,6 @@ c WUS pre-nga (2002 atten models)
 c
 c CEUS pre-nga (2002 atten models). These motions can be "clamped"
 c
-       elseif(ceus02(ip,ia).or.ceus11(ip,ia))then
 c added 3 new CENA models defined by tables. Mar 2011
        rjbp=max(rjb,0.11)
        if(ipia.eq.25)then
@@ -3342,6 +3357,7 @@ c added 3 new CENA models defined by tables. Mar 2011
        ka=1
             sigma = 0.3*2.303
       gnd(1) = amean11(xmag,rkm,rjbp,vs30,ip,jf,ka)
+cc        if(jf.eq.14)print *,iq,clamp(iq),' pgv',exp(gnd(1))
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
 c     print *,gnd,rkm,ip,jf,ka
        sigmaf = 1./sqrt2/sigma
@@ -3397,12 +3413,14 @@ c in 2002 was used only for CEUS sources. The precomputed p() matrix does
 c not work for this case because truncation is no longer at mu+3sig
       test0=gnd(1)+3.*sigma
       test= exp(test0)
+       if(iq.eq.9)write(25,*)gnd(1),clamp(iq),iq,test
       if(clamp(iq).lt.test .and. clamp(iq).gt.0.) then
       clamp2= alog(clamp(iq))
       sigmasq=1./sigma/sqrt2
       tempgt3= (gnd(1) - clamp2)*sigmasq
       probgt3= (erf(tempgt3)+1.)*0.5
       prr=1./(1.-probgt3)
+c      endif
         if(determ.and.isbig.and.isclose.and.norpt(ip,ia))then
 c write deterministic median if it's big and close and you havent written but should
       write(idet,679)exp(gnd(ifn)),1./sigmaf/sqrt2,ipia,
@@ -3715,6 +3733,7 @@ c CEUS pre-nga (2002 atten models)
              ka=1
              sigma = 0.3*2.303
              gnd(1) = amean11(xmag2,rkm,rjbp,vs30,ip,jf,ka)
+c        if(jf.eq.14)print *,iq,clamp(iq),' pgv',exp(gnd(1))
               if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
 c     print *,gnd,rkm,ip,jf,ka
             sigmaf = 1./sqrt2/sigma
@@ -3773,6 +3792,7 @@ c in 2002 was used only for CEUS sources. The precomputed p() matrix does
 c not work for this case because truncation is no longer at mu+3sig
       test0=gnd(1)+3.*sigma
       test= exp(test0)
+      if(iq.eq.9)write(25,*)gnd(1),clamp(iq),iq,test
       if(clamp(iq).lt.test .and. clamp(iq).gt.0.) then
       clamp2= alog(clamp(iq))
       sigmasq=1./sigma/sqrt2
@@ -4104,6 +4124,7 @@ c added 3 new CENA models defined by tables. Mar 2011
        ka=1
             sigma = 0.3*2.303
       gnd(1) = amean11(xmag,rkm,rjbp,vs30,ip,jf,ka)
+c        if(jf.eq.14)print *,iq,clamp(iq),' pgv',exp(gnd(1))
        if(lceus_sigma)sigma=ceus_sigma !for special study 3/2011
        sigmaf = 1./sqrt2/sigma
       elseif(ipia.eq.26)then
@@ -4159,6 +4180,7 @@ c not work for this case because truncation is no longer at mu+3sig
       test0=gnd(1)+3.*sigma
       test= exp(test0)
 c clamp is relying on the iq index. Some CEUS models now have different set than the 7 std
+      if(iq.eq.9)write(25,*)gnd(1),clamp(iq),iq,test
       if(clamp(iq).lt.test .and. clamp(iq).gt.0.) then
       clamp2= alog(clamp(iq))
       sigmasq=1./sigma/sqrt2
@@ -4699,8 +4721,8 @@ c tc Mw coeffs. 3.33 hz is log-log from the 2.5 and 5 hz values.
       tc2 = (/0.81,0.84,1.42,0.81,0.964,1.14,1.86,0.80,1.05,1.6773834/)
       tc3 = (/0.,0.0,-0.2,0.,-0.059,-0.1244,-0.31,0.0,-0.10,-0.26434588/)
       tc4 = (/1.27,0.98,0.90,1.1,0.951,0.9227,0.92,1.46,0.93,.9116993/)
-      tc5 = (/1.16,0.66,0.49,1.02,0.601,0.5429,0.46,1.77,0.56,0.47245115/)
-      tc6 = (/0.0021,0.0042,0.0023,0.004,0.00367,0.00306,0.0017,0.0013,0.0033,1.9490225E-3/)
+      tc5 = (/1.16,0.66,0.49,1.02,0.601,0.5429,0.46,1.77,0.56,0.477/)
+      tc6 = (/0.0021,0.0042,0.0023,0.004,0.00367,0.00306,0.0017,0.0013,0.0033,0.0021/)
       
            th = (/9.3,7.5,6.8,8.3,7.26,7.027,6.9,10.5,7.1,6.858496/)
 c write sigma in nat log units. Saves a divide
@@ -5008,7 +5030,8 @@ c     !a reference set including 1.5s. Repair 1.5s Jan 27 2015
       a5 = (/-0.00498,-.00498,-0.00362,-.00498,-.0048045,-.00442189,-2.7952031E-3,-0.00221/)
       a6 = (/-0.477,-.477,-0.755,-.477,-.523792,-.605213,-0.8667278,-.946/)
       a7 = (/0.,0.,-0.102,0.,-.030298,-.0640237,-0.124228574,-.140/)
-      sig0 = (/0.587,0.611,0.693,0.595,.6057,.6242,0.7696301,0.824/)
+      sig0 = (/0.587,0.611,0.693,0.595,.6057,.6242,0.72,0.824/)	!slightly lower sigma
+c for 1.5s SA than one would get from interpolation.
 c      clamp = (/3.,6.,3.,6.,6.,6.,0.,0./)
 c compute SOmerville median and dispersion estimates.
       if(lceus_sigma)then
@@ -5271,13 +5294,13 @@ c
       c8= (/-.873,-.928,-.482,-1.284,-.753,-0.6529481,
      + -0.606,-0.44397741,-.4170,-.922,-1.1005,-1.239/) !paper's c10
       c9= (/-.00428,-.0046,-.00255,-.00454,-.00414,-3.7463151E-3,
-     + -.00341, -2.55E-3,-.00187,-.00367,-.0037319,-.00378/) !paper's c5
+     + -.00341, -2.15E-3,-.00187,-.00367,-.0037319,-.00378/) !paper's c5
       c10= (/.000483,.000337,.000141,.00046,.000263,2.1878805E-4,
      + .000194,1.1877142E-4,.000103,.000501,.00050044,.0005/) !paper's c6
       c11= (/1.030,1.077,1.110,1.059,1.081,1.0901983,
-     + 1.098,1.1000557,1.093,1.03,1.037,1.042 /)  !paper's c11
+     + 1.098,1.10,1.093,1.03,1.037,1.042 /)  !paper's c11
       c12= (/-.0860,-.0838,-.0793,-.0838,-0.0838,-0.083180725,
-     + -0.0824,-0.07725263,-.0758,-.086,-0.0848,-.0838/) !paper's c12
+     + -0.0824,-0.08,-.0758,-.086,-0.0848,-.0838/) !paper's c12
       c13= (/0.414,.478,.543,0.460,0.482,0.49511834,
      + 0.508,0.54767966,0.551,.414,0.43,.443/)  !paper's c13
 c clamp for 2s set to 0 as per Ken Campbell's email of Aug 18 2008.
@@ -7113,7 +7136,7 @@ c For BC at 2.5 hz use interp between .3 and .5. 1.64116 whose log is 0.4953
      1 -0.16423,-.25757,-0.30578261,-0.33999,-0.35463/)
 c note very high sigma for longer period SA:
       sigma= (/.8471,0.8870,0.8753,0.8546,.8338,0.8428,.8386,
-     1 0.8484,.8785,0.9578794,1.0142,1.2253/)
+     1 0.8484,.8785,0.89,1.0142,1.2253/)	!reduced 1.5s sigma from interp.
         if(ir.ge.1)then
         c=c1(iq)
         else
@@ -8068,6 +8091,7 @@ c also have to be redefined. (a1,a2) represents a siteamp smoothing range (units
         basiteamp = site-siter
         return
       end 
+
       subroutine GailTable(i)
 c the "i" index refers to which model's table is read in. This is a mod
 c from the snippet Gail sent, which only allows one model.
@@ -8085,7 +8109,7 @@ c wrute ti unit 94.
       if(i.gt.3)stop 'please redimension the arrays in gail1 and gail2.'
       read(3,3)header
 3     format(a)
-      i2=max(1,index(fname,'.rev')-15)
+      i2=max(1,index(fname,'.rev')-19)
       i3=i2+19
       read(3,*) nm(i), nd(i), nf(i), itype(i)
       write(*,9) fname, itype(i)
@@ -8094,19 +8118,19 @@ c wrute ti unit 94.
       read(3,*) (f(jf,i), jf=1,nf(i))
 c
 	do jf=1,nf(i)
-	if(f(jf,i).eq.99.0)indpga=jf
+	if(f(jf,i).eq.0.5)ind2s=jf
 	if(f(jf,i).eq.1.0)ind1s=jf
-	if(f(jf,i).eq.5.0)ind5h=jf
+	if(f(jf,i).eq.0.67)ind1p5=jf
 	enddo
-c       write(94,9)fname(i2:i3), itype(i)
-c      write(94,99)'R(km)  1hzSA(g)   5hzSA(g)	  PGA(g) for hard rock'
+       write(94,9)fname(i2:i3), itype(i)
+       write(94,99)'R(km)  1s SA(g)   1.5sSA(g)	  2sSA(g) for hard rock'
       do 5000 jm = 1, nm(i)
         read(3,*)xmag(jm,i)
         m7=xmag(jm,i).eq.7.0
         do 4000 jd = 1, nd(i)
           read(3,*)rlog(jd,i),(gma(jf,jd,jm,i), jf = 1,nf(i))
-c          a=gma(ind1s,jd,jm,i)*sfac-gfac;b=gma(ind5h,jd,jm,i)*sfac-gfac;c=gma(indpga,jd,jm,i)*sfac-gfac
-c          if(m7)write(94,10)10**rlog(jd,i),exp(a),exp(b),exp(c)
+          a=gma(ind1s,jd,jm,i)*sfac-gfac;b=gma(ind1p5,jd,jm,i)*sfac-gfac;c=gma(ind2s,jd,jm,i)*sfac-gfac
+          if(m7)write(94,10)10**rlog(jd,i),exp(a),exp(b),exp(c)
 10      format(f7.1,1p,3(1x,e11.5))
 4000    continue
 5000  continue
@@ -8197,15 +8221,21 @@ c Also, nothing in 2011 models is available for handing soil Vs.
       amean = amean + bcfac(jf)
       endif	!pga or not?
       endif	!BC rock from A?
-c change to base e log to fit into standard framework. Convert to units g
-      amean11 = amean*sfac -gfac
+c change to base e log to fit into standard framework.
+       if(jf.eq.14)then
+       amean11 = amean*sfac	! cm/s. 2/12/2015
+c       print *,r,amag,exp(amean11),' pgv',freq(ip),jf
+	else
+c Except for PGV  Convert to units g
+       amean11 = amean*sfac -gfac
 c apply the median clamp for some frequencies. Gail email, Mar 23, 2011.
+c
       if(freq(jf).gt.2.1 .and. freq(jf) .lt.40.)then
-c      amean11=min(amean11,1.792)
       amean11=min(amean11,1.099)	!corrected clamp value
       elseif(freq(jf).gt.90.)then
       amean11=min(amean11,0.405)
       endif
+       endif	!PGV or not?
       return
       end function  amean11
 

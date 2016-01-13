@@ -1,4 +1,16 @@
 c--- program hazSUBXnga.test.f : long header version
+c Apr 7 2015: The c(0.4s) coef. for Zhao et al. was changed to 0.01 (as in BSSA
+c  Table 4) instead of 0.006, from Zhao's spreadsheet. The effect is to remove
+c  a spiky amplification at 0.4 s from the Zhao interface spectrum.
+c Apr 2 2015: reevaluated 0.15-s, 0.30s &0.75-s coeffs for AM09. Previous version (Dec 3 14) was less accurate.
+c Mar 11 2015: Always taper GR distribution above M9.5. Taper rate is sqrt(e)
+c		per 0.1 M unit. Taper starts at first sampled M above 9.5
+c Dec 3 2014: Add 0.15s to AM09
+c June 20 2014: Add 0.75-s coeffs. to AM09. BAsiteamp already has 0.75 coefs.
+c Mar 21 2014: add 2.5s to BAsiteamp to use with AM09 if requested. SH.
+c Feb 24 2014: Include option to use Papazachos (2004) orStrasser et al (2010) L(M) length as fcn of M
+c as  alternatives to the older Geomatrix relation (1995).
+c		Papazachos : use itype = 4; Strasser: use itype = 10
 c Feb 19 2014: Add hard-rock coeffs. to Zhao (ch in Zhao table 5). This allows
 c            site response to decrease as Vs30 increases above 800 m/s.
 c Jan 21 2014: Correct NAAsub (BCHydro) sigma to 0.74.
@@ -158,8 +170,9 @@ c iatten=16 Gregor et al. (SRL, 2006) w/variable siteamp.
 c    Ground motions are damped response spectra (5%) and PGA. PGV, PGD n/a.
 c--- ground motion levels should be in units of g
 c--- period=0 indicates PGA
-      parameter (npmx=8)
-      parameter ( pi=3.14159265,fourpisq=39.4784175,tiny=1.e-16)
+       parameter (npmx=8)
+c roote = sqrt(e), used for tapering GR relation for megathrust.
+      parameter ( pi=3.14159265,fourpisq=39.4784175,tiny=1.e-16,roote=1.64872127)
       dimension dmin2(50,800,6)
       real, dimension(2,npmx) :: sumwt
       real, dimension (0:37) :: perka
@@ -178,7 +191,7 @@ c Also compatible with Windows computers and gfortran compiler.
       type(header_type) :: headr,hdv30
       logical lxyin, verbose/.false./, on_top_of_rup,petersen_corr,pcorab,go_norm/.false./,sdi
       real, dimension(500):: magmin,magmax,ar
-      real magminn
+      real magminn,rootef,tapfac	!new, Mar 10 2015. Used to taper GR relation
 c  ar=aspect ratio for floating ruptures.
       real, dimension(33):: slat,slong
       character*4 sname(33),date*8,time*10,zone*5
@@ -217,8 +230,8 @@ c name must include 'cascadia' for these arrays to be filled.
       real, dimension (11):: perab,percbc
       real,dimension(6):: ptail
       real, dimension(13):: pergeo
-      real, dimension(16):: pdAM	!Atkinson Macias
-      real, dimension(23) :: perba
+      real, dimension(20):: pdAM	!Atkinson Macias
+      real, dimension(24) :: perba
       dimension rate(50,12),ratem(50)
       dimension nrup(50,12)
       dimension tarray(2)
@@ -228,12 +241,14 @@ c name must include 'cascadia' for these arrays to be filled.
       real piriod      !gregor approximation march 14 2007
        logical v30a,cascadia,abb03(8,7), rock,soil
 c from ba_02apr07_usnr.xls coef file. use for nonlinear site response, getgeom
+c added 2.5s
       perba= (/-1.000, 0.000, 0.010, 0.020, 0.030, 0.050, 0.075, 0.100,
      + 0.150, 0.200, 0.250, 0.300, 0.400, 0.500, 0.750, 1.000,
-     + 1.500, 2.000, 3.000, 4.000, 5.000, 7.500,10.0/)
+     + 1.500, 2.000, 2.50,3.000, 4.000, 5.000, 7.500,10.0/)
 C extend getgeom to long periods.
-c coeffs from Bob Youngs spreadsheet in email of Nov 17 2008.
-      pdAM = (/0.0,0.05,0.1,0.2,0.3,0.4,0.5,1.,1.5,2.,2.5,3.,4.,5.,7.7,10./)
+c coeffs from Bob Youngs' spreadsheet in email of Nov 17 2008.
+c calling penult. period 7.5 s. SH. Add 0.75s to AM09 June 20 2014. SH.
+      pdAM = (/0.0,0.05,0.1,0.15,0.2,0.25,0.3,0.31646,0.4,0.5,0.75,1.,1.5,2.,2.5,3.,4.,5.,7.5,10./)
       pergeo= (/0.,0.2,1.0,0.1,0.3,0.5,2.0,0.4,0.75,1.5,3.,4.,5./)      
       perab= (/0.,0.2,1.0,0.1,0.3,0.4,0.5,0.75,1.5,2.0,3.0/)      
 c percbc is spectral period set for Crouse91.
@@ -487,6 +502,8 @@ c          write(6,*) "enter name of output file for this period"
       write(6,*) ifp(ip),nameout
       else
       open(9+ip,file=nameout,status='unknown')      !ascii
+	write(9+ip,891)name
+891	format('#hazSUBXnga.test infile ',a)
        write(6,895)nameout
 895      format('Ascii output file: ',a)
       if(deagg)then
@@ -539,7 +556,7 @@ c may also need the companion BA period index as of july 2009
          j=1
          dowhile(period(ip).ne.perba(j))
          j=j+1
-         if(j.eq.24)stop 'period doesnt match BA siteamp period set for geom'
+         if(j.eq.25)stop 'period doesnt match BA siteamp period set for geom'
          enddo
          iperba(ip)=j
          headr%name(6)='Geomatrix attn'      !period-indep assignment.
@@ -615,7 +632,7 @@ c New atkinson-macias (BSSA,2009) GMPE nov 2012. For spectral period <=0.02 s, u
 	ka=2
       dowhile(abs(period(ip)-pdAM(ka)).gt.0.001)
       ka=ka+1
-      if(ka.gt.15)then
+      if(ka.gt.20)then
       write(6,*)'Period ',period(ip)
       stop 'For this period please remove the Atkinson Macias relation from input file'
       endif
@@ -628,7 +645,7 @@ c may also need the companion BA period index for soil amp function "basiteamp"
          j=1
          dowhile(period(ip).ne.perba(j))
          j=j+1
-         if(j.eq.24)stop 'period doesnt match BA siteamp period set for including with AtMac09'
+         if(j.eq.25)stop 'period doesnt match BA siteamp period set for including with AtMac09'
          enddo
          iperba(ip)=j
          elseif(iatten(ip,ia).eq.15)then
@@ -746,6 +763,14 @@ c
      +   "Enter 1 for char. 2 for G-R; 1 for SS, 2 for reverse; number of Mmodels: "
          read(1,*,end=60) itype,iftype,nmodel
           write(6,*) itype,iftype,nmodel,' itype iftype, number of models for this case(7/2008)'
+	imodel=2
+	if(itype.eq.4)then	!papazachos 2004
+	imodel=4
+	itype=2	!GR relation is implied. L(M) from papazachos eqn (11). Mmax9.3
+	elseif(itype.eq.10)then		!strasser 2010
+	imodel=10
+	itype=2	!still a GR relation
+	endif
         rev=iftype.eq.2
          ss=iftype.eq.1
          normal=iftype.eq.3
@@ -852,12 +877,24 @@ c---Assume only one fault
       ift =1
 c---Set up parameters of rupture zones
       do 285 imod=1,nmodel
+      tapfac=1.0	!include possible taper for M>9.5
+      rootef = roote**(dmag(imod)/0.1)
       do 185 m=1,nmag0(imod)
           xmag = magmin(imod)+(m-1)*dmag(imod)
-c------find rupture length from Geomatrix interface eqs relation
-	if(itype.eq.2)then
+          if(xmag.gt.9.5)tapfac=tapfac/rootef
+c------find rupture length from Geomatrix or more current  interface eqs relation
+	if(itype.ge.2)then
+	  if(imodel.eq.2)then
           ruplen= (xmag-4.94)/1.39
           ruplen= 10**ruplen
+          elseif(imodel.eq.4)then
+          ruplen = 10**(-2.19 + 0.55*xmag)	!papazachos et al 2004 eqn 11.
+          elseif(imodel.eq.10)then
+          ruplen = 10**(-2.477+0.585*xmag)	!Strasser et al 2010, Table 1.
+          else
+          print *,'imodel ',imodel
+          stop 'not ready'
+          endif
           nrup(m,imod)= max(1,nint((tlen-ruplen)/dlen) +1)
 c max of 1 and the other expression because if tlen < ruplen, will get 0 or less than 0         
        write(6,*) "nrup(m,imod),ruplen,tlen",nrup(m,imod),ruplen,tlen
@@ -874,8 +911,10 @@ c                endif
                 ruplen=tlen
           endif 
           rate(m,imod)= a(imod) - b(imod)*xmag
-c apply epistemic model weight here corresponding to branch imod.
-          rate(m,imod)= wtm(imod)*10.**rate(m,imod)
+c apply epistemic model weight here corresponding to branch imod.GR rate has
+c a taper when M>9.5. Characteristic ("else" branch), however, has no taper.
+c
+          rate(m,imod)= wtm(imod)*tapfac*10.**rate(m,imod)
           else
           rate(m,imod)= crate(imod)*wtm(imod)
           nrup(m,imod)=1
@@ -911,7 +950,7 @@ c store this in m= 24 bin.
 c      endif
       write(6,*)' Cumulative annual rate of subd events: ',rtot
       write(6,*)' This is equivalent to recurr. interval of ',1./rtot,' yrs'
-c---Heres the guts
+c---Here's the guts
 c
 c---loop through receiver sites 250 at a time. Why 250 at a time? big mystery.
       i = 0
@@ -1202,7 +1241,7 @@ c                     write(6,*) ndata,readn
             prob = 1.e-21
             else
 c For list of stations, formatted output in place of binary
-67      format(/,'#Station ',f7.4,1x,f10.4,1x,a,' vs30 ',f6.1)
+67      format('#Station ',f8.4,1x,f10.4,1x,a,' vs30 ',f6.1)
       do 615 i=1,nrec       
       do 615 ip=1,nper
        write(9+ip,67)slat(i),slong(i),sname(i),headr%extra(9)
@@ -2014,7 +2053,7 @@ c      write(*,*) "fa,fb", fa,fb
       SUBROUTINE MNBRAK(AX,BX,CX,FA,FB,FC,FUNC,tol)
 c     Modified from Numerical Recipes
 c     Want to establish whether minimum is within interval [ax,cx],
-c     or at end point.  If minimum is within interval, then ax,bx,cx
+c     or at end point.  If minimum is within interval, then ax,bx,cx
 c     will bracket minimum
       PARAMETER (GOLD=0.618034, GLIMIT=100., TINY=1.E-20)
       FA=FUNC(AX)
@@ -2399,7 +2438,7 @@ c array constructors oct 2006
          pergeo= (/0.,0.2,1.0,0.1,0.3,0.5,2.0,.4,0.75,1.5,3.,4.,5./)    
 C vgeo is a reference vs30 for Geomatrix, 760 m/s rock, 300 m/s soil.
 c Additional siteamp will be wrt these values from Frankel discussion july 7.
-c the 475 value isnt currently used. A coeff. set that represents very stiff soil (NEHRP C)
+c the 475 value isn't currently used. A coeff. set that represents very stiff soil (NEHRP C)
 c with something like 475 to 500 m/s could go with this. Currently there is a discontinuity
 c when switching between rock and soil coeffs, currently at 520 m/s Vs30.
 	vgeo=(/760.,300.,475./)
@@ -2835,6 +2874,10 @@ c            hslab= depth (km) of slab events (50 km for PacNW). (only applies t
 c            or DEEP events, with islab =1 (not used here))
 c            If islab =0, an interface term si lowers median for T >= 0.5 s.
 c
+c The 0.4-s c() coeff. was changed to 0.01 on Apr 7 2015 to agree with Table 4
+c in Zhao et al (2006). Previous value of 0.006 was in an electronic file sent
+c to us by Zhao directly (so I would not need to type in the numbers SH).
+c
       parameter (nper=22,hi=20.,sqrt2=1.41421356,xmagc=6.3,gcor=6.88806)
       real, dimension (nper):: a,b,c,d,e,ch,c1,c2,c3,qi,wi,ps,
      & qs,ws,si,sr,ss,ssl,sig,tau,tauI,tauS,per,sigt
@@ -2854,7 +2897,8 @@ c added 0.75s nov 2008. 0.75s (1.33 Hz) is an in-demand T.
      & -0.00232,-0.00220,-0.00207,-0.00224,-0.00201,-0.00187,-0.00147,
      & -0.00195,-0.00237/)
 	c=(/0.0055,0.0075,0.0090,0.0100,0.0120,0.0140,
-     &     0.0150,0.0060,0.0060,0.0030,0.0025,2.3797892E-3,0.0022,0.0020,0.0020,
+c     &     0.0150,0.0060,0.0060,0.0030,0.0025,2.3797892E-3,0.0022,0.0020,0.0020,
+     &     0.0150,0.010,0.0060,0.0030,0.0025,2.3797892E-3,0.0022,0.0020,0.0020,
      &     0.0020,0.0020,0.0025,0.0028,0.0032,0.0040,0.0050/)
 	d=(/1.07967,1.05984,1.08274,1.05292,1.01360,
      &   0.96638,0.93427,0.95880,1.00779,1.08773,1.08384,1.0826032,1.08849,
@@ -3104,13 +3148,14 @@ c allowed periods are listed in the array period. 0=pga
 	end subroutine Crouse91
 
        real function basiteamp(pganl,vs30,vs30r,ip)
-c inputs: pganl (g)
+c inputs: pganl (g). 
 c	vs30: vs30 of site
 c	vs30r: a reference vs30, usually one value for soil and another for rock.
 c	ip : period index (1st, 2nd, 3rd, ... in the outermost analysis). Max 10.
 c Output: basiteamp = log(AMP at vs30)-log(AMP at vs30r)
 c  Purpose: makes site response a continuous fcn of vs30. Its value at vs30r is unity.
-	parameter (np=23)	!23 periods apr 07. include 0.01 to 10 s 
+c Note: Add 2.5s coeffs. Mar 21 2014.
+	parameter (np=24)	!24 periods apr 07. include 0.01 to 10 s 
 	parameter (pi=3.14159265,sqrt2=1.414213562,vref=760.)
 	parameter (dx=1.098612289,dxsq=1.206948961,dxcube=1.325968960,plfac=-0.510825624)
 c dx = ln(a2/a1), made a param. used in a smoothed nonlin calculation sept 2006.
@@ -3122,100 +3167,29 @@ c plfac = ln(pga_low/0.1)	This never changes so shouldnt be calculated.
       real b2nl/0./,pga_low/0.06/,mhnl/6.75/,mrefnl/4.5/,rrefnl/1.0/
       real  dy,dyr,pganl, pganlm,pganlmec,site,siter/0.0/
       real  a1/ 0.030/,a2/ 0.090/,a2fac/0.405465108/
-	real, dimension(np):: per,e1,e2,e3,e4,e5,e6,e7,e8
-     + ,mh,c1,c2,c3,c4,mref,rref,h,blin,b1,b2,v1,v2,
-     +  sig1,sig2u,sigtu,sig2m,sigtm
-c e2,e3,e4 are the mech-dependent set. e1 is a mech-unspecified value.
+	real, dimension(np):: per,
+     + blin,b1,b2,v1,v2
 c Notation change from subroutine version of 12/05 and earlier.
 c array constructors for f95 Linux
 c from ba_02apr07_usnr.xls coef file
       per= (/-1.000, 0.000, 0.010, 0.020, 0.030, 0.050, 0.075, 0.100,
      + 0.150, 0.200, 0.250, 0.300, 0.400, 0.500, 0.750, 1.000,
-     + 1.500, 2.000, 3.000, 4.000, 5.000, 7.500,10.0/)
-       e1= (/ 5.00121,-0.53804,-0.52883,-0.52192,-0.45285,-0.28476,
-     1  0.00767, 0.20109, 0.46128, 0.57180, 0.51884, 0.43825, 0.39220, 0.18957,-0.21338,
-     1 -0.46896,-0.86271,-1.22652,-1.82979,-2.24656,-1.28408,-1.43145,-2.15446/)
-       e2= (/ 5.04727,-0.50350,-0.49429,-0.48508,-0.41831,-0.25022,
-     1  0.04912, 0.23102, 0.48661, 0.59253, 0.53496, 0.44516, 0.40602, 0.19878,-0.19496,
-     1 -0.43443,-0.79593,-1.15514,-1.74690,-2.15906,-1.21270,-1.31632,-2.16137/)
-c Editorial comment I used the e3(10s)=e3(7.5)+e2(10s)-e2(7.5s) for 10s normal, because BA
-c report e3(10s) as 0.0 and this gives a large motion compared to others in nhbd.
-c also reported this to Dave Boore in email for his advice. SHarmsen Oct 3 2007. Gail suggests
-c that ratio for normal might equal ratio for unspecified or ratio for SS. No consensus. Using
-c Gail's sugg. This choice of e3(10s), -2.66, is very low. Normal median is probably too low.
-       e3= (/ 4.63188,-0.75472,-0.74551,-0.73906,-0.66722,-0.48462,
-     1 -0.20578, 0.03058, 0.30185, 0.40860, 0.33880, 0.25356, 0.21398, 0.00967,-0.49176,
-     1 -0.78465,-1.20902,-1.57697,-2.22584,-2.58228,-1.50904,-1.81022, -2.66/)
-       e4= (/ 5.08210,-0.50970,-0.49966,-0.48895,-0.42229,-0.26092,
-     1  0.02706, 0.22193, 0.49328, 0.61472, 0.57747, 0.51990, 0.46080, 0.26337,-0.10813,
-     1 -0.39330,-0.88085,-1.27669,-1.91814,-2.38168,-1.41093,-1.59217,-2.14635/)
-       e5= (/ 0.18322, 0.28805, 0.28897, 0.25144, 0.17976, 0.06369,
-     1  0.01170, 0.04697, 0.17990, 0.52729, 0.60880, 0.64472, 0.78610, 0.76837, 0.75179,
-     1  0.67880, 0.70689, 0.77989, 0.77966, 1.24961, 0.14271, 0.52407, 0.40387/)
-       e6= (/-0.12736,-0.10164,-0.10019,-0.11006,-0.12858,-0.15752,
-     1 -0.17051,-0.15948,-0.14539,-0.12964,-0.13843,-0.15694,-0.07843,-0.09054,-0.14053,
-     1 -0.18257,-0.25950,-0.29657,-0.45384,-0.35874,-0.39006,-0.37578,-0.48492/)
-       e7= (/ 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000,
-     1  0.00000, 0.00000, 0.00000, 0.00102, 0.08607, 0.10601, 0.02262, 0.00000, 0.10302,
-     1  0.05393, 0.19082, 0.29888, 0.67466, 0.79508, 0.00000, 0.00000, 0.00000/)
-       e8= (/ 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000,
-     1  0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000,
-     1  0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000/)
-       mh= (/ 8.50000, 6.75000, 6.75000, 6.75000, 6.75000, 6.75000,
-     1  6.75000, 6.75000, 6.75000, 6.75000, 6.75000, 6.75000, 6.75000, 6.75000, 6.75000,
-     1  6.75000, 6.75000, 6.75000, 6.75000, 6.75000, 8.50000, 8.50000, 8.50000/)
-       c1= (/-0.873700,-0.660500,-0.662200,-0.666000,-0.690100,-0.717000,
-     1 -0.720500,-0.708100,-0.696100,-0.583000,-0.572600,-0.554300,-0.644300,-0.691400,-0.740800,
-     1 -0.818300,-0.830300,-0.828500,-0.784400,-0.685400,-0.509600,-0.372400,-0.098240/)
-       c2= (/ 0.100600, 0.119700, 0.120000, 0.122800, 0.128300, 0.131700,
-     1  0.123700, 0.111700, 0.098840, 0.042730, 0.029770, 0.019550, 0.043940, 0.060800, 0.075180,
-     1  0.102700, 0.097930, 0.094320, 0.072820, 0.037580,-0.023910,-0.065680,-0.138000/)
-       c3= (/-0.003340,-0.011510,-0.011510,-0.011510,-0.011510,-0.011510,
-     1 -0.011510,-0.011510,-0.011130,-0.009520,-0.008370,-0.007500,-0.006260,-0.005400,-0.004090,
-     1 -0.003340,-0.002550,-0.002170,-0.001910,-0.001910,-0.001910,-0.001910,-0.001910/)
-       c4= (/ 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000,
-     1  0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000,
-     1  0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000/)
-       mref= (/4.500,4.500,4.500,4.500,4.500,4.500,
-     1 4.500,4.500,4.500,4.500,4.500,4.500,4.500,4.500,4.500,
-     1 4.500,4.500,4.500,4.500,4.500,4.500,4.500,4.500/)
-       rref= (/1.000,1.000,1.000,1.000,1.000,1.000,
-     1 1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,
-     1 1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000/)
-          h= (/2.540,1.350,1.350,1.350,1.350,1.350,
-     1 1.550,1.680,1.860,1.980,2.070,2.140,2.240,2.320,2.460,
-     1 2.540,2.660,2.730,2.830,2.890,2.930,3.000,3.040/)
+     + 1.500, 2.000, 2.50,3.000, 4.000, 5.000, 7.500,10.0/)
       blin = (/-0.600,-0.360,-0.360,-0.340,-0.330,-0.290,
      1 -0.230,-0.250,-0.280,-0.310,-0.390,-0.440,-0.500,-0.600,-0.690,
-     1 -0.700,-0.720,-0.730,-0.740,-0.750,-0.750,-0.692,-0.650/)
+     1 -0.700,-0.720,-0.730,-0.7383405,-0.740,-0.750,-0.750,-0.692,-0.650/)
        b1= (/-0.500,-0.640,-0.640,-0.630,-0.620,-0.640,
      1 -0.640,-0.600,-0.530,-0.520,-0.520,-0.520,-0.510,-0.500,-0.470,
-     1 -0.440,-0.400,-0.380,-0.340,-0.310,-0.291,-0.247,-0.215/)
+     1 -0.440,-0.400,-0.380,-0.34663826,-0.340,-0.310,-0.291,-0.247,-0.215/)
        b2= (/-0.060,-0.140,-0.140,-0.120,-0.110,-0.110,
      1 -0.110,-0.130,-0.180,-0.190,-0.160,-0.140,-0.100,-0.060, 0.000,
-     1  0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000/)
+     1  0.000, 0.000, 0.000, 0.0, 0.000, 0.000, 0.000, 0.000, 0.000/)
          v1= (/ 180., 180., 180., 180., 180., 180.,
      1  180., 180., 180., 180., 180., 180., 180., 180., 180.,
-     1  180., 180., 180., 180., 180., 180., 180., 180./)
+     1  180., 180., 180., 180., 180., 180., 180., 180.,180./)
          v2= (/ 300., 300., 300., 300., 300., 300.,
      1  300., 300., 300., 300., 300., 300., 300., 300., 300.,
-     1  300., 300., 300., 300., 300., 300., 300., 300./)
-       sig1= (/0.500,0.502,0.502,0.502,0.507,0.516,
-     1 0.513,0.520,0.518,0.523,0.527,0.546,0.541,0.555,0.571,
-     1 0.573,0.566,0.580,0.566,0.583,0.601,0.626,0.645/)
-      sig2u= (/0.286,0.265,0.267,0.267,0.276,0.286,
-     1 0.322,0.313,0.288,0.283,0.267,0.272,0.267,0.265,0.311,
-     1 0.318,0.382,0.398,0.410,0.394,0.414,0.465,0.355/)
-      sigtu= (/0.576,0.566,0.569,0.569,0.578,0.589,
-     1 0.606,0.608,0.592,0.596,0.592,0.608,0.603,0.615,0.649,
-     1 0.654,0.684,0.702,0.700,0.702,0.730,0.781,0.735/)
-      sig2m= (/0.256,0.260,0.262,0.262,0.274,0.286,
-     1 0.320,0.318,0.290,0.288,0.267,0.269,0.267,0.265,0.299,
-     1 0.302,0.373,0.389,0.401,0.385,0.437,0.477,0.477/)
-      sigtm= (/0.560,0.564,0.566,0.566,0.576,0.589,
-     1 0.606,0.608,0.594,0.596,0.592,0.608,0.603,0.615,0.645,
-     1 0.647,0.679,0.700,0.695,0.698,0.744,0.787,0.801/)
-c end of April 07 coeff. updates.
+     1  300., 300., 300., 300., 300., 300., 300., 300.,300./)
 c----  Input vs30.  
 c  ip index corresponds to period. (check per correspondence with main perx)
 c--- iq is the boore-atkinson period index for period with outer index ip
@@ -3494,6 +3468,8 @@ C Calulate ground motion of Base Function
 	gm = theta1(iq)+theta4*delC1+(theta2(iq)+theta14(iq)*Fevnt+theta3*(xmag-7.8))*
      1	alog(R+c4*exp((xmag-6)*theta9))+theta6(iq)*R+theta10(iq)*Fevnt+fMag+fDepth+
      2       fterm +fSite
+c temp diagnostic.
+c         print *,xmag,R,exp(gm),' bchyd median T=',NAAper(iq)
 	if(sdi)then
        sde=gm+fac_sde(ip)	!fac_sde is log(T**2/(4pisq))
        rhat = min(10.,exp(sde)/dy_sdi)	!10 is an upper bound for rhat.
@@ -3510,7 +3486,9 @@ C Calulate ground motion of Base Function
 	subroutine getAtkinsub(ipg,ip,rcd,M,vs30,backarc,gnd,sigmaf)
 	real rcd,M,vs30,gnd,sfac,gfac,gnd0,gndp,gnd0p,pganl
 c Atkinson and Macias (BSSA, 2009) for great cascadia subduction eqs M>=7.5
-c add 1.5s coeffs SH Jan 17 2014. Interpolate on log(T).
+c add 0.15s Dec 3 2014. a useful period. from interpolation on log(T)
+c add 1.5s coeffs SH Jan 17 2014. Interpolate on log(T). add 4hz coefs feb 27
+c Add interpolated 0.75-s coeffs SH June 20 2014.
 c	input variables:
 c	ipg = global ip index used with site amplification calculation.
 c	ip = index corresponding to  spectral period (s)
@@ -3528,7 +3506,7 @@ c	sigma = sig_lnY based on Campbell&Bozorgnia
 c	coded Nov 7 2012 S Harmsen USGS harmsen@usgs.gov
 c
 	integer np
-	parameter (np=16)
+	parameter (np=20)
 	parameter (gfac=6.8875526,sfac=2.3025851,sqrt2=1.4142136)
         common/sdi/sdi,dy_sdi,fac_sde
         real dy_sdi,rhat, sigma,sigmaf,sdisd
@@ -3537,23 +3515,30 @@ c base10 to natural logs. cm/s/s to g
 	logical sdi
 	integer backarc,ip,ipq
 	real, dimension(np):: fr,pd,c0,c1,c2,c2b,c3,c4,sig
-	sig =(/0.24,0.26,0.27,0.27,0.27,0.27,0.27,0.29,0.2958,0.30,0.30,
+c 0.15s coeffs changed apr 2 2015 from reexam. of tables in AM09. 0.3 interpolated
+c from 0.25 and 0.31646 coefs.
+	sig =(/0.24,0.26,0.27,0.27,0.27,0.27,0.27,0.27,0.27,0.27,0.28169924,0.29,0.2958,0.30,0.30,
      + 0.30,0.3,0.32,0.35,0.38/)
-     	c0=(/5.006,5.843,5.490,4.746,4.303,4.167,3.999,3.621,3.3987143,3.241,3.104,2.978,
+     	c0=(/5.006,5.843,5.490,4.996067,4.746,4.529893,4.3412933,4.303,4.167,3.999,3.764495,3.621,3.3987143,3.241,3.104,2.978,
      + 2.814,2.671,2.489,2.338/)
-     	c1=(/-1.5573,-1.9391,-1.6257,-1.1691,-0.9322,-0.8854,
-     + -0.8211,-0.7376,-0.7004549,-0.6741,-.6585,-0.6431,-0.6108,-0.5942,-0.6412,-0.6311/)
-       c2=(/-0.00034,0.0,-0.00115,-0.00212,-0.00231,-0.00211,-0.00195,
+     	c1=(/-1.5573,-1.9391,-1.6257,-1.3081374,-1.1691,-1.0535342,-0.95057606,
+     + -0.9322,-0.8854,-0.8211,-0.7541239,-0.7376,-0.7004549,
+     + -0.6741,-.6585,-0.6431,-0.6108,-0.5942,-0.6412,-0.6311/)
+       c2=(/-0.00034,0.0,-0.00115,-1.942912E-3,-0.00212,-2.212687E-3,-2.3167976E-3,
+     + -0.00231,-0.00211,-0.00195,-1.6399919E-3,
      + -0.00128,-1.0050676E-3,-0.00081,-0.00063,-0.00057,-0.00046,-0.00040,-0.00003,0.0/)
-       c2b=(/-0.0015,-.0015,-0.00225,-0.00332,-.00331,-0.00281,-0.00225,
-     + -0.00158,-1.1412782E-3,-0.00083,-0.00065,-0.00059,-0.00048,-0.00041,-0.000032,0.0/)
+       c2b=(/-0.0015,-.0015,-0.00225,-3.0116E-3,-0.00332,-3.3151218E-3,-3.312266E-3,
+     + -.00331,-0.00281,-0.00225,-1.8580751E-3,
+     + -0.00158,-0.012055098,-0.00083,-0.00065,-0.00059,-0.00048,-0.00041,-0.000032,0.0/)
 c c2b first attempt at decay in backarc region. hybridizing two Atkinson papers       
-      c3=(/0.1774,0.1813,0.1736,0.1593,0.1713,0.1802,0.1870,0.2116,0.24552783,0.2696,0.2990,
+      c3=(/0.1774,0.1813,0.1736,0.16788623,0.1593,0.1651539,0.1713,0.1713,
+     + 0.1802,0.18700,.20287511,0.2116,0.24552783,0.2696,0.2990,
      + 0.3258,0.3490,0.3822,0.4760,0.5357/)
-      c4 = (/0.0827,0.0199,0.0261,0.0432,0.0270,0.0258,0.0271,0.0328,9.869471E-3,
+      c4 = (/0.0827,0.0199,0.0261,0.026548002,0.0432,0.035297226,0.026660122,
+     + 0.0270,0.0258,0.02710,0.025725568, 0.0328,9.869471E-3,
      + -0.0064,-0.0074,-0.0103,-0.0299,-0.0417,-0.0629,-0.0737/)
-      fr = (/99.,20.,10.,5.,3.16,2.5,2.,1.0,0.667,0.5,0.4,0.32,0.25,0.2,0.13,0.10/)
-      pd = (/0.01,0.05,0.1,0.2,0.3,0.4,0.5,1.,1.5,2.,2.5,3.,4.,5.,7.7,10./)
+      fr = (/99.,20.,10.,6.667,5.,4.,3.33,3.16,2.5,2.,1.333,1.0,0.667,0.5,0.4,0.32,0.25,0.2,0.13,0.10/)
+      pd = (/0.01,0.05,0.1,0.15,0.2,0.25,0.3,0.31646,0.4,0.5,0.75,1.,1.5,2.,2.5,3.,4.,5.,7.5,10./)
 c h term from M
 	h=M**2-3.1*M-14.55	!eqn 6
 	xm=M-8.0
