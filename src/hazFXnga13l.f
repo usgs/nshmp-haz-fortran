@@ -8215,7 +8215,8 @@ c PGA median is > 5hz median for A and even for BC for close-in sites.
 c Current limitation : either A or BC. Nothing in between is provided for.
 c Also, nothing in 2011 models is available for handing soil Vs.
       if(Vs30.lt.800.)then
-      if(jf.eq.12.or.jf.eq.11)then
+c Make sure only 50 hz and PGA get the below treatment. Ch May 27 2015. SH.
+      if(freq(jf).gt.90..or.freq(jf).eq.50.)then
       amean = amean -0.3 + 0.15*rl
       else
       amean = amean + bcfac(jf)
