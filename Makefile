@@ -25,9 +25,9 @@ UTIL = $(SRC)/util
 
 ## NOTE: Pick one or the other list of codes to compile (comment out the other!)
 ## compile codes on mac (no parallel version of hazFXnga131)
-all: CreateBinDir hazallXL.v2 hazallXL.v4 hazFXnga13l hazgridXnga13l hazSUBXnga.test hazpoint hazinterpnga avg_dist fltrate.v2 get_avalue gethead.nga getmeanrjf getmeanrjf.v2 gutenberg assim.2013
+all: CreateBinDir hazallXL.v2 hazallXL.v4 hazFXnga13l hazgridXnga13l hazSUBX hazpoint hazinterpnga avg_dist fltrate.v2 get_avalue gethead.nga getmeanrjf getmeanrjf.v2 gutenberg assim.2013
 ## compile codes on CLUSTER (with parallel version of hazFXnga131)
-#all: CreateBinDir hazallXL.v2 hazallXL.v4 hazFXnga13l hazFXnga13lp hazgridXnga13l hazSUBXnga.test hazpoint hazinterpnga avg_dist fltrate.v2 get_avalue gethead.nga getmeanrjf getmeanrjf.v2 gutenberg assim.2013
+#all: CreateBinDir hazallXL.v2 hazallXL.v4 hazFXnga13l hazFXnga13lp hazgridXnga13l hazSUBX hazpoint hazinterpnga avg_dist fltrate.v2 get_avalue gethead.nga getmeanrjf getmeanrjf.v2 gutenberg assim.2013
 
 CreateBinDir:
 	mkdir -p $(OUT)
@@ -56,8 +56,8 @@ hazgridXnga13l: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga13l $(SRC)/hazgridXnga13l.f $(SRC)/iosubs.o
 
 ##	ceus hazard calculations
-hazSUBXnga.test: iosubs
-	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazSUBXnga.test $(SRC)/hazSUBXnga.test.f $(SRC)/iosubs.o
+hazSUBX: iosubs
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazSUBX $(SRC)/hazSUBX.f $(SRC)/iosubs.o
 
 ## 	single-site hazard curve generation
 hazpoint: iosubs
