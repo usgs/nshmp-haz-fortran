@@ -12,7 +12,7 @@
 0.24
 ../out/wasatchSLCseg.clu.char.1hz.g3
 0.24
-../out/wasatchSLCseg.noclu.char.1hz
+../out/wasatchSLCseg.noclu.char.1hz.p
 0.24
 1
 ../out/combine/wus_flts_geo.1hz.p

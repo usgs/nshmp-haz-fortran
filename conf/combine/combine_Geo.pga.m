@@ -12,7 +12,7 @@
 0.24
 ../out/wasatchSLCseg.clu.char.pga.g3
 0.24
-../out/wasatchSLCseg.noclu.char.pga
+../out/wasatchSLCseg.noclu.char.pga.m
 0.24
 1
 ../out/combine/wus_flts_geo.pga.m
