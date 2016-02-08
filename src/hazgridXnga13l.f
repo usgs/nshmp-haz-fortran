@@ -432,7 +432,7 @@ c--- Ground motion levels should be in units of g, except for PGV. Code checks f
 c --- and stops if this is found. For PGV there is a related check, for PGV max < 20 cm/s.
 c--- period=0 indicates PGA. period = -1 indicates PGV
       parameter ( d2r=0.0174533,pi=3.14159265,fourpisq=39.4784175)
-        parameter (nlmx=20,npmx=8,nsrcmx=200000,nzonex=15)   
+        parameter (nlmx=20,npmx=8,nsrcmx=275000,nzonex=15)   
       real*8 emax/3.0/,sqrt2/1.4142135623/
       real, dimension(2) :: mcut,dcut,tarray
       real, dimension(50) :: a_fac
