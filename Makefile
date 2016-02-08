@@ -3,87 +3,71 @@
 # Author      : USGS
 # Version     :
 # Copyright   : 
-# Description : Makefile for NSHMP08 codes
+# Description : Makefile for NSHMP14 codes
 # ============================================================================
 
 .PHONY: all clean
 
-#F_COMPILER = gfortran
+m_bit=
+
 F_COMPILER = gfortran
 F_COMPILER2 = ifort
-FFLAGS1 = -Warray-bounds -ffixed-line-length-none -ffpe-trap= -fbounds-check $(LDLIBS)
+FFLAGS1 = -O2 -Warray-bounds -ffixed-line-length-none -ffpe-trap= -fbounds-check $(m_bit) 
 FFLAGS1_I = -132 
-#FFLAGS2 = $(FFLAGS1) -fcray-pointer $(m_bit)
 FFLAGS2 = $(FFLAGS1) $(m_bit)
 
 C_COMPILER = gcc
-#CFLAGS = -O $(m_bit)
-CFLAGS = 
+CFLAGS = -O $(m_bit)
 
 OUT = bin
 SRC = src
 UTIL = $(SRC)/util
 
-
-all: CreateBinDir hazallXL.v2 hazallXL.v4 hazFXnga13l hazgridXnga13l hazSUBX hazpoint hazinterpnga avg_dist fltrate.v2 get_avalue gethead.nga getmeanrjf.v2 gutenberg assim.2013
+## NOTE: Pick one or the other list of codes to compile (comment out the other!)
+## compile codes on mac (no parallel version of hazFXnga131)
+all: CreateBinDir hazallXL.v2 hazallXL.v4 hazFXnga13l hazgridXnga13l hazSUBXnga.test hazpoint hazinterpnga avg_dist fltrate.v2 get_avalue gethead.nga getmeanrjf getmeanrjf.v2 gutenberg assim.2013
+## compile codes on CLUSTER (with parallel version of hazFXnga131)
+#all: CreateBinDir hazallXL.v2 hazallXL.v4 hazFXnga13l hazFXnga13lp hazgridXnga13l hazSUBXnga.test hazpoint hazinterpnga avg_dist fltrate.v2 get_avalue gethead.nga getmeanrjf getmeanrjf.v2 gutenberg assim.2013
 
 CreateBinDir:
 	mkdir -p $(OUT)
 
-#	dependencies
+##	dependencies
 iosubs:
 	$(C_COMPILER)  $(CFLAGS) -c -o $(SRC)/iosubs.o $(SRC)/iosubs.c
 iosubs128:
 	$(C_COMPILER)  $(CFLAGS) -c -o $(SRC)/iosubs_128.o $(SRC)/iosubs_128.c
-iosubs_noLong:
-	$(C_COMPILER)  $(CFLAGS) -c -o $(SRC)/iosubs_noLong.o $(SRC)/iosubs_noLong.c
 
-#	hazard curve generation
+
+##	hazard curve generation
 hazallXL.v2: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazallXL.v2 $(SRC)/hazallXL.v2.f $(SRC)/iosubs.o
 hazallXL.v4: iosubs
 	$(F_COMPILER) $(FFLAGS2) -o $(OUT)/hazallXL.v4 $(SRC)/hazallXL.v4.f $(SRC)/iosubs.o 
-hazallXL.v5: iosubs
-	$(F_COMPILER) $(FFLAGS2) -o $(OUT)/hazallXL.v5 $(SRC)/hazallXL.v5.f $(SRC)/iosubs.o 
-#hazallXL.v5: iosubs128
-#	$(F_COMPILER) $(FFLAGS2) -o $(OUT)/hazallXL.v5 $(SRC)/hazallXL.v5.f $(SRC)/iosubs_128.o 
-
-hazFXnga7c: iosubs
-	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazFXnga7c $(SRC)/hazFXnga7c.f $(SRC)/iosubs.o
+	
+##	fault hazard calculations (comment out hazFXnga131p if not compiling on CLUSTER!)
 hazFXnga13l: iosubs
 	$(F_COMPILER) $(FFLAGS1) -finit-local-zero -o $(OUT)/hazFXnga13l $(SRC)/hazFXnga13l.f $(SRC)/iosubs.o
-hazFXnga13p: iosubs128
-	ifort -o $(OUT)/hazFXnga13p $(SRC)/hazFXnga13p.f -coarray $(SRC)/iosubs_128.o -w -132
-hazFXnga7.temp: iosubs
-	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazFXnga7.temp $(SRC)/hazFXnga7.temp.f $(SRC)/iosubs.o
-hazFXnga12: iosubs
-	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazFXnga12 $(SRC)/hazFXnga12.f $(SRC)/iosubs.o
+#hazFXnga13lp: iosubs_128
+	#$(F_COMPILER2) $(FFLAGS1_I) -o $(OUT)/hazFXnga13lp $(SRC)/hazFXnga13lp.f -coarray $(SRC)/iosubs_128.o -w
 
-hazgridXnga5: iosubs
-	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga5 $(SRC)/hazgridXnga5.f $(SRC)/iosubs.o
+##	gridded hazard calculations
 hazgridXnga13l: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga13l $(SRC)/hazgridXnga13l.f $(SRC)/iosubs.o
-hazgridXnga13lidOld: iosubs
-	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga13lidOld $(SRC)/hazgridXnga13lidOld.f $(SRC)/iosubs.o
-hazgridXnga13l_test: iosubs
-	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga13l_test $(SRC)/hazgridXnga13l_test.f $(SRC)/iosubs.o
-hazgridXnga13l_deep: iosubs
-	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazgridXnga13l_deep $(SRC)/hazgridXnga13l_deep.f $(SRC)/iosubs.o
 
-hazSUBXnga: iosubs
-	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazSUBXnga $(SRC)/hazSUBXnga.f $(SRC)/iosubs.o
-hazSUBXngatest: iosubs
-	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazSUBXngatest $(SRC)/hazSUBXngatest.f $(SRC)/iosubs.o
-hazSUBX: iosubs
-	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazSUBX $(SRC)/hazSUBX.f $(SRC)/iosubs.o
+##	ceus hazard calculations
+hazSUBXnga.test: iosubs
+	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazSUBXnga.test $(SRC)/hazSUBXnga.test.f $(SRC)/iosubs.o
 
+## 	single-site hazard curve generation
 hazpoint: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/hazpoint $(SRC)/hazpoint.f $(SRC)/iosubs.o
+	
+##	resampling	
 hazinterpnga: iosubs
-#	$(F_COMPILER2) $(FFLAGS1_I) -o $(OUT)/hazinterpnga $(SRC)/hazinterpnga.f $(SRC)/iosubs_128.o -w
 	$(F_COMPILER) $(FFLAGS2) -o $(OUT)/hazinterpnga $(SRC)/hazinterpnga.f $(SRC)/iosubs.o
 
-# deagg codes
+## deagg codes
 deaggFLTH: 
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/deaggFLTH $(SRC)/deaggFLTH.f 
 
@@ -102,7 +86,7 @@ sum_haz:
 checksum09: 
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/checksum09 $(SRC)/checksum09.f 
 
-#	utility
+##	utility
 avg_dist: iosubs
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/avg_dist $(UTIL)/avg_dist.f $(SRC)/iosubs.o
 bin2xyzX.v2: iosubs
@@ -129,17 +113,6 @@ assim.2013:
 	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/assim.2013 $(UTIL)/assim.2013.f
 swapf: 
 	$(C_COMPILER) $(CLAGS) -o $(OUT)/swapf $(UTIL)/swapf.c
-
-#	other
-#	$(F_COMPILER) $(FFLAGS1) -o $(OUT)/agridtest2A $(SRC)/agridtest2A.f 
-#
-#	gfortran hazFXnga7c.f -ffixed-line-length-none -ffpe-trap= -o hazFXnga7c -finit-local-zero
-#	gfortran -ffixed-line-length-none -ffpe-trap= -o hazFXnga7c -g hazFXnga7c.f iosubs.o
-#	cc -O -arch i386 -c swapf.c
-#	gfortran -ffixed-line-length-none -fbounds-check -ffpe-trap= -o getmeanrjf getmeanrjf.f
-#	cc -O -arch i386 -o swapf swapf.c
-#	-fbounds-check 
-
 
 clean:
 	rm -f $(SRC)/*.o
