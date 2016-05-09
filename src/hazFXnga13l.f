@@ -8216,7 +8216,7 @@ c Current limitation : either A or BC. Nothing in between is provided for.
 c Also, nothing in 2011 models is available for handing soil Vs.
       if(Vs30.lt.800.)then
 c Make sure only 50 hz and PGA get the below treatment. Ch May 27 2015. SH.
-      if(freq(jf).gt.90..or.freq(jf).eq.50.)then
+      if(freq(ip).gt.90..or.freq(ip).eq.50.)then
       amean = amean -0.3 + 0.15*rl
       else
       amean = amean + bcfac(jf)
@@ -8231,9 +8231,9 @@ c Except for PGV  Convert to units g
        amean11 = amean*sfac -gfac
 c apply the median clamp for some frequencies. Gail email, Mar 23, 2011.
 c
-      if(freq(jf).gt.2.1 .and. freq(jf) .lt.40.)then
+      if(freq(ip).gt.2.1 .and. freq(ip) .lt.40.)then
       amean11=min(amean11,1.099)	!corrected clamp value
-      elseif(freq(jf).gt.90.)then
+      elseif(freq(ip).gt.90.)then
       amean11=min(amean11,0.405)
       endif
        endif	!PGV or not?

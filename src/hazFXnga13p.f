@@ -619,7 +619,7 @@ c add PGV feb 12 2015. Testing for ceus
      1              4.0000, 5.0000, 7.5000,10.0000/)
        gmwt = (/0.63, 0.185, 0.185/)      !weights for gm uncert branches
 c The final clamp is associated with PGV and is 400 cm/s. SH Feb 12 2014.
-       clamp = (/3.,6.,3.,6.,6.,6.,3.,0.,400./)
+       clamp = (/3.,6.,0.,6.,6.,6.,3.,0.,400./)
       pdgk= (/0.,0.01,0.02,0.03,0.04,0.06,0.08,0.1,0.12,0.14,
      &         0.16,0.18,0.20,0.22,0.24,0.27,0.30,0.33,
      &         0.36,0.4,0.46,0.5,0.6,0.75,0.85,1.0,1.5,
@@ -4683,7 +4683,7 @@ c the gnd_ep branching will not be done for CEUS relations.
       common/ceus_sig/lceus_sigma,ceus_sigma
 
              real, dimension(np):: tc1,tc2,tc3,tc4,tc5,tc6
-      real, dimension(np):: tc1h,th,tsigma,clamp
+      real, dimension(np):: tc1h,th,tsigma
            real   perx(np) , pganl
            save pganl
 c array constructors
@@ -4701,7 +4701,7 @@ c tc Mw coeffs. 3.33 hz is log-log from the 2.5 and 5 hz values.
            th = (/9.3,7.5,6.8,8.3,7.26,7.027,6.9,10.5,7.1,6.858496/)
 c write sigma in nat log units. Saves a divide
            tsigma = (/0.7506,0.7506,0.799,.7506,.7506,.7506,0.799,.7506,.7506,0.799/)	
-           clamp = (/3.,6.,0.,6.,6.,6.,0.,6.,6.,0./)
+c           clamp = (/3.,6.,0.,6.,6.,6.,0.,6.,6.,0./)
         xmag= xmag0
 c correct mag will be used in calling program. never need to convert here.
       if(lceus_sigma)then
@@ -4917,7 +4917,7 @@ c
       real gnd_ep(3,3,8),gndout(3)
       logical lceus_sigma,l_gnd_ep(8),sp
 
-      real bdepth(np),bsigma(np),clamp(np)
+      real bdepth(np),bsigma(np)
       real gma(20,21,4*np),tabdist(21,4)
              real perx(8)      !a reference set including pgv which wasn't used in 2002
         perx= (/0.,0.2,1.0,0.1,0.3,0.5,1.5,2.0/ )
@@ -5246,7 +5246,7 @@ c
       logical l_gnd_ep(8),sp
 
       real,dimension(np):: c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,
-     1 clamp,c1h,c11,c12,c13,perx
+     1 c1h,c11,c12,c13,perx
        perx = (/0.01,0.2,1.0,0.1,0.3,0.4,
      + 0.5,1.5,2.0,.03,.04,.05/)
       c1= (/0.4492,.1325,-.3177,.4064,-0.1483,-0.17039,
@@ -5278,7 +5278,7 @@ c
       c13= (/0.414,.478,.543,0.460,0.482,0.49511834,
      + 0.508,0.54767966,0.551,.414,0.43,.443/)  !paper's c13
 c clamp for 2s set to 0 as per Ken Campbell's email of Aug 18 2008.
-      clamp= (/3.0,6.0,0.,6.,6.,6.,3.0,0.,0.,6.,6.,6./)
+c      clamp= (/3.0,6.0,0.,6.,6.,6.,3.0,0.,0.,6.,6.,6./)
       cmagsig=  7.16	!make it a constant
       sp = perx(ip).gt.0.02.and.perx(ip).lt.0.5
       if(ir.eq.1)then

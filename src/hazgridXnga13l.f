@@ -4220,7 +4220,7 @@ c     + 0.503,0.5006602,.499,.376,0.40246,0.423/) !paper's c8
       c13= (/0.414,.478,.543,0.460,0.482,0.49511834,
      + 0.508,0.54767966,0.551,.414,0.43,.443/)  !paper's c13
 c clamp for 2s set to 0 as per Ken Campbell's email of Aug 18 2008.
-      clamp= (/3.0,6.0,0.,6.,6.,6.,3.0,0.,0.,6.,6.,6./)
+      clamp= (/3.0,6.0,0.,6.,6.,6.,6.0,0.,0.,6.,6.,6./)
       period = perx(iq)
        cmagsig= 7.16
 c set up erf matrix p as ftn of dist,mag,period,level,depth to seismicity,/
@@ -7807,7 +7807,7 @@ c Frequencies in *.rev table (2015):
 c 0.20   0.32   0.50   0.67   1.00   2.00   3.20   5.00  10.00  20.00
 c  32.00  40.00  99.00  89.00
 c Clamp corresponds to the above frequencies
-         clamp = (/0.,0.,0.,0.,0.,0.,6.,6.,6.,0.,0.,3.,3.,400./)
+         clamp = (/0.,0.,0.,0.,0.,6.,6.,6.,6.,6.,6.,6.,3.,400./)
         name ='GR/AB06revA_Rcd.rev'	!include 1.5s explicitly
         name=trim(name)
              open(3,file=name,status='old',err=202)
@@ -7903,7 +7903,7 @@ c e0_ceus not saving a depth of rupture dim, not sens. to this
       integer nlev(8),icode(8,10)
        character*32 name
 c Clamp corresponds to the .rev file frequencies
-         clamp = (/0.,0.,0.,0.,0.,0.,6.,6.,6.,0.,0.,3.,3.,400./)
+         clamp = (/0.,0.,0.,0.,0.,6.,6.,6.,6.,6.,6.,6.,3.,400./)
         name ='GR/A08revA_Rjb.rev'	!include 1.5s explicitly
         name=trim(name)
              open(3,file=name,status='old',err=202)
@@ -8002,7 +8002,7 @@ c e0_ceus not saving a depth of rupture dim, not sens. to this
       integer nlev(8),icode(8,10)
        character*32 name
 c Clamp corresponds to the .rev file frequencies
-         clamp = (/0.,0.,0.,0.,0.,0.,6.,6.,6.,0.,0.,3.,3.,400./)
+         clamp = (/0.,0.,0.,0.,0.,6.,6.,6.,6.,6.,6.,6.,3.,400./)
         name ='GR/P11A_Rcd.rev'
         name=trim(name)
              open(3,file=name,status='old',err=202)
