@@ -619,7 +619,7 @@ c add PGV feb 12 2015. Testing for ceus
      1              4.0000, 5.0000, 7.5000,10.0000/)
        gmwt = (/0.63, 0.185, 0.185/)      !weights for gm uncert branches
 c The final clamp is associated with PGV and is 400 cm/s. SH Feb 12 2014.
-       clamp = (/3.,6.,0.,6.,6.,6.,3.,0.,400./)
+       clamp = (/3.,6.,0.,6.,6.,6.,0.,0.,400./)
       pdgk= (/0.,0.01,0.02,0.03,0.04,0.06,0.08,0.1,0.12,0.14,
      &         0.16,0.18,0.20,0.22,0.24,0.27,0.30,0.33,
      &         0.36,0.4,0.46,0.5,0.6,0.75,0.85,1.0,1.5,
@@ -8189,7 +8189,8 @@ c PGA median is > 5hz median for A and even for BC for close-in sites.
 c Current limitation : either A or BC. Nothing in between is provided for.
 c Also, nothing in 2011 models is available for handing soil Vs.
       if(Vs30.lt.800.)then
-      if(jf.eq.12.or.jf.eq.11)then
+c Make sure only 50 hz and PGA get the below treatment. Ch May 27 2015. SH.
+      if(freq(ip).gt.90..or.freq(ip).eq.50.)then
       amean = amean -0.3 + 0.15*rl
       else
       amean = amean + bcfac(jf)
@@ -8204,9 +8205,9 @@ c Except for PGV  Convert to units g
        amean11 = amean*sfac -gfac
 c apply the median clamp for some frequencies. Gail email, Mar 23, 2011.
 c
-      if(freq(jf).gt.2.1 .and. freq(jf) .lt.40.)then
+      if(freq(ip).gt.2.1 .and. freq(ip) .lt.40.)then
       amean11=min(amean11,1.099)	!corrected clamp value
-      elseif(freq(jf).gt.90.)then
+      elseif(freq(ip).gt.90.)then
       amean11=min(amean11,0.405)
       endif
        endif	!PGV or not?
