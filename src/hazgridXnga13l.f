@@ -1,4 +1,6 @@
-c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  11/18/ 2015. Long header version.
+c--- hazgridXnga13l.f for USGS PSHA runs, Last changed  09/21/ 2016. Long header version.
+c insure that Campbell CEUS GMM (index 10) is called with negative ipia when vs30 > 1200 m/s. Mod sept 21 2016 SH
+c	
 c nov 2,2015: repair a little bug with "oktogo" variable so that 2-s SA can be
 c	computed with Frankel and others
 c nov 5, 2015: repair initializations for "getToro" so that 2-s SA works with this GMM.
@@ -1502,6 +1504,8 @@ c add three terms corresponding to ss-weight, reverse-weight, and normal-slip we
 c new dec 2005.
       read(1,*) iatten(ip,ia),wt(ip,ia,1),wtdist(ip,ia),wt(ip,ia,2),
      &  icode(ip,ia)
+c insure that Campbell CEUS relation is called with negative ipia when vs30 > 1200 m/s. Mod sept 21 2016 SH
+	if(iatten(ip,ia).eq.10 .and. vs30 .gt.1200.)iatten(ip,ia)= -10
 c special treatment for ASK13 and CY2013 models, if user wants to use measured Vs30
 c option:
        if(iatten(ip,ia).eq.-34 .or. iatten(ip,ia).eq.-33)then
