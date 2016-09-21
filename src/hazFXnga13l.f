@@ -1,4 +1,5 @@
-c--- program  hazFXnga13l.f; 03/16/2015; Use  with NGA relations, or others.
+c--- program  hazFXnga13l.f; 09/21/2016; Use  with NGA relations, or others.
+c Sept 21, 2016: For the CampCEUS model, insure that ipia = -10 whenever Vs30 > 1200 m/s.
 c March 16, 2015: remove a repeated line of code in the GR-without-uncert loop.
 c  This repeated line caused CEUS GMM calculations to be skipped for GR-distr.
 c	source magnitudes. Discovery by Morgan Moschetti, 3/16/2015.
@@ -1151,6 +1152,8 @@ c      write(6,*) "enter type of atten. relation, weight1, wtdist,
 c     &  weight2 , mb to M conv."
       read(1,*) iatten(ip,ia),wt(ip,ia,1),wtdist(ip,ia),wt(ip,ia,2),
      &   icode(ip,ia)
+c insure that Campbell CEUS relation is called with negative ipia when vs30 > 1200 m/s. Mod sept 21 2016 SH
+	if(iatten(ip,ia).eq.10 .and. vs30 .gt.1200.)iatten(ip,ia)= -10
       ipia=iatten(ip,ia)
 	if(ipia.eq.35)then
 	F_inferred=1.0
