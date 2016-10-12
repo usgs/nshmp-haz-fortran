@@ -1154,12 +1154,12 @@ c     &  weight2 , mb to M conv."
      &   icode(ip,ia)
 c insure that Toro, Frankel, Somerville, and Campbell CEUS relations are called with 
 c negative ipia when vs30 > 1200 m/s. Mod Oct 12 2016 pmpowers
-  if(vs30.gt.1200.)then
-    if(iatten(ip,ia).eq.2) iatten(ip,ia)= -2
-    if(iatten(ip,ia).eq.6) iatten(ip,ia)= -6
-    if(iatten(ip,ia).eq.7) iatten(ip,ia)= -7
-    if(iatten(ip,ia).eq.10) iatten(ip,ia)= -10
-  endif
+	if(vs30.gt.1200.)then
+		if(iatten(ip,ia).eq.2) iatten(ip,ia)= -2
+		if(iatten(ip,ia).eq.6) iatten(ip,ia)= -6
+		if(iatten(ip,ia).eq.7) iatten(ip,ia)= -7
+		if(iatten(ip,ia).eq.10) iatten(ip,ia)= -10
+	endif
       ipia=iatten(ip,ia)
 	if(ipia.eq.35)then
 	F_inferred=1.0
