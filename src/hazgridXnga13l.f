@@ -792,7 +792,7 @@ c      prob5=0.
       endif
       call date_and_time(date,time,zone,ival)
       write (6,61)date,time,zone,namein
-61      format('hazgridXnga13l (11/18/2015) log file. Pgm run on ',a,' at ',a,1x,a,/,
+61      format('hazgridXnga13l (09/30/2016) log file. Pgm run on ',a,' at ',a,1x,a,/,
      + '# Control file:',a)
         call getarg(0,progname)
         ind=index(progname,' ')
@@ -1182,7 +1182,8 @@ c example line: 5 6.5 0.1 6.7 0.2 6.9 0.4 7.1 0.2 7.3 0.1
       i1=1
       sum=0.0
       do j=1,nm
-      i2= nint((mwmax(j,izone)-magmin)/dmag)+1
+      i2= nint((mwmax(j,izone)-magmin)/dmag)  !+1 P. Powers discovered that the +1 oversteps Mmax
+c changed i2 to one less than its original value SH Sept 30 2016
       print *,i2,mwmax(j,izone), magmin,dmag,izone
       wt_zone(i1:i2,izone)=wnow
       i1=i2+1
