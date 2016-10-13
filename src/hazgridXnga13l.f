@@ -1505,8 +1505,14 @@ c add three terms corresponding to ss-weight, reverse-weight, and normal-slip we
 c new dec 2005.
       read(1,*) iatten(ip,ia),wt(ip,ia,1),wtdist(ip,ia),wt(ip,ia,2),
      &  icode(ip,ia)
+c insure that Somerville and Campbell CEUS relations are called with 
+c negative ipia when vs30 > 1200 m/s. Mod Oct 12 2016 pmpowers
+	if(vs30.gt.1200.)then
+		if(iatten(ip,ia).eq.7) iatten(ip,ia)= -7
+		if(iatten(ip,ia).eq.10) iatten(ip,ia)= -10
+	endif
 c insure that Campbell CEUS relation is called with negative ipia when vs30 > 1200 m/s. Mod sept 21 2016 SH
-	if(iatten(ip,ia).eq.10 .and. vs30 .gt.1200.)iatten(ip,ia)= -10
+c	if(iatten(ip,ia).eq.10 .and. vs30 .gt.1200.)iatten(ip,ia)= -10
 c special treatment for ASK13 and CY2013 models, if user wants to use measured Vs30
 c option:
        if(iatten(ip,ia).eq.-34 .or. iatten(ip,ia).eq.-33)then
