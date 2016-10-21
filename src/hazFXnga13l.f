@@ -8210,6 +8210,8 @@ c
       if (jdl .eq. 0) write(*,*)' ERROR. CANNOT FIND DIST'
       jdu = jdl + 1
       fracd = (rl - rlog(jdl,ka)) / (rlog(jdu,ka)-rlog(jdl,ka))
+c     fracd goes negative above rmax; clamp to 0 P.Powers 10/21/16
+      if (jdflag .eq. 1) fracd = 0
 c**   fracd gives interpolation fraction in distanc
       do 40 j = jfl, jfu
       arl = gma(j,jdl,jml,ka) + fracm * (gma(j,jdl,jmu,ka)-gma(j,jdl,jml,ka))
