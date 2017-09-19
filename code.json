@@ -1,0 +1,42 @@
+{
+  "version": "2.0.0",
+  "measurementType": {},
+  "agency": "U.S. Department of Interior",
+  "releases": [
+    {
+      "name": "nshmp-haz",
+      "description": "National Seismic Hazard Mapping Project (NSHMP) Legacy Fortran Code",
+      "version": "nshm2014r2b",
+      "status": "Archival",
+      "organization": "U.S. Geological Survey",
+      "vcs": "git",
+      "repositoryURL": "https://github.com/usgs/nshmp-haz-fortran",
+      "homepageURL": "https://github.com/usgs/nshmp-haz-fortran",
+      "downloadURL": "https://github.com/usgs/nshmp-haz-fortran/releases/tag/nshm2014r2b",
+      "disclaimerURL": "https://github.com/usgs/nshmp-haz-fortran/blob/master/DISCLAIMER.md",
+      "permissions": {
+        "licenses": [
+          {
+            "name": "Public Domain",
+            "URL": "https://github.com/usgs/nshmp-haz-fortran/blob/master/LICENSE.md"
+          }
+        ],
+        "usageType": "openSource",
+        "exemptionText": null
+      },
+      "laborHours": 3200,
+      "languages": [ "Java" ],
+      "tags": [
+        "psha",
+        "seismic-hazard"
+      ],
+      "contact": {
+        "name": "Peter Powers",
+        "email": "pmpowers@usgs.gov"
+      },
+      "date": {
+        "metadataLastUpdated": "2017-09-18"
+      }
+    }
+  ]
+}

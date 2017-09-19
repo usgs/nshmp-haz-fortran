@@ -1,0 +1,1 @@
+Unless otherwise noted, this software is in the public domain because it contains materials that originally came from the U.S. Geological Survey (USGS), an agency of the U.S. Department of Interior. For more information, see the official USGS [copyright policy](http://www.usgs.gov/visual-id/credit_usgs.html#copyright).
