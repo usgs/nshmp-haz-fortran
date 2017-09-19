@@ -1,10 +1,12 @@
-## National Seismic Hazard Model (NSHM) Fortran Codes
+## National Seismic Hazard Mapping Project (NSHMP) Fortran Codes
 
-This repository houses the codes used to generate the [2008](http://pubs.usgs.gov/of/2008/1128/) and [2014](http://pubs.usgs.gov/of/2014/1091/) updates to the NSHM for the conterminous US. The 2008 codes are tagged as [nshm2008r3](https://github.com/usgs/nshmp-haz-fortran/tree/nshm2008r3). The 2014 codes are the current master, and also tagged as [nshm2014r1](https://github.com/usgs/nshmp-haz-fortran/tree/nshm2014r1). These codes include all necessary configuration and data files and were compiled and run using [GFortran](http://gcc.gnu.org/fortran/) to produce the maps and data currently available on the [USGS website](http://earthquake.usgs.gov/hazards/products/conterminous/).
+This repository houses the legacy codes used to generate the [2008](http://pubs.usgs.gov/of/2008/1128/) and [2014](http://pubs.usgs.gov/of/2014/1091/) updates to the NSHM for the conterminous US. The 2008 codes are tagged as [nshm2008r3](https://github.com/usgs/nshmp-haz-fortran/tree/nshm2008r3). The 2014 codes are the current master, and also tagged as [nshm2014r1](https://github.com/usgs/nshmp-haz-fortran/tree/nshm2014r1). These codes include all necessary configuration and data files and were compiled and run using [GFortran](http://gcc.gnu.org/fortran/) to produce the maps and data currently available on the [USGS website](http://earthquake.usgs.gov/hazards/products/conterminous/).
 
-*__Note:__ At this time, these codes are provided with limited documentation and support. We anticipate releasing a unified code base with more thorough support in the near future. See notes on 2014 update, below.*
+*__Note:__ The code in this repository is provided as is, with limited documentation and support. It has been superceded by [nshmp-haz](https://github.com/usgs/nshmp-haz).*
 
 #### Notes on the 2014 update (IMPORTANT)
+
+For user Q & A and errata relating to the 2014 update of the NSHM for the COnterminous U.S., please see the [wiki](https://github.com/usgs/nshmp-haz-fortran/wiki).
 
 The California component of the 2014 update was based on the 3rd version of the Uniform California Earthquake Rupture Forecast ([UCERF3](http://pubs.usgs.gov/of/2013/1165/)). This model was developed using [OpenSHA](http://www.opensha.org). The contributions to hazard from UCERF3 sources were also calculated using OpenSHA; these were then added to the contributions from other Western US sources calculated using the 2014 Fortran codes. Replicating the hazard curves for a site such as Reno, NV is difficult at this time as it requires running both codes and summing the results.
 
