@@ -13,12 +13,12 @@
       "repositoryURL": "https://github.com/usgs/nshmp-haz-fortran",
       "homepageURL": "https://github.com/usgs/nshmp-haz-fortran",
       "downloadURL": "https://github.com/usgs/nshmp-haz-fortran/releases/tag/nshm2014r2b",
-      "disclaimerURL": "https://github.com/usgs/nshmp-haz-fortran/blob/master/DISCLAIMER.md",
+      "disclaimerURL": "https://github.com/usgs/nshmp-haz-fortran/blob/main/DISCLAIMER.md",
       "permissions": {
         "licenses": [
           {
             "name": "Public Domain",
-            "URL": "https://github.com/usgs/nshmp-haz-fortran/blob/master/LICENSE.md"
+            "URL": "https://github.com/usgs/nshmp-haz-fortran/blob/main/LICENSE.md"
           }
         ],
         "usageType": "openSource",
